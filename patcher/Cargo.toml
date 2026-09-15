@@ -1,0 +1,13 @@
+[package]
+name = "cbpatch"
+version = "0.1.0"
+edition = "2021"
+description = "Cavalry.app bilingual injector manager (status/apply/restore)"
+
+[lib]
+name = "cbpatch"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cbpatch"
+path = "src/main.rs"

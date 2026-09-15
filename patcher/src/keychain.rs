@@ -1,0 +1,862 @@
+//! libExtensionLayer.dylib 的 Keychain 查询属性 NOP 二进制补丁。
+//! 移植自 Cavalry-i18n 的 keychain_patch.rs（MIT）：
+//! 解析 fat Mach-O 两个 slice，按符号定位 5 个 keychain 函数 × 2 个属性
+//! （kSecAttrAccessGroup / kSecAttrSynchronizable）的调用点，
+//! ARM64 写 0xd503201f (NOP)，x86_64 写 0x90；已 patch 过的调用点幂等跳过。
+//! 另含 build_synthetic_keychain_dylib 测试构造器（无需真实 Cavalry 即可单测）。
+
+use std::fs;
+use std::path::Path;
+
+use crate::error::{msg, Result};
+use crate::util;
+
+const FAT_MAGIC: u32 = 0xcafebabe;
+const MH_MAGIC_64: u32 = 0xfeedfacf;
+const LC_SEGMENT_64: u32 = 0x19;
+const LC_SYMTAB: u32 = 0x2;
+const LC_DYSYMTAB: u32 = 0xb;
+const S_NON_LAZY_SYMBOL_POINTERS: u32 = 0x6;
+const S_LAZY_SYMBOL_POINTERS: u32 = 0x7;
+const CPU_TYPE_X86_64: u32 = 0x01000007;
+const CPU_TYPE_ARM64: u32 = 0x0100000c;
+const ARM64_NOP_WORD: u32 = 0xd503201f;
+const ARM64_NOP: [u8; 4] = [0x1f, 0x20, 0x03, 0xd5];
+
+const TARGETS: [(&str, &str); 5] = [
+    ("createQuery", "__ZN7cavalry8keychain11createQuery"),
+    ("valueExists", "__ZN7cavalry8keychain11valueExists"),
+    ("setValue", "__ZN7cavalry8keychain8setValue"),
+    ("getValue", "__ZN7cavalry8keychain8getValue"),
+    ("eraseValue", "__ZN7cavalry8keychain10eraseValue"),
+];
+const ATTRS: [(&str, &str); 2] = [
+    ("kSecAttrAccessGroup", "_kSecAttrAccessGroup"),
+    ("kSecAttrSynchronizable", "_kSecAttrSynchronizable"),
+];
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KeychainPatchReport {
+    pub functions: usize,
+    pub patched_callsites: usize,
+    pub already_patched_callsites: usize,
+    pub details: Vec<KeychainPatchDetail>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KeychainPatchDetail {
+    pub function: String,
+    pub attribute: String,
+    pub patched_callsites: usize,
+    pub already_patched_callsites: usize,
+}
+
+#[derive(Clone)]
+struct Slice {
+    cputype: u32,
+    offset: usize,
+    size: usize,
+}
+
+#[derive(Clone)]
+struct Segment {
+    vmaddr: u64,
+    filesize: u64,
+    fileoff: u64,
+}
+
+#[derive(Clone)]
+struct Section {
+    sectname: String,
+    segname: String,
+    addr: u64,
+    size: u64,
+    flags: u32,
+    reserved1: u32,
+}
+
+#[derive(Clone)]
+struct Symbol {
+    name: String,
+    value: u64,
+}
+
+struct MachO {
+    arch: &'static str,
+    base: usize,
+    segments: Vec<Segment>,
+    sections: Vec<Section>,
+    symbols: Vec<Symbol>,
+    indirect: Vec<u32>,
+}
+
+struct FunctionBounds {
+    name: &'static str,
+    start: u64,
+    end: u64,
+}
+
+/// 对 app 的 Contents/Frameworks/libExtensionLayer.dylib 做 Keychain NOP 补丁。
+/// 已 patch 过（找不到调用点、只剩 NOP）时幂等跳过，不写文件。
+pub fn patch_app_keychain_dylib(app_root: &Path) -> Result<KeychainPatchReport> {
+    let target = app_root
+        .join("Contents")
+        .join("Frameworks")
+        .join("libExtensionLayer.dylib");
+    if !target.exists() {
+        return Err(msg(format!(
+            "找不到 libExtensionLayer.dylib: {}",
+            target.display()
+        )));
+    }
+    let bytes = fs::read(&target)?;
+    let (patched, report) = patch_keychain_query_attributes_owned(bytes)?;
+    if report.patched_callsites > 0 {
+        util::atomic_write(&target, &patched)?;
+    }
+    Ok(report)
+}
+
+pub fn patch_keychain_query_attributes_bytes(
+    input: &[u8],
+) -> Result<(Vec<u8>, KeychainPatchReport)> {
+    patch_keychain_query_attributes_owned(input.to_vec())
+}
+
+pub fn patch_keychain_query_attributes_owned(
+    mut bytes: Vec<u8>,
+) -> Result<(Vec<u8>, KeychainPatchReport)> {
+    let mut report = empty_report();
+    for slice in parse_slices(&bytes)? {
+        let macho = parse_macho(&bytes, &slice)?;
+        patch_slice(&mut bytes, &macho, &mut report)?;
+    }
+    Ok((bytes, report))
+}
+
+fn empty_report() -> KeychainPatchReport {
+    KeychainPatchReport {
+        functions: TARGETS.len(),
+        patched_callsites: 0,
+        already_patched_callsites: 0,
+        details: TARGETS
+            .iter()
+            .flat_map(|(function, _)| {
+                ATTRS.iter().map(move |(attribute, _)| KeychainPatchDetail {
+                    function: (*function).to_string(),
+                    attribute: (*attribute).to_string(),
+                    patched_callsites: 0,
+                    already_patched_callsites: 0,
+                })
+            })
+            .collect(),
+    }
+}
+
+fn parse_slices(bytes: &[u8]) -> Result<Vec<Slice>> {
+    if bytes.len() < 4 {
+        return Err(msg("libExtensionLayer.dylib 太小，不是 Mach-O 文件"));
+    }
+    if read_u32_be(bytes, 0)? == FAT_MAGIC {
+        let count = read_u32_be(bytes, 4)? as usize;
+        let mut slices = Vec::new();
+        for index in 0..count {
+            let offset = 8 + index * 20;
+            slices.push(Slice {
+                cputype: read_u32_be(bytes, offset)?,
+                offset: read_u32_be(bytes, offset + 8)? as usize,
+                size: read_u32_be(bytes, offset + 12)? as usize,
+            });
+        }
+        return Ok(slices);
+    }
+    if read_u32_le(bytes, 0)? != MH_MAGIC_64 {
+        return Err(msg(
+            "libExtensionLayer.dylib 不是受支持的 64 位 Mach-O 二进制文件",
+        ));
+    }
+    Ok(vec![Slice {
+        cputype: read_u32_le(bytes, 4)?,
+        offset: 0,
+        size: bytes.len(),
+    }])
+}
+
+fn parse_macho(bytes: &[u8], slice: &Slice) -> Result<MachO> {
+    let base = slice.offset;
+    let end = base + slice.size;
+    if end > bytes.len() || read_u32_le(bytes, base)? != MH_MAGIC_64 {
+        return Err(msg("libExtensionLayer.dylib 内存在不支持的 Mach-O slice"));
+    }
+    let ncmds = read_u32_le(bytes, base + 16)? as usize;
+    let mut command = base + 32;
+    let mut segments = Vec::new();
+    let mut sections = Vec::new();
+    let mut symtab = None;
+    let mut dysymtab = None;
+
+    for _ in 0..ncmds {
+        let cmd = read_u32_le(bytes, command)?;
+        let cmdsize = read_u32_le(bytes, command + 4)? as usize;
+        if cmd == LC_SEGMENT_64 {
+            segments.push(Segment {
+                vmaddr: read_u64_le(bytes, command + 24)?,
+                filesize: read_u64_le(bytes, command + 48)?,
+                fileoff: read_u64_le(bytes, command + 40)?,
+            });
+            let nsects = read_u32_le(bytes, command + 64)? as usize;
+            let mut section = command + 72;
+            for _ in 0..nsects {
+                sections.push(Section {
+                    sectname: read_cstring(bytes, section, section + 16),
+                    segname: read_cstring(bytes, section + 16, section + 32),
+                    addr: read_u64_le(bytes, section + 32)?,
+                    size: read_u64_le(bytes, section + 40)?,
+                    flags: read_u32_le(bytes, section + 64)?,
+                    reserved1: read_u32_le(bytes, section + 68)?,
+                });
+                section += 80;
+            }
+        } else if cmd == LC_SYMTAB {
+            symtab = Some((
+                read_u32_le(bytes, command + 8)? as usize,
+                read_u32_le(bytes, command + 12)? as usize,
+                read_u32_le(bytes, command + 16)? as usize,
+                read_u32_le(bytes, command + 20)? as usize,
+            ));
+        } else if cmd == LC_DYSYMTAB {
+            dysymtab = Some((
+                read_u32_le(bytes, command + 56)? as usize,
+                read_u32_le(bytes, command + 60)? as usize,
+            ));
+        }
+        command += cmdsize;
+    }
+
+    let (symoff, nsyms, stroff, strsize) =
+        symtab.ok_or_else(|| msg("Mach-O 符号表不存在"))?;
+    let (indirectsymoff, nindirectsyms) =
+        dysymtab.ok_or_else(|| msg("Mach-O 间接符号表不存在"))?;
+
+    let mut symbols = Vec::new();
+    for index in 0..nsyms {
+        let entry = base + symoff + index * 16;
+        let strx = read_u32_le(bytes, entry)? as usize;
+        symbols.push(Symbol {
+            name: read_cstring(bytes, base + stroff + strx, base + stroff + strsize),
+            value: read_u64_le(bytes, entry + 8)?,
+        });
+    }
+    let mut indirect = Vec::new();
+    for index in 0..nindirectsyms {
+        indirect.push(read_u32_le(bytes, base + indirectsymoff + index * 4)?);
+    }
+
+    Ok(MachO {
+        arch: if slice.cputype == CPU_TYPE_ARM64 {
+            "arm64"
+        } else {
+            "x86_64"
+        },
+        base,
+        segments,
+        sections,
+        symbols,
+        indirect,
+    })
+}
+
+fn patch_slice(
+    bytes: &mut [u8],
+    macho: &MachO,
+    report: &mut KeychainPatchReport,
+) -> Result<()> {
+    let pointers = pointer_symbols(macho);
+    let functions = function_bounds(macho)?;
+
+    for function in functions {
+        for (label, symbol) in ATTRS {
+            let pointer = pointers
+                .iter()
+                .find_map(|(name, address)| (*name == symbol).then_some(*address))
+                .ok_or_else(|| msg(format!("缺少 Keychain 符号: {symbol}")))?;
+            let callsite = if macho.arch == "arm64" {
+                find_arm64_callsite(bytes, macho, &function, pointer, label)?
+            } else {
+                find_x86_callsite(bytes, macho, &function, pointer, label)?
+            };
+            if callsite.2 {
+                record_callsite(report, function.name, label, false);
+            } else if macho.arch == "arm64" {
+                bytes[callsite.0..callsite.0 + 4].copy_from_slice(&ARM64_NOP);
+                record_callsite(report, function.name, label, true);
+            } else {
+                for byte in &mut bytes[callsite.0..callsite.0 + callsite.1] {
+                    *byte = 0x90;
+                }
+                record_callsite(report, function.name, label, true);
+            }
+        }
+    }
+    Ok(())
+}
+
+fn record_callsite(
+    report: &mut KeychainPatchReport,
+    function: &str,
+    attribute: &str,
+    patched: bool,
+) {
+    let detail = report
+        .details
+        .iter_mut()
+        .find(|detail| detail.function == function && detail.attribute == attribute)
+        .expect("patch detail target must exist");
+    if patched {
+        report.patched_callsites += 1;
+        detail.patched_callsites += 1;
+    } else {
+        report.already_patched_callsites += 1;
+        detail.already_patched_callsites += 1;
+    }
+}
+
+fn pointer_symbols(macho: &MachO) -> Vec<(&str, u64)> {
+    let mut out = Vec::new();
+    for section in &macho.sections {
+        let section_type = section.flags & 0xff;
+        if section_type != S_NON_LAZY_SYMBOL_POINTERS && section_type != S_LAZY_SYMBOL_POINTERS {
+            continue;
+        }
+        for index in 0..(section.size / 8) as usize {
+            let indirect_index = section.reserved1 as usize + index;
+            if let Some(symbol_index) = macho.indirect.get(indirect_index) {
+                if let Some(symbol) = macho.symbols.get(*symbol_index as usize) {
+                    out.push((symbol.name.as_str(), section.addr + (index as u64) * 8));
+                }
+            }
+        }
+    }
+    out
+}
+
+fn function_bounds(macho: &MachO) -> Result<Vec<FunctionBounds>> {
+    let text = macho
+        .sections
+        .iter()
+        .find(|section| section.segname == "__TEXT" && section.sectname == "__text")
+        .ok_or_else(|| msg("Mach-O __TEXT,__text 段不存在"))?;
+    let mut text_symbols = macho
+        .symbols
+        .iter()
+        .filter(|symbol| symbol.value >= text.addr && symbol.value < text.addr + text.size)
+        .collect::<Vec<_>>();
+    text_symbols.sort_by_key(|symbol| symbol.value);
+
+    TARGETS
+        .iter()
+        .map(|(name, prefix)| {
+            let symbol = text_symbols
+                .iter()
+                .find(|symbol| symbol.name.starts_with(prefix))
+                .ok_or_else(|| msg(format!("在 libExtensionLayer.dylib 中找不到 {name}")))?;
+            let end = text_symbols
+                .iter()
+                .find(|next| next.value > symbol.value)
+                .map(|next| next.value)
+                .unwrap_or(text.addr + text.size);
+            Ok(FunctionBounds {
+                name,
+                start: symbol.value,
+                end,
+            })
+        })
+        .collect()
+}
+
+fn vm_to_file(macho: &MachO, address: u64) -> Result<usize> {
+    let segment = macho
+        .segments
+        .iter()
+        .find(|segment| address >= segment.vmaddr && address <= segment.vmaddr + segment.filesize)
+        .ok_or_else(|| msg(format!("无法把 Mach-O 地址 0x{address:x} 映射到文件偏移")))?;
+    Ok(macho.base + (segment.fileoff + (address - segment.vmaddr)) as usize)
+}
+
+fn find_arm64_callsite(
+    bytes: &[u8],
+    macho: &MachO,
+    function: &FunctionBounds,
+    pointer: u64,
+    label: &str,
+) -> Result<(usize, usize, bool)> {
+    let start = vm_to_file(macho, function.start)?;
+    let end = vm_to_file(macho, function.end)?;
+    let mut offset = start;
+    while offset + 8 <= end {
+        let address = function.start + (offset - start) as u64;
+        if decode_arm64_adrp_target(bytes, offset, address)? == Some(pointer) {
+            let limit = end.min(offset + 96);
+            let mut call = offset + 8;
+            while call + 4 <= limit {
+                let word = read_u32_le(bytes, call)?;
+                if word & 0xfc000000 == 0x94000000 {
+                    return Ok((call, 4, false));
+                }
+                if word == ARM64_NOP_WORD {
+                    return Ok((call, 4, true));
+                }
+                call += 4;
+            }
+            return Err(msg(format!(
+                "{} 的 {label} 调用点未找到",
+                function.name
+            )));
+        }
+        offset += 4;
+    }
+    Err(msg(format!(
+        "{} 的 {label} 引用调用点未找到",
+        function.name
+    )))
+}
+
+fn decode_arm64_adrp_target(
+    bytes: &[u8],
+    offset: usize,
+    address: u64,
+) -> Result<Option<u64>> {
+    let adrp = read_u32_le(bytes, offset)?;
+    let ldr = read_u32_le(bytes, offset + 4)?;
+    if adrp & 0x9f000000 != 0x90000000 || ldr & 0xffc00000 != 0xf9400000 {
+        return Ok(None);
+    }
+    if (adrp & 0x1f) != ((ldr >> 5) & 0x1f) {
+        return Ok(None);
+    }
+    let immlo = (adrp >> 29) & 0x3;
+    let immhi = (adrp >> 5) & 0x7ffff;
+    let delta = sign_extend(((immhi << 2) | immlo) as i64, 21) << 12;
+    let page = (address & !0xfff) as i64;
+    let page_offset = (((ldr >> 10) & 0xfff) * 8) as i64;
+    Ok(Some((page + delta + page_offset) as u64))
+}
+
+fn find_x86_callsite(
+    bytes: &[u8],
+    macho: &MachO,
+    function: &FunctionBounds,
+    pointer: u64,
+    label: &str,
+) -> Result<(usize, usize, bool)> {
+    let start = vm_to_file(macho, function.start)?;
+    let end = vm_to_file(macho, function.end)?;
+    for offset in start..end.saturating_sub(7) {
+        let address = function.start + (offset - start) as u64;
+        if x86_rip_target(bytes, offset, address)? != Some(pointer) {
+            continue;
+        }
+        let limit = end.min(offset + 128);
+        for call in offset + 7..limit {
+            let length = x86_call_len(bytes, call);
+            if length > 0 {
+                return Ok((call, length, false));
+            }
+            if bytes.get(call..call + 3) == Some(&[0x90, 0x90, 0x90]) {
+                return Ok((call, 3, true));
+            }
+        }
+        return Err(msg(format!(
+            "{} 的 {label} 调用点未找到",
+            function.name
+        )));
+    }
+    Err(msg(format!(
+        "{} 的 {label} 引用调用点未找到",
+        function.name
+    )))
+}
+
+fn x86_rip_target(bytes: &[u8], offset: usize, address: u64) -> Result<Option<u64>> {
+    if bytes.get(offset) != Some(&0x48) || bytes.get(offset + 1) != Some(&0x8b) {
+        return Ok(None);
+    }
+    let modrm = bytes[offset + 2];
+    if modrm & 0xc7 != 0x05 {
+        return Ok(None);
+    }
+    let disp = read_i32_le(bytes, offset + 3)? as i64;
+    Ok(Some((address as i64 + 7 + disp) as u64))
+}
+
+fn x86_call_len(bytes: &[u8], offset: usize) -> usize {
+    match bytes.get(offset..offset + 3) {
+        Some([0xe8, _, _]) => 5,
+        Some([0xff, b, _]) if b & 0x38 == 0x10 => 2,
+        Some([rex, 0xff, b]) if (0x40..=0x4f).contains(rex) && b & 0x38 == 0x10 => 3,
+        _ => 0,
+    }
+}
+
+pub fn build_synthetic_keychain_dylib(arch: Option<&str>, fat: bool) -> Vec<u8> {
+    if !fat {
+        return build_thin(arch.unwrap_or("arm64"), false);
+    }
+    let arm = build_thin("arm64", false);
+    let x86 = build_thin("x86_64", false);
+    let arm_offset = 0x1000usize;
+    let x86_offset = align(arm_offset + arm.len(), 0x1000);
+    let mut bytes = vec![0; x86_offset + x86.len()];
+    write_u32_be(&mut bytes, 0, FAT_MAGIC);
+    write_u32_be(&mut bytes, 4, 2);
+    write_u32_be(&mut bytes, 8, CPU_TYPE_ARM64);
+    write_u32_be(&mut bytes, 16, arm_offset as u32);
+    write_u32_be(&mut bytes, 20, arm.len() as u32);
+    write_u32_be(&mut bytes, 24, 12);
+    write_u32_be(&mut bytes, 28, CPU_TYPE_X86_64);
+    write_u32_be(&mut bytes, 36, x86_offset as u32);
+    write_u32_be(&mut bytes, 40, x86.len() as u32);
+    write_u32_be(&mut bytes, 44, 12);
+    bytes[arm_offset..arm_offset + arm.len()].copy_from_slice(&arm);
+    bytes[x86_offset..x86_offset + x86.len()].copy_from_slice(&x86);
+    bytes
+}
+
+pub fn build_synthetic_keychain_dylib_missing_sync_get_value() -> Vec<u8> {
+    build_thin("arm64", true)
+}
+
+/// 合成 MH_EXECUTE 主程序（fixture 的 Contents/MacOS/Cavalry 用，可被 codesign 签名）。
+pub fn build_synthetic_main_executable() -> Vec<u8> {
+    let mut bytes = build_thin("arm64", false);
+    write_u32_le(&mut bytes, 12, 2); // MH_EXECUTE
+    bytes
+}
+
+fn build_thin(arch: &str, missing_sync_get_value: bool) -> Vec<u8> {
+    let cputype = if arch == "arm64" {
+        CPU_TYPE_ARM64
+    } else {
+        CPU_TYPE_X86_64
+    };
+    let function_size = 0x80usize;
+    let text_offset = 0x400usize;
+    let text_addr = 0x1000u64;
+    let data_offset = 0x900usize;
+    let data_addr = 0x3000u64;
+    let text_size = function_size * TARGETS.len();
+    let symoff = align(data_offset + 0x10, 8);
+    let names = TARGETS
+        .iter()
+        .map(|(_, symbol)| *symbol)
+        .chain(ATTRS.iter().map(|(_, symbol)| *symbol))
+        .collect::<Vec<_>>();
+    let mut str_offsets = Vec::new();
+    let mut strsize = 1usize;
+    for name in &names {
+        str_offsets.push(strsize);
+        strsize += name.len() + 1;
+    }
+    let stroff = symoff + names.len() * 16;
+    let indirect = align(stroff + strsize, 4);
+    let body_end = align(indirect + 8, 16);
+    let linkedit_off = body_end;
+    let linkedit_size = 0x100usize;
+    let mut bytes = vec![0; body_end + linkedit_size];
+    write_u32_le(&mut bytes, 0, MH_MAGIC_64);
+    write_u32_le(&mut bytes, 4, cputype);
+    write_u32_le(&mut bytes, 12, 6); // MH_DYLIB（主程序构造器会改写为 MH_EXECUTE）
+    write_u32_le(&mut bytes, 16, 5);
+    write_u32_le(&mut bytes, 20, 480);
+    write_segment(
+        &mut bytes,
+        32,
+        "__TEXT",
+        text_addr,
+        text_size as u64,
+        text_offset as u64,
+        text_size as u64,
+        "__text",
+        "__TEXT",
+        text_addr,
+        text_size as u64,
+        text_offset as u32,
+        0,
+        0,
+    );
+    write_segment(
+        &mut bytes,
+        184,
+        "__DATA_CONST",
+        data_addr,
+        0x10,
+        data_offset as u64,
+        0x10,
+        "__got",
+        "__DATA_CONST",
+        data_addr,
+        0x10,
+        data_offset as u32,
+        S_NON_LAZY_SYMBOL_POINTERS,
+        0,
+    );
+    write_linkedit_segment(
+        &mut bytes,
+        336,
+        0x4000,
+        linkedit_size as u64,
+        linkedit_off as u64,
+        linkedit_size as u64,
+    );
+    write_u32_le(&mut bytes, 408, LC_SYMTAB);
+    write_u32_le(&mut bytes, 412, 24);
+    write_u32_le(&mut bytes, 416, symoff as u32);
+    write_u32_le(&mut bytes, 420, names.len() as u32);
+    write_u32_le(&mut bytes, 424, stroff as u32);
+    write_u32_le(&mut bytes, 428, strsize as u32);
+    write_u32_le(&mut bytes, 432, LC_DYSYMTAB);
+    write_u32_le(&mut bytes, 436, 80);
+    write_u32_le(&mut bytes, 488, indirect as u32);
+    write_u32_le(&mut bytes, 492, 2);
+
+    for (index, (name, _)) in TARGETS.iter().enumerate() {
+        let fn_addr = text_addr + (index * function_size) as u64;
+        let fn_offset = text_offset + index * function_size;
+        let missing = missing_sync_get_value && *name == "getValue";
+        if arch == "arm64" {
+            write_arm_ref_call(&mut bytes, fn_offset, fn_addr, data_addr);
+            if !missing {
+                write_arm_ref_call(&mut bytes, fn_offset + 0x20, fn_addr + 0x20, data_addr + 8);
+            }
+        } else {
+            write_x86_ref_call(&mut bytes, fn_offset, fn_addr, data_addr);
+            if !missing {
+                write_x86_ref_call(&mut bytes, fn_offset + 0x20, fn_addr + 0x20, data_addr + 8);
+            }
+        }
+    }
+    for (index, name) in names.iter().enumerate() {
+        let entry = symoff + index * 16;
+        write_u32_le(&mut bytes, entry, str_offsets[index] as u32);
+        bytes[entry + 4] = 0x0f;
+        bytes[entry + 5] = if index < TARGETS.len() { 1 } else { 0 };
+        let value = if index < TARGETS.len() {
+            text_addr + (index * function_size) as u64
+        } else {
+            0
+        };
+        write_u64_le(&mut bytes, entry + 8, value);
+        bytes[stroff + str_offsets[index]..stroff + str_offsets[index] + name.len()]
+            .copy_from_slice(name.as_bytes());
+    }
+    write_u32_le(&mut bytes, indirect, TARGETS.len() as u32);
+    write_u32_le(&mut bytes, indirect + 4, TARGETS.len() as u32 + 1);
+    bytes
+}
+
+/// __LINKEDIT（0 个 section，cmdsize 72）：codesign 需要它存放签名数据。
+fn write_linkedit_segment(
+    bytes: &mut [u8],
+    offset: usize,
+    vmaddr: u64,
+    vmsize: u64,
+    fileoff: u64,
+    filesize: u64,
+) {
+    write_u32_le(bytes, offset, LC_SEGMENT_64);
+    write_u32_le(bytes, offset + 4, 72);
+    bytes[offset + 8..offset + 8 + 10].copy_from_slice(b"__LINKEDIT");
+    write_u64_le(bytes, offset + 24, vmaddr);
+    write_u64_le(bytes, offset + 32, vmsize);
+    write_u64_le(bytes, offset + 40, fileoff);
+    write_u64_le(bytes, offset + 48, filesize);
+    write_u32_le(bytes, offset + 64, 0);
+}
+
+#[allow(clippy::too_many_arguments)]
+fn write_segment(
+    bytes: &mut [u8],
+    offset: usize,
+    seg: &str,
+    vmaddr: u64,
+    vmsize: u64,
+    fileoff: u64,
+    filesize: u64,
+    sect: &str,
+    sectseg: &str,
+    sectaddr: u64,
+    sectsize: u64,
+    sectoff: u32,
+    flags: u32,
+    reserved1: u32,
+) {
+    write_u32_le(bytes, offset, LC_SEGMENT_64);
+    write_u32_le(bytes, offset + 4, 152);
+    bytes[offset + 8..offset + 8 + seg.len()].copy_from_slice(seg.as_bytes());
+    write_u64_le(bytes, offset + 24, vmaddr);
+    write_u64_le(bytes, offset + 32, vmsize);
+    write_u64_le(bytes, offset + 40, fileoff);
+    write_u64_le(bytes, offset + 48, filesize);
+    write_u32_le(bytes, offset + 64, 1);
+    let section = offset + 72;
+    bytes[section..section + sect.len()].copy_from_slice(sect.as_bytes());
+    bytes[section + 16..section + 16 + sectseg.len()].copy_from_slice(sectseg.as_bytes());
+    write_u64_le(bytes, section + 32, sectaddr);
+    write_u64_le(bytes, section + 40, sectsize);
+    write_u32_le(bytes, section + 48, sectoff);
+    write_u32_le(bytes, section + 64, flags);
+    write_u32_le(bytes, section + 68, reserved1);
+}
+
+fn write_arm_ref_call(bytes: &mut [u8], offset: usize, address: u64, pointer: u64) {
+    write_u32_le(bytes, offset, encode_adrp(address, pointer));
+    write_u32_le(
+        bytes,
+        offset + 4,
+        0xf9400000 | ((((pointer % 4096) / 8) as u32) << 10) | (8 << 5) | 8,
+    );
+    write_u32_le(
+        bytes,
+        offset + 8,
+        0x94000000 | ((((0x5000i64 - (address + 8) as i64) / 4) as u32) & 0x03ffffff),
+    );
+}
+
+fn encode_adrp(address: u64, target: u64) -> u32 {
+    let delta = ((target / 4096) as i64 - (address / 4096) as i64) as u32;
+    0x90000008 | ((delta & 0x3) << 29) | (((delta >> 2) & 0x7ffff) << 5)
+}
+
+fn write_x86_ref_call(bytes: &mut [u8], offset: usize, address: u64, pointer: u64) {
+    bytes[offset..offset + 3].copy_from_slice(&[0x48, 0x8b, 0x05]);
+    write_i32_le(
+        bytes,
+        offset + 3,
+        (pointer as i64 - (address + 7) as i64) as i32,
+    );
+    bytes[offset + 7..offset + 10].copy_from_slice(&[0x41, 0xff, 0xd5]);
+}
+
+fn sign_extend(value: i64, bits: u32) -> i64 {
+    let shift = 64 - bits;
+    (value << shift) >> shift
+}
+
+fn align(value: usize, boundary: usize) -> usize {
+    value.div_ceil(boundary) * boundary
+}
+
+fn read_cstring(bytes: &[u8], offset: usize, limit: usize) -> String {
+    let mut end = offset;
+    while end < limit && end < bytes.len() && bytes[end] != 0 {
+        end += 1;
+    }
+    String::from_utf8_lossy(&bytes[offset..end]).to_string()
+}
+
+fn read_u32_le(bytes: &[u8], offset: usize) -> Result<u32> {
+    bytes
+        .get(offset..offset + 4)
+        .and_then(|slice| slice.try_into().ok())
+        .map(u32::from_le_bytes)
+        .ok_or_else(|| msg("Mach-O 数据意外结束"))
+}
+
+fn read_u32_be(bytes: &[u8], offset: usize) -> Result<u32> {
+    bytes
+        .get(offset..offset + 4)
+        .and_then(|slice| slice.try_into().ok())
+        .map(u32::from_be_bytes)
+        .ok_or_else(|| msg("Mach-O 数据意外结束"))
+}
+
+fn read_i32_le(bytes: &[u8], offset: usize) -> Result<i32> {
+    bytes
+        .get(offset..offset + 4)
+        .and_then(|slice| slice.try_into().ok())
+        .map(i32::from_le_bytes)
+        .ok_or_else(|| msg("Mach-O 数据意外结束"))
+}
+
+fn read_u64_le(bytes: &[u8], offset: usize) -> Result<u64> {
+    bytes
+        .get(offset..offset + 8)
+        .and_then(|slice| slice.try_into().ok())
+        .map(u64::from_le_bytes)
+        .ok_or_else(|| msg("Mach-O 数据意外结束"))
+}
+
+fn write_u32_le(bytes: &mut [u8], offset: usize, value: u32) {
+    bytes[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+fn write_u32_be(bytes: &mut [u8], offset: usize, value: u32) {
+    bytes[offset..offset + 4].copy_from_slice(&value.to_be_bytes());
+}
+
+fn write_i32_le(bytes: &mut [u8], offset: usize, value: i32) {
+    bytes[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+}
+
+fn write_u64_le(bytes: &mut [u8], offset: usize, value: u64) {
+    bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        build_synthetic_keychain_dylib, build_synthetic_keychain_dylib_missing_sync_get_value,
+        patch_keychain_query_attributes_bytes, ARM64_NOP_WORD,
+    };
+
+    const EXPECTED_CALLSITES: usize = 5 * 2 * 2; // 5 函数 × 2 属性 × 2 slice
+
+    #[test]
+    fn patches_all_callsites_in_fat_dylib() {
+        let source = build_synthetic_keychain_dylib(None, true);
+        let (patched, report) = patch_keychain_query_attributes_bytes(&source).unwrap();
+        assert_eq!(report.patched_callsites, EXPECTED_CALLSITES);
+        assert_eq!(report.already_patched_callsites, 0);
+        assert_ne!(patched, source);
+    }
+
+    #[test]
+    fn repatching_is_idempotent() {
+        let source = build_synthetic_keychain_dylib(None, true);
+        let (once, first) = patch_keychain_query_attributes_bytes(&source).unwrap();
+        let (twice, second) = patch_keychain_query_attributes_bytes(&once).unwrap();
+        assert_eq!(first.patched_callsites, EXPECTED_CALLSITES);
+        assert_eq!(second.patched_callsites, 0);
+        assert_eq!(second.already_patched_callsites, EXPECTED_CALLSITES);
+        assert_eq!(once, twice);
+    }
+
+    #[test]
+    fn arm64_callsites_become_nop_words() {
+        let source = build_synthetic_keychain_dylib(Some("arm64"), false);
+        let (patched, report) = patch_keychain_query_attributes_bytes(&source).unwrap();
+        assert_eq!(report.patched_callsites, 10);
+        // 原调用点（offset+8 处）应已是 NOP 指令字。
+        let text_offset = 0x400usize;
+        for index in 0..5 {
+            let callsite = text_offset + index * 0x80 + 8;
+            let word = u32::from_le_bytes([
+                patched[callsite],
+                patched[callsite + 1],
+                patched[callsite + 2],
+                patched[callsite + 3],
+            ]);
+            assert_eq!(word, ARM64_NOP_WORD);
+        }
+    }
+
+    #[test]
+    fn missing_callsite_fails_closed() {
+        let source = build_synthetic_keychain_dylib_missing_sync_get_value();
+        let error = patch_keychain_query_attributes_bytes(&source).unwrap_err();
+        assert!(
+            error.to_string().contains("getValue"),
+            "unexpected error: {error}"
+        );
+    }
+}

@@ -1,0 +1,12 @@
+qt_sdk/
+dist/
+node_modules/
+*.bak
+*.log
+.DS_Store
+tools-local/
+patcher/target/
+# 构建期派生输入（真源在 translations/pristine/）
+tools/*.ts
+tools/model_display_translations.json
+translations/working/

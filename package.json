@@ -1,0 +1,11 @@
+{
+  "name": "cavalry-bilingual",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "compose": "node composer/make_bilingual.js --ts translations/pristine/zh-Hans.ts --out translations/working/zh-Hans.ts --all && node composer/make_model_display_bilingual.js --config composer/bilingual.config.json --in translations/pristine/model_display_translations.json --out translations/working/model_display_translations.json --lang zh-Hans",
+    "compose:reset": "rm -f translations/working/zh-Hans.ts translations/working/model_display_translations.json tools/model_display_translations.json tools/zh-*.ts tools/ja_JP.ts",
+    "build:macos": "npm run compose && mkdir -p translations/working && cp translations/working/zh-Hans.ts tools/zh-Hans.ts && cp translations/pristine/zh-Hant.ts tools/zh-Hant.ts && cp translations/pristine/ja_JP.ts tools/ja_JP.ts && cp translations/working/model_display_translations.json tools/model_display_translations.json && test -n \"$CAVALRY_QT_PREFIX\" && bash tools/build_translator_injector.sh dist/libCavalryTranslatorInjector.dylib || (echo 'set CAVALRY_QT_PREFIX first' && exit 1)"
+  }
+}

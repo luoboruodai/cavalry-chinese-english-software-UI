@@ -1,0 +1,181 @@
+#!/usr/bin/env node
+/**
+ * [INPUT]: 依赖 tools/zh-Hans.ts、tools/zh-Hant.ts、tools/ja_JP.ts 的 Qt TS 翻译目录、model_display_translations.json 的显示层模型名词典与 runtime-noise-quarantine.json 的无来源噪声清单
+ * [OUTPUT]: 对外提供 parseTs 测试缝与带 GEB L3 契约的 injector/generated_translations.inc 编译期 C++ 翻译表，拒绝 context 外孤儿消息并保留 xml:space 标记的精确空白，附加 display-only 模型 niceName 译名并剔除无 provenance 的 runtime 噪声
+ * [POS]: tools 的 TS/显示层词典到 C++ 投影器，连接翻译资产与 Objective-C++ injector
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+
+const fs = require('node:fs');
+const path = require('node:path');
+
+const repoRoot = path.resolve(__dirname, '..');
+const outputPath =
+  process.argv[2] || path.join(repoRoot, 'injector', 'generated_translations.inc');
+const modelDisplayPath = path.join(repoRoot, 'tools', 'model_display_translations.json');
+const runtimeNoiseQuarantinePath = path.join(repoRoot, 'tools', 'runtime-noise-quarantine.json');
+
+const languages = [
+  { code: 'zh-Hans', symbol: 'kZhHansEntries', file: path.join(repoRoot, 'tools', 'zh-Hans.ts') },
+  { code: 'zh-Hant', symbol: 'kZhHantEntries', file: path.join(repoRoot, 'tools', 'zh-Hant.ts') },
+  { code: 'ja_JP', symbol: 'kJaEntries', file: path.join(repoRoot, 'tools', 'ja_JP.ts') },
+];
+
+function decodeXml(value) {
+  return value
+    .replace(/&apos;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, '>')
+    .replace(/&lt;/g, '<')
+    .replace(/&amp;/g, '&');
+}
+
+function escapeCpp(value) {
+  return value
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/\n/g, '\\n');
+}
+
+function parseTag(block, tagName) {
+  const match = block.match(
+    new RegExp(`<${tagName}(\\s[^>]*)?>([\\s\\S]*?)<\\/${tagName}>`)
+  );
+  if (!match) {
+    return '';
+  }
+  const attributes = match[1] || '';
+  const preserveWhitespace =
+    /\bxml:space\s*=\s*(["'])preserve\1/.test(attributes);
+  return decodeXml(preserveWhitespace ? match[2] : match[2].trim());
+}
+
+function assertTsMessageOwnership(xml, filePath) {
+  const withoutComments = xml.replace(/<!--[\s\S]*?-->/g, '');
+  const outsideContexts = withoutComments.replace(/<context>[\s\S]*?<\/context>/g, '');
+  if (/<message\b/.test(outsideContexts)) {
+    throw new Error(`${path.basename(filePath)} contains <message> outside <context>`);
+  }
+}
+
+function parseTs(filePath) {
+  const xml = fs.readFileSync(filePath, 'utf8');
+  assertTsMessageOwnership(xml, filePath);
+  const entries = [];
+  const contextRegex = /<context>([\s\S]*?)<\/context>/g;
+
+  for (const contextMatch of xml.matchAll(contextRegex)) {
+    const contextBlock = contextMatch[1];
+    const contextName = parseTag(contextBlock, 'name');
+    if (!contextName) {
+      continue;
+    }
+
+    const messageRegex = /<message>([\s\S]*?)<\/message>/g;
+    for (const messageMatch of contextBlock.matchAll(messageRegex)) {
+      const messageBlock = messageMatch[1];
+      const source = parseTag(messageBlock, 'source');
+      const translation = parseTag(messageBlock, 'translation');
+      if (!source || !translation) {
+        continue;
+      }
+      entries.push({ context: contextName, source, translation });
+    }
+  }
+
+  return entries;
+}
+
+function parseRuntimeNoiseQuarantine() {
+  if (!fs.existsSync(runtimeNoiseQuarantinePath)) {
+    return new Set();
+  }
+  const payload = JSON.parse(fs.readFileSync(runtimeNoiseQuarantinePath, 'utf8'));
+  return new Set(
+    (payload.tokens || [])
+      .filter((entry) => entry && entry.decision === 'do_not_translate')
+      .map((entry) => entry.source)
+      .filter(Boolean)
+  );
+}
+
+function parseModelDisplayTranslations(languageCode) {
+  const payload = JSON.parse(fs.readFileSync(modelDisplayPath, 'utf8'));
+  const entries = (payload.entries || [])
+    .map((entry) => ({
+      context: 'ModelDisplay',
+      source: entry.source || '',
+      translation: entry[languageCode] || '',
+    }))
+    .filter((entry) => entry.source && entry.translation);
+  const menuVariants = entries.map((entry) => ({
+    context: 'ModelDisplay',
+    source: `${entry.source}...`,
+    translation: `${entry.translation}...`,
+  }));
+  return [...entries, ...menuVariants];
+}
+
+function renderEntries(symbol, entries) {
+  const body = entries
+    .map(
+      ({ context, source, translation }) =>
+        `    {"${escapeCpp(context)}", "${escapeCpp(source)}", "${escapeCpp(translation)}"},`
+    )
+    .join('\n');
+
+  return `const TranslationEntry ${symbol}[] = {\n${body}\n};\n`;
+}
+
+function renderDispatcher() {
+  const branches = languages
+    .map(
+      ({ code, symbol }) => `    if (lang == QStringLiteral("${code}")) {
+        *count = static_cast<int>(sizeof(${symbol}) / sizeof(${symbol}[0]));
+        return ${symbol};
+    }`
+    )
+    .join('\n');
+
+  return `const TranslationEntry *entriesForLanguage(const QString &lang, int *count)
+{
+${branches}
+
+    *count = 0;
+    return nullptr;
+}
+`;
+}
+
+function generate(destinationPath = outputPath) {
+  const header = `/**
+ * [INPUT]: 依赖 tools/{zh-Hans,zh-Hant,ja_JP}.ts 的 Qt 翻译目录、tools/model_display_translations.json 的显示层模型词典与 tools/runtime-noise-quarantine.json 的噪声隔离决策
+ * [OUTPUT]: 对外提供 macOS 与 Windows injector 共用的 TranslationEntry 三语静态表及 entriesForLanguage 查询入口
+ * [POS]: injector 的生成式机器投影，由 tools/generate_embedded_translations.js 唯一维护，禁止手工编辑或平台分叉
+ * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
+ */
+// Generated by tools/generate_embedded_translations.js. Do not edit by hand.
+`;
+  const quarantinedSources = parseRuntimeNoiseQuarantine();
+  const output = [
+    header,
+    ...languages.map(({ code, symbol, file }) => {
+      const entries = [...parseTs(file), ...parseModelDisplayTranslations(code)].filter(
+        (entry) => !quarantinedSources.has(entry.source)
+      );
+      return renderEntries(symbol, entries);
+    }),
+    renderDispatcher(),
+  ].join('\n');
+
+  fs.mkdirSync(path.dirname(destinationPath), { recursive: true });
+  fs.writeFileSync(destinationPath, output);
+}
+
+if (require.main === module) {
+  generate();
+}
+
+module.exports = {
+  parseTs,
+};
