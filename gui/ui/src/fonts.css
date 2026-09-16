@@ -1,0 +1,16 @@
+/* MiSans GUI — MiSans 子集(仅 UI 用到的 CJK 字形,~67KB/字重) */
+@font-face {
+  font-family: "MiSans GUI";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/MiSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "MiSans GUI";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("./fonts/MiSans-Medium.woff2") format("woff2");
+}

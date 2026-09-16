@@ -1,1 +1,1 @@
-{"template": "{zh}（{en}）", "lang": "zh-Hans", "fonts": {"zh": "MiSans", "en": "Inter", "enabled": false}}
+{"fonts":{"en":"Inter","enabled":true,"zh":"MiSans"},"lang":"zh-Hans","template":"{zh}（{en}）"}

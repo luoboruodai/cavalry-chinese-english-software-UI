@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2.json",
+  "productName": "Cavalry Bilingual",
+  "version": "0.2.0",
+  "identifier": "com.cavalry-bilingual.gui",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../ui/dist",
+    "devUrl": "http://localhost:1420"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Cavalry Bilingual",
+        "width": 880,
+        "height": 620,
+        "minWidth": 700,
+        "minHeight": 460,
+        "resizable": true,
+        "decorations": true,
+        "transparent": false,
+        "hiddenTitle": true,
+        "backgroundColor": "#f5f1e4"
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "category": "Utility",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    }
+  }
+}

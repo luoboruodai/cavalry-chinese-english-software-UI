@@ -1,0 +1,16 @@
+[package]
+name = "cavalry-bilingual"
+version = "0.2.0"
+edition = "2021"
+description = "Cavalry Bilingual desktop app — Tauri shell crate (built by the Tauri CLI)"
+publish = false
+
+[dependencies]
+cavalry-bilingual-gui = { path = ".." }
+# Tauri CLI 会对本 manifest 注入 managed features（release 时的 custom-protocol），
+# 因此 tauri 必须是这里的直依赖；实际逻辑全部在 cavalry-bilingual-gui lib 中。
+tauri = { version = "2", features = [] }
+
+[[bin]]
+name = "cavalry-bilingual"
+path = "main.rs"

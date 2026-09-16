@@ -1,0 +1,32 @@
+{
+  "name": "cavalry-bilingual-ui",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "shot": "npm run build && node scripts/screenshot.mjs",
+    "tauri": "TAURI_APP_PATH=../src-tauri tauri",
+    "tauri:dev": "TAURI_APP_PATH=../src-tauri tauri dev",
+    "tauri:build": "TAURI_APP_PATH=../src-tauri tauri build"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@tauri-apps/api": "^2.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.49.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}
