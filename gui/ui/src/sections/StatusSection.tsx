@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { BuildInfo, StatusInfo, View } from "../api";
 import { langLabel, stateLabel } from "../labels";
 import { SectionHeader } from "../SectionHeader";
@@ -25,6 +25,11 @@ export function StatusSection({
 }: Props) {
   const [pending, setPending] = useState<Pending>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) setPending(null); };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [busy]);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   if (!status && !loadError) {
@@ -63,7 +68,7 @@ export function StatusSection({
   const details: Array<[string, string]> = [
     ["签名标识", status?.signing?.identifier ?? "—"],
     [
-      "dylib 摘要",
+      "运行时摘要",
       buildInfo?.dylibExists && buildInfo.dylibSha12
         ? buildInfo.dylibSha12
         : "未找到",
@@ -87,12 +92,12 @@ export function StatusSection({
 
   const confirmText =
     pending === "apply"
-      ? "确认应用双语补丁？"
+      ? "确认应用已保存的排版和字体？请先保存工程并退出 Cavalry。"
       : pending === "restore"
-        ? "确认还原为英文？"
+        ? "还原到最近的备份状态？不会强制退出 Cavalry。"
         : null;
 
-  const primaryLabel = applied ? "还原为英文" : "应用双语补丁";
+  const primaryLabel = applied ? "应用更新" : "应用双语补丁";
 
   return (
     <>
@@ -118,19 +123,24 @@ export function StatusSection({
         </div>
       </div>
 
+      {status?.compatibility && <p className="notice" role="status">{status.compatibility.message}</p>}
+      {status?.running && <p className="notice">Cavalry 正在运行。请保存工作并自行退出后，刷新状态再应用；工具不会关闭你的工程。</p>}
+      {status?.pendingSettings && <p className="notice">运行时、节点词典或已保存的设置有更新，尚未应用到 Cavalry。</p>}
+      {buildInfo && !buildInfo.dylibExists && <p className="field-error">缺少随附注入器，请重新安装完整工具包。不会尝试修改 Cavalry。</p>}
       <div className="status-actions">
         <div className="action-row">
           {detected && (
             <button
               type="button"
               className="cta-coral"
-              disabled={busy}
-              onClick={() => setPending(applied ? "restore" : "apply")}
+              disabled={busy || !!loadError || status?.compatibility?.canApply !== true || status?.running || !buildInfo?.dylibExists}
+              onClick={() => setPending("apply")}
             >
               <span>{busy ? (busyLabel ?? "处理中…") : primaryLabel}</span>
               <span className={`dot ${busy ? "busy" : ""}`} aria-hidden />
             </button>
           )}
+          <button type="button" className="secondary-button" disabled={busy || !status?.latestBackup || status?.running} onClick={() => setPending("restore")}>还原最近备份</button>
           <button
             type="button"
             className="inline-link"

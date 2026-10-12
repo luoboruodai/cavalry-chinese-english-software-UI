@@ -57,7 +57,18 @@ export default function App() {
   const [config, setConfig] = useState<ConfigInfo | null>(null);
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null);
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [logs, setLogs] = useState<LogEntry[]>(() => {
+    if (isMock) return [];
+    try {
+      const saved = JSON.parse(localStorage.getItem("cb-operation-log-v1") ?? "[]");
+      return Array.isArray(saved) ? saved.filter(e => typeof e?.time === "string" && typeof e?.text === "string").slice(0, 200) : [];
+    } catch { return []; }
+  });
+  const [operationBusy, setOperationBusy] = useState(false);
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!isMock) { try { localStorage.setItem("cb-operation-log-v1", JSON.stringify(logs)); } catch { /* Core operation results remain visible in this session. */ } }
+  }, [logs]);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(true);
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -101,10 +112,10 @@ export default function App() {
     try {
       setBackups(await api.listBackups());
     } catch {
-      setBackups([]);
+      addLog("备份读取失败 — 保留已显示列表，请稍后刷新。");
     }
     setRefreshing(false);
-  }, []);
+  }, [addLog]);
 
   useEffect(() => {
     void refresh();
@@ -117,25 +128,27 @@ export default function App() {
       .then(setBuildInfo)
       .catch((error) => addLog(`读取构建信息失败 — ${errorText(error)}`));
     // 浏览器 mock 环境:种子日志,让日志区/截图有内容可看
-    if (isMock) {
+    if (isMock && !seeded.current) {
+      seeded.current = true;
       addLog(
         "已应用双语补丁（原版英文 → 双语已应用），备份 ~/.cavalry-bilingual/backups/2.7.2-1757938382",
       );
       addLog(
         "已还原备份 ~/.cavalry-bilingual/backups/2.7.1-1756884120（恢复 4 项，移除 2 项）",
       );
-      addLog("配置已保存 — 模板 {zh}（{en}） · 语言 简体中文 · 字体差异化 关闭");
+      addLog("配置已保存 — 模板 {zh}（{en}） · 语言 简体中文 · 字体跟随系统");
       addLog("已应用双语补丁（社区中文运行时（daftai） → 双语已应用），备份 ~/.cavalry-bilingual/backups/2.7.2-1757938001");
     }
   }, [refresh, addLog]);
 
   const handleApply = useCallback(async (): Promise<string | null> => {
+    setOperationBusy(true);
     try {
       const result = await api.applyPatch();
       addLog(
         `已应用双语补丁（${stateLabel(result.stateBefore)} → ${stateLabel("ours")}），备份 ${result.backupDir}`,
       );
-      pushToast("success", "双语补丁已应用，备份已创建。");
+      pushToast("success", `补丁已应用，备份已创建${result.assetStringsUpdated ? `；更新 ${result.assetStringsUpdated} 个节点展示字符串` : ""}。`);
       await refresh();
       return null;
     } catch (error) {
@@ -144,10 +157,12 @@ export default function App() {
       pushToast("error", message);
       return message;
     }
+    finally { setOperationBusy(false); }
   }, [addLog, pushToast, refresh]);
 
   const handleRestore = useCallback(
     async (backupDir: string): Promise<string | null> => {
+      setOperationBusy(true);
       try {
         const result = await api.restoreBackup(backupDir);
         addLog(
@@ -161,7 +176,7 @@ export default function App() {
         addLog(`还原失败 — ${message}`);
         pushToast("error", message);
         return message;
-      }
+      } finally { setOperationBusy(false); }
     },
     [addLog, pushToast, refresh],
   );
@@ -170,15 +185,17 @@ export default function App() {
     async (
       template: string,
       lang: string,
-      fontsEnabled: boolean,
+      zhFont: string,
+      enFont: string,
     ): Promise<string | null> => {
       try {
-        const next = await api.saveConfig(template, lang, fontsEnabled);
+        const next = await api.saveConfig(template, lang, zhFont, enFont);
         setConfig(next);
         addLog(
-          `配置已保存 — 模板 ${next.template} · 语言 ${langLabel(next.lang)} · 字体差异化 ${next.fontsEnabled ? "开启" : "关闭"}`,
+          `配置已保存 — 模板 ${next.template} · 语言 ${langLabel(next.lang)} · 字体 ${next.zhFont || "系统默认"} / ${next.enFont || "系统默认"}`,
         );
-        pushToast("success", "排版配置已保存。");
+        pushToast("success", "设置已保存；请在状态页应用更新，再重新打开 Cavalry。");
+        await refresh();
         return null;
       } catch (error) {
         const message = errorText(error);
@@ -187,7 +204,7 @@ export default function App() {
         return message;
       }
     },
-    [addLog, pushToast],
+    [addLog, pushToast, refresh],
   );
 
   const detected = status?.detected ?? false;
@@ -219,6 +236,8 @@ export default function App() {
             type="button"
             className="tb-refresh"
             data-tip="重新检测状态"
+            aria-label="刷新状态"
+            disabled={refreshing || operationBusy}
             onClick={() => void refresh()}
           >
             <svg
@@ -248,6 +267,8 @@ export default function App() {
               className={`side-item ${view === item.view ? "active" : ""}`}
               aria-current={view === item.view ? "page" : undefined}
               data-tip={item.label}
+              aria-label={item.label}
+              disabled={operationBusy}
               onClick={() => setView(item.view)}
             >
               <span className={`side-icon ${item.icon}`} aria-hidden />
@@ -256,7 +277,7 @@ export default function App() {
           ))}
         </aside>
         <main className="content">
-          <div className="view" key={view}>
+          <div className="view">
             {view === "status" && (
               <StatusSection
                 status={status}
@@ -267,9 +288,9 @@ export default function App() {
                 onNavigate={setView}
               />
             )}
-            {view === "type" && (
+            <div className="type-view" hidden={view !== "type"}>
               <TypeSection config={config} onSave={handleSaveConfig} />
-            )}
+            </div>
             {view === "backup" && (
               <BackupSection backups={backups} onRestore={handleRestore} />
             )}
@@ -279,7 +300,7 @@ export default function App() {
       </div>
 
       <footer className="bottom-bar">
-        <span>v0.2.0</span>
+        <span>v{buildInfo?.appVersion ?? "0.1.0"}{isMock ? " · 界面演示" : " · 验证中"}</span>
         <span>仅供学习用途 · 与 Scene Group 无关</span>
       </footer>
 

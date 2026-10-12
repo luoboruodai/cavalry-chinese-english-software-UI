@@ -2,8 +2,9 @@
 
 export const STATE_LABELS: Record<string, string> = {
   ours: "双语已应用",
+  incomplete: "安装状态需要检查",
   daftai: "社区中文运行时（daftai）",
-  vendor: "原版英文",
+  vendor: "未安装运行时",
 };
 
 export const LANG_LABELS: Record<string, string> = {

@@ -21,17 +21,19 @@ export interface StatusInfo {
   detected: boolean;
   cavalryVersion?: string | null;
   executable?: string | null;
-  state?: "vendor" | "daftai" | "ours" | null;
+  state?: "vendor" | "daftai" | "ours" | "incomplete" | null;
   lang?: string | null;
   signing?: SigningInfo;
   latestBackup?: string | null;
+  pendingSettings?: boolean;
+  running?: boolean;
+  compatibility?: { canApply: boolean; level: string; message: string; qtVersion?: string };
 }
 
 export interface ConfigInfo {
   path: string;
   template: string;
   lang: string;
-  fontsEnabled: boolean;
   zhFont: string;
   enFont: string;
 }
@@ -42,6 +44,7 @@ export interface BackupInfo {
   time: string;
   version: string;
   kind: string;
+  recoverable?: boolean;
 }
 
 export interface BuildInfo {
@@ -52,7 +55,6 @@ export interface BuildInfo {
   configExists: boolean;
   template: string | null;
   lang: string | null;
-  fontsEnabled: boolean | null;
   appVersion: string;
   supportedLangs: string[];
 }
@@ -61,6 +63,7 @@ export interface ApplyResult {
   ok: boolean;
   app: string;
   stateBefore: string;
+  assetStringsUpdated?: number;
   backupDir: string;
 }
 
@@ -90,15 +93,15 @@ const MOCK_STATUS: StatusInfo = {
     signature: "adhoc",
   },
   latestBackup: "2026-09-15 21:33",
+  compatibility: { canApply: true, level: "candidate", message: "Cavalry 2.7.2 / Qt 6.6.3：匹配当前适配目标；完整覆盖仍需实机验收。" },
 };
 
 const MOCK_CONFIG: ConfigInfo = {
   path: "/Users/example/cavalry-bilingual/composer/bilingual.config.json",
   template: "{zh}（{en}）",
   lang: "zh-Hans",
-  fontsEnabled: false,
-  zhFont: "MiSans",
-  enFont: "Inter",
+  zhFont: "",
+  enFont: "",
 };
 
 const MOCK_BACKUPS: BackupInfo[] = [
@@ -134,8 +137,7 @@ const MOCK_BUILD_INFO: BuildInfo = {
   configExists: true,
   template: MOCK_CONFIG.template,
   lang: MOCK_CONFIG.lang,
-  fontsEnabled: false,
-  appVersion: "0.2.0",
+  appVersion: "0.1.0",
   supportedLangs: ["en", "zh-Hans", "zh-Hant", "ja_JP"],
 };
 
@@ -143,8 +145,12 @@ function mockInvoke<T>(
   cmd: string,
   args?: Record<string, unknown>,
 ): Promise<T> {
+  if (cmd === "save_config" && new URLSearchParams(location.search).get("mock") === "save-error") return Promise.reject("模拟写入失败：原设置未更改。");
   let result: unknown;
   switch (cmd) {
+    case "list_fonts":
+      result = ["Arial", "Inter", "MiSans", "PingFang SC", "Microsoft YaHei"];
+      break;
     case "get_status":
       result = MOCK_STATUS;
       break;
@@ -162,7 +168,8 @@ function mockInvoke<T>(
         ...MOCK_CONFIG,
         template: String(args?.template ?? MOCK_CONFIG.template),
         lang: String(args?.lang ?? MOCK_CONFIG.lang),
-        fontsEnabled: Boolean(args?.fontsEnabled ?? false),
+        zhFont: String(args?.zhFont ?? ""),
+        enFont: String(args?.enFont ?? ""),
       };
       break;
     case "apply_patch":
@@ -213,8 +220,9 @@ export const api = {
     call<RestoreResult>("restore_backup", { backupDir }),
   listBackups: () => call<BackupInfo[]>("list_backups"),
   getConfig: () => call<ConfigInfo>("get_config"),
-  saveConfig: (template: string, lang: string, fontsEnabled: boolean) =>
-    call<ConfigInfo>("save_config", { template, lang, fontsEnabled }),
+  saveConfig: (template: string, lang: string, zhFont: string, enFont: string) =>
+    call<ConfigInfo>("save_config", { template, lang, zhFont, enFont }),
+  listFonts: () => call<string[]>("list_fonts"),
   getBuildInfo: () => call<BuildInfo>("get_build_info"),
 };
 

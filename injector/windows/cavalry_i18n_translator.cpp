@@ -5,6 +5,10 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 #include "cavalry_i18n_translator.h"
+#ifdef CAVALRY_BILINGUAL_ENABLED
+#include "../cavalry_bilingual_runtime.h"
+#define CAVALRY_BILINGUAL_ENTRIES(array, count) cavalry_bilingual::entries(array, count)
+#endif
 
 #include "../cavalry_i18n_translation_policy.h"
 

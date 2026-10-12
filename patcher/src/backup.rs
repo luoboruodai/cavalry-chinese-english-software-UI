@@ -27,24 +27,25 @@ pub fn create_backup_dir(backup_root: &Path, version: &str, unix_ts: u64) -> Res
         .collect();
     // 同一秒内多次 apply 时目录会碰撞，追加递增计数后缀。
     let base_name = format!("{safe_version}-{unix_ts}");
-    let mut name = base_name.clone();
-    let mut counter = 2u32;
-    let mut dir = backup_root.join(&name);
-    while dir.exists() {
-        name = format!("{base_name}-{counter}");
-        dir = backup_root.join(&name);
-        counter += 1;
+    fs::create_dir_all(backup_root)?;
+    let mut counter = 1u64;
+    loop {
+        let name = if counter == 1 {
+            base_name.clone()
+        } else {
+            format!("{base_name}-{counter}")
+        };
+        let dir = backup_root.join(name);
+        match fs::create_dir(&dir) {
+            Ok(()) => return Ok(dir),
+            Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => counter += 1,
+            Err(e) => return Err(e.into()),
+        }
     }
-    fs::create_dir_all(&dir)?;
-    Ok(dir)
 }
 
 /// 备份 app_root 内 rel 指向的文件到 backup_dir；源文件不存在时返回 Ok(None)。
-pub fn backup_file(
-    backup_dir: &Path,
-    app_root: &Path,
-    rel: &Path,
-) -> Result<Option<BackupAction>> {
+pub fn backup_file(backup_dir: &Path, app_root: &Path, rel: &Path) -> Result<Option<BackupAction>> {
     let src = app_root.join(rel);
     if !src.is_file() {
         return Ok(None);
@@ -72,7 +73,7 @@ pub fn latest_backup_dir(backup_root: &Path) -> Result<Option<PathBuf>> {
     if !backup_root.is_dir() {
         return Ok(None);
     }
-    let mut best: Option<(u64, PathBuf)> = None;
+    let mut best: Option<(u64, u64, PathBuf)> = None;
     for entry in fs::read_dir(backup_root)? {
         let entry = entry?;
         if !entry.path().is_dir() {
@@ -81,16 +82,21 @@ pub fn latest_backup_dir(backup_root: &Path) -> Result<Option<PathBuf>> {
         let name = entry.file_name().to_string_lossy().into_owned();
         let timestamp = backup_dir_timestamp(&name);
         if let Some(timestamp) = timestamp {
+            let sequence = name
+                .split('-')
+                .nth(2)
+                .and_then(|v| v.parse::<u64>().ok())
+                .unwrap_or(1);
             let better = best
                 .as_ref()
-                .map(|(best_ts, _)| timestamp > *best_ts)
+                .map(|(best_ts, best_seq, _)| (timestamp, sequence) > (*best_ts, *best_seq))
                 .unwrap_or(true);
             if better {
-                best = Some((timestamp, entry.path()));
+                best = Some((timestamp, sequence, entry.path()));
             }
         }
     }
-    Ok(best.map(|(_, path)| path))
+    Ok(best.map(|(_, _, path)| path))
 }
 
 fn backup_dir_timestamp(name: &str) -> Option<u64> {

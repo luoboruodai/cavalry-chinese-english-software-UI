@@ -8,7 +8,8 @@ fn main() {
     println!("cargo:rerun-if-changed=src-tauri/capabilities");
     tauri_build::try_build(
         tauri_build::Attributes::new()
-            .capabilities_path_pattern("src-tauri/capabilities/**/*.json"),
+            .capabilities_path_pattern("src-tauri/capabilities/**/*.json")
+            .windows_attributes(tauri_build::WindowsAttributes::new().window_icon_path("src-tauri/icons/icon.ico")),
     )
     .expect("failed to run tauri-build");
 }

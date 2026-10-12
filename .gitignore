@@ -12,3 +12,14 @@ gui/gen/
 tools/*.ts
 tools/model_display_translations.json
 translations/working/
+
+# Local handoff, test evidence and generated UI output
+PROJECT.md
+private-testing/
+gui/feedback_auto/
+gui/ui/dist/
+
+gui/runtime/
+gui/src-tauri/runtime/
+
+build/

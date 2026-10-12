@@ -11,6 +11,8 @@ use crate::signing::SigningSummary;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppState {
+    /// Present but inconsistent/unsupported runtime; never label this as successfully applied.
+    Incomplete,
     /// 无 CavalryLauncher，原厂状态。
     Vendor,
     /// 有 CavalryLauncher 且存在 cavalry-i18n-lang.txt，但无本工具 marker。
@@ -22,6 +24,7 @@ pub enum AppState {
 impl AppState {
     pub fn as_str(&self) -> &'static str {
         match self {
+            AppState::Incomplete => "incomplete",
             AppState::Vendor => "vendor",
             AppState::Daftai => "daftai",
             AppState::Ours => "ours",

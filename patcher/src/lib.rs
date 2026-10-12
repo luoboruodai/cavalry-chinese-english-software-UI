@@ -16,3 +16,16 @@ pub mod util;
 
 pub use detect::AppState;
 pub use error::{Error, Result};
+
+pub mod compatibility;
+pub mod config;
+pub mod transaction;
+
+pub mod operation_lock;
+
+#[cfg(any(windows, test))]
+mod windows_deployment;
+#[cfg(windows)]
+pub mod windows;
+
+pub mod assets;

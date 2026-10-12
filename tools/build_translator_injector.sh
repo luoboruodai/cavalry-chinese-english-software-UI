@@ -93,6 +93,11 @@ extern "C" void cavalryI18nSkiaGetPathLinkStub(
     void *)
 {
 }
+extern "C" void cavalryBilingualCanvasLinkStub(void *, const void *, std::size_t, int, float, float, const void *, const void *)
+    __asm("__ZN8SkCanvas14drawSimpleTextEPKvm14SkTextEncodingffRK6SkFontRK7SkPaint");
+extern "C" void cavalryBilingualCanvasLinkStub(void *, const void *, std::size_t, int, float, float, const void *, const void *) {}
+
+
 EOF
   clang++ \
     -std=c++17 \
@@ -207,6 +212,9 @@ fi
 clang++ \
   -std=c++17 \
   -O2 \
+  -ffile-prefix-map="$REPO_ROOT"=/src/cavalry-bilingual \
+  -ffile-prefix-map="$QT_PREFIX"=/qt-sdk \
+  -ffile-prefix-map="$HOME"=/build-home \
   -fno-omit-frame-pointer \
   -fobjc-arc \
   -DQT_NO_VERSION_TAGGING \
@@ -252,5 +260,12 @@ case "$DYLIB_FLAGS" in
     exit 1
     ;;
 esac
+
+HOST_APP="$(cd "$LINK_FRAMEWORKS/../.." 2>/dev/null && pwd || true)"
+if [ -n "$HOST_APP" ] && [ -f "$HOST_APP/Contents/Info.plist" ] && [ -f "$LINK_FRAMEWORKS/QtWidgets.framework/Versions/A/QtWidgets" ]; then
+  python3 "$REPO_ROOT/tools/check_macos_host_symbols.py" --host "$HOST_APP" --injector "$OUTPUT"
+else
+  echo "WARN: host Qt symbol audit not run (no Cavalry.app at $LINK_FRAMEWORKS); compiled only, not host-accepted." >&2
+fi
 
 echo "Built translator injector -> $OUTPUT"

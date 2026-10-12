@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { BackupInfo } from "../api";
 import { SectionHeader } from "../SectionHeader";
 import { EmptyState } from "../EmptyState";
@@ -11,6 +11,11 @@ interface Props {
 export function BackupSection({ backups, onRestore }: Props) {
   const [confirmPath, setConfirmPath] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) setConfirmPath(null); };
+    document.addEventListener("keydown", escape);
+    return () => document.removeEventListener("keydown", escape);
+  }, [busy]);
 
   const run = async (path: string) => {
     setBusy(true);
@@ -23,7 +28,7 @@ export function BackupSection({ backups, onRestore }: Props) {
     <>
       <SectionHeader
         title="备份"
-        desc="应用补丁前自动备份，可任选一份还原。"
+        desc="还原前校验快照完整性，恢复当时的状态，而非一律变回英文。旧版无清单备份仅保留。"
       />
 
       {backups.length === 0 ? (
@@ -68,7 +73,7 @@ export function BackupSection({ backups, onRestore }: Props) {
                 <button
                   type="button"
                   className="inline-link"
-                  disabled={busy}
+                  disabled={busy || backup.recoverable === false}
                   onClick={() => setConfirmPath(backup.path)}
                 >
                   还原

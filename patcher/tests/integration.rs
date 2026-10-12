@@ -36,10 +36,8 @@ impl TempDir {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let path = std::env::temp_dir().join(format!(
-            "cbpatch-it-{name}-{}-{nanos}",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("cbpatch-it-{name}-{}-{nanos}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).unwrap();
         TempDir(path)
@@ -64,6 +62,29 @@ fn vendor_fixture(root: &Path) -> PathBuf {
     fs::create_dir_all(contents.join("Frameworks")).unwrap();
     fs::create_dir_all(contents.join("Resources")).unwrap();
     fs::write(contents.join("Info.plist"), VENDOR_PLIST).unwrap();
+    fs::create_dir_all(contents.join("assets/Definitions")).unwrap();
+    fs::write(contents.join("assets/Definitions/nodeStrings.json"), cbpatch::assets::sample_english()).unwrap();
+    let qt = contents.join("Frameworks/QtCore.framework");
+    fs::create_dir_all(qt.join("Resources")).unwrap();
+    fs::write(
+        qt.join("Resources/Info.plist"),
+        VENDOR_PLIST
+            .replace("Cavalry</string>", "QtCore</string>")
+            .replace("com.cbpatch.fixture", "com.cbpatch.fixture.qt")
+            .replace("2.7.2", "6.6.3")
+            .replace("APPL", "FMWK"),
+    )
+    .unwrap();
+    fs::write(
+        qt.join("QtCore"),
+        keychain::build_synthetic_main_executable(),
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(qt.join("QtCore"), fs::Permissions::from_mode(0o755)).unwrap();
+    }
 
     let executable = contents.join("MacOS/Cavalry");
     fs::write(&executable, keychain::build_synthetic_main_executable()).unwrap();
@@ -90,7 +111,21 @@ fn write_fake_dist_dylib(root: &Path) -> PathBuf {
     let dist = root.join("dist");
     fs::create_dir_all(&dist).unwrap();
     let dylib = dist.join(INJECTOR_DYLIB_NAME);
-    fs::write(&dylib, b"fake-injector-dylib").unwrap();
+    fs::write(&dylib, keychain::build_synthetic_keychain_dylib(None, true)).unwrap();
+    assert!(
+        cbpatch::util::run(
+            "codesign",
+            &[
+                "--force".into(),
+                "--sign".into(),
+                "-".into(),
+                "--timestamp=none".into(),
+                dylib.display().to_string()
+            ]
+        )
+        .unwrap()
+        .success
+    );
     dylib
 }
 
@@ -121,9 +156,7 @@ fn strip_signature_copy(bytes: &[u8]) -> Option<Vec<u8>> {
             .arg(&temp)
             .status()?;
         if !status.success() {
-            return Err(std::io::Error::other(
-                "codesign --remove-signature failed",
-            ));
+            return Err(std::io::Error::other("codesign --remove-signature failed"));
         }
         std::fs::read(&temp)
     })();
@@ -149,8 +182,7 @@ fn snapshot_tree(root: &Path) -> BTreeMap<String, Vec<u8>> {
         .unwrap()
         .into_iter()
         .filter(|rel| {
-            !rel
-                .components()
+            !rel.components()
                 .any(|component| component.as_os_str() == "_CodeSignature")
         })
         .map(|rel| {
@@ -205,7 +237,11 @@ fn status_recognizes_vendor_daftai_and_ours() {
     assert!(json.contains("\"lang\":null"));
 
     // daftai：有 CavalryLauncher + cavalry-i18n-lang.txt，无我们的 marker。
-    fs::write(app.join("Contents/MacOS").join(WRAPPER_EXECUTABLE_NAME), b"wrapper").unwrap();
+    fs::write(
+        app.join("Contents/MacOS").join(WRAPPER_EXECUTABLE_NAME),
+        b"wrapper",
+    )
+    .unwrap();
     fs::write(
         app.join("Contents/Resources").join(LANG_MARKER_NAME),
         b"zh-Hans\n",
@@ -217,11 +253,7 @@ fn status_recognizes_vendor_daftai_and_ours() {
     assert_eq!(report.lang.as_deref(), Some("zh-Hans"));
 
     // ours：存在 cavalry-bilingual.json。
-    fs::write(
-        app.join("Contents/Resources/cavalry-bilingual.json"),
-        b"{}",
-    )
-    .unwrap();
+    fs::write(app.join("Contents/Resources/cavalry-bilingual.json"), b"{}").unwrap();
     assert_eq!(detect::classify(&app), AppState::Ours);
     assert_eq!(ops::status(&app).unwrap().state.as_str(), "ours");
 }
@@ -243,8 +275,8 @@ fn backup_is_idempotent_for_identical_content() {
     assert_eq!(backed_up, fs::read(app.join(rel)).unwrap());
 
     // 源文件缺失时返回 None。
-    let missing = backup::backup_file(&backup_dir, &app, Path::new("Contents/Resources/nope"))
-        .unwrap();
+    let missing =
+        backup::backup_file(&backup_dir, &app, Path::new("Contents/Resources/nope")).unwrap();
     assert_eq!(missing, None);
 }
 
@@ -284,8 +316,10 @@ fn apply_then_restore_returns_tree_to_vendor_fixture() {
         "zh-Hans\n"
     );
     assert_eq!(
-        fs::read(app.join("Contents/Frameworks").join(INJECTOR_DYLIB_NAME)).unwrap(),
-        b"fake-injector-dylib"
+        cbpatch::util::sha256_hex(&normalized_content(
+            &app.join("Contents/Frameworks").join(INJECTOR_DYLIB_NAME)
+        )),
+        cbpatch::util::sha256_hex(&normalized_content(&dylib))
     );
     assert_eq!(
         plist::read_string(&app.join("Contents/Info.plist"), "CFBundleExecutable")
@@ -349,9 +383,8 @@ fn apply_then_restore_returns_tree_to_vendor_fixture() {
     // 语义级验证：restore 后 keychain 补丁已回退（20 个调用点重新可打补丁）。
     let restored_extension =
         fs::read(app.join("Contents/Frameworks/libExtensionLayer.dylib")).unwrap();
-    let (_, restore_report) =
-        keychain::patch_keychain_query_attributes_bytes(&restored_extension)
-            .expect("restore 后的 vendor 文件应可重新解析");
+    let (_, restore_report) = keychain::patch_keychain_query_attributes_bytes(&restored_extension)
+        .expect("restore 后的 vendor 文件应可重新解析");
     assert_eq!(restore_report.patched_callsites, 20);
     assert_eq!(restore_report.already_patched_callsites, 0);
 
@@ -372,24 +405,45 @@ fn reapply_on_ours_state_is_idempotent() {
     let backup_root = temp.path().join("backups");
 
     let first = ops::apply(&app, &dylib, "zh-Hans", &backup_root).unwrap();
-    let second = ops::apply(&app, &dylib, "zh-Hant", &backup_root).unwrap();
+    let config = cbpatch::config::Settings {
+        template: "{en} / {zh}".into(),
+        ..Default::default()
+    };
+    let second = ops::apply_with_settings(&app, &dylib, &config, &backup_root).unwrap();
     assert_eq!(second.state_before, AppState::Ours);
     assert_ne!(first.backup_dir, second.backup_dir);
 
-    // 语言 marker 已切换。
+    // Reapply uses saved runtime settings, while retaining a recoverable prior snapshot.
     assert_eq!(
         fs::read_to_string(app.join("Contents/Resources").join(LANG_MARKER_NAME)).unwrap(),
-        "zh-Hant\n"
+        "zh-Hans\n"
     );
+    assert!(
+        fs::read_to_string(app.join("Contents/Resources/cavalry-bilingual-settings.json"))
+            .unwrap()
+            .contains("{en} / {zh}")
+    );
+    ops::restore_from_dir(&app, &second.backup_dir, &backup_root).unwrap();
+    assert_eq!(detect::classify(&app), AppState::Ours);
+    assert!(app
+        .join("Contents/Frameworks")
+        .join(INJECTOR_DYLIB_NAME)
+        .is_file());
+    let saved = cbpatch::config::Settings::load(
+        &app.join("Contents/Resources/cavalry-bilingual-settings.json"),
+    )
+    .unwrap();
+    assert_eq!(saved.template, "{zh}（{en}）");
 }
 
 #[test]
-fn apply_on_daftai_state_preserves_wrapper_and_restore_fixes_executable() {
+fn apply_on_daftai_state_restores_its_exact_owned_files() {
     let temp = TempDir::new("daftai");
     let app = vendor_fixture(temp.path());
 
     // 构造 daftai 态：launcher（内容保持 daftai 版）+ 语言 marker，无我们的 manifest。
-    let daftai_wrapper = b"#!/bin/sh\n# daftai wrapper original\nexec \"$(dirname \"$0\")/Cavalry\" \"$@\"\n";
+    let daftai_wrapper =
+        b"#!/bin/sh\n# daftai wrapper original\nexec \"$(dirname \"$0\")/Cavalry\" \"$@\"\n";
     fs::write(
         app.join("Contents/MacOS").join(WRAPPER_EXECUTABLE_NAME),
         daftai_wrapper,
@@ -411,10 +465,10 @@ fn apply_on_daftai_state_preserves_wrapper_and_restore_fixes_executable() {
     assert_eq!(summary.state_before, AppState::Daftai);
     assert_eq!(detect::classify(&app), AppState::Ours);
 
-    // daftai 的 wrapper 与 Info.plist 不被改写。
+    // Owned launcher is updated to carry runtime configuration, then fully restored.
     assert_eq!(
         fs::read(app.join("Contents/MacOS").join(WRAPPER_EXECUTABLE_NAME)).unwrap(),
-        daftai_wrapper
+        runtime::build_launch_wrapper().as_bytes()
     );
     assert_eq!(
         plist::read_string(&app.join("Contents/Info.plist"), "CFBundleExecutable")
@@ -427,20 +481,23 @@ fn apply_on_daftai_state_preserves_wrapper_and_restore_fixes_executable() {
         "zh-Hans\n"
     );
 
-    // restore：备份里没有 Info.plist（daftai 态未备份），走 executable 修正分支。
     let restore = ops::restore(&app, &backup_root).unwrap();
     assert!(restore.ok);
-    assert_eq!(detect::classify(&app), AppState::Vendor);
+    assert_eq!(detect::classify(&app), AppState::Daftai);
     assert_eq!(
         plist::read_string(&app.join("Contents/Info.plist"), "CFBundleExecutable")
             .unwrap()
             .as_deref(),
-        Some("Cavalry")
+        Some(WRAPPER_EXECUTABLE_NAME)
     );
-    assert!(!app
-        .join("Contents/MacOS")
-        .join(WRAPPER_EXECUTABLE_NAME)
-        .exists());
+    assert_eq!(
+        fs::read(app.join("Contents/MacOS").join(WRAPPER_EXECUTABLE_NAME)).unwrap(),
+        daftai_wrapper
+    );
+    assert_eq!(
+        fs::read_to_string(app.join("Contents/Resources").join(LANG_MARKER_NAME)).unwrap(),
+        "zh-Hant\n"
+    );
 }
 
 #[cfg(target_os = "macos")]
@@ -505,4 +562,140 @@ fn launch_wrapper_routes_dyld_and_lang() {
     fs::remove_file(resources.join(LANG_MARKER_NAME)).unwrap();
     let out = run(inherited, "external-value");
     assert_eq!(out, format!("{inherited}\n\n"));
+}
+
+#[test]
+fn corrupted_snapshot_is_rejected_before_any_write() {
+    let temp = TempDir::new("corruption");
+    let app = vendor_fixture(temp.path());
+    let root = temp.path().join("backups");
+    let dir = cbpatch::transaction::capture(&app, &root).unwrap();
+    fs::write(dir.join("Contents/Info.plist"), "tampered").unwrap();
+    let before = snapshot_tree(&app);
+    assert!(ops::restore_from_dir(&app, &dir, &root).is_err());
+    assert_eq!(before, snapshot_tree(&app));
+}
+#[test]
+fn unsupported_version_never_creates_backup_or_writes_app() {
+    let temp = TempDir::new("version");
+    let app = vendor_fixture(temp.path());
+    let info = app.join("Contents/Info.plist");
+    fs::write(
+        &info,
+        fs::read_to_string(&info).unwrap().replace("2.7.2", "3.0.0"),
+    )
+    .unwrap();
+    let before = snapshot_tree(&app);
+    let root = temp.path().join("backups");
+    let dylib = write_fake_dist_dylib(temp.path());
+    assert!(ops::apply(&app, &dylib, "zh-Hans", &root).is_err());
+    assert!(!root.exists());
+    assert_eq!(before, snapshot_tree(&app));
+}
+#[test]
+fn damaged_settings_and_newer_schema_are_not_overwritten() {
+    let temp = TempDir::new("config");
+    let path = temp.path().join("settings.json");
+    let config = cbpatch::config::Settings::default();
+    for contents in ["broken", "{\"schemaVersion\":99}"] {
+        fs::write(&path, contents).unwrap();
+        assert!(config.save(&path).is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), contents);
+    }
+}
+#[test]
+fn same_second_backup_uses_numeric_sequence_not_directory_order() {
+    let temp = TempDir::new("backup-order");
+    let root = temp.path().join("backups");
+    for name in [
+        "2.7.2-1790000000",
+        "2.7.2-1790000000-10",
+        "2.7.2-1790000000-2",
+    ] {
+        fs::create_dir_all(root.join(name)).unwrap();
+    }
+    assert_eq!(
+        backup::latest_backup_dir(&root)
+            .unwrap()
+            .unwrap()
+            .file_name()
+            .unwrap(),
+        "2.7.2-1790000000-10"
+    );
+}
+#[cfg(unix)]
+#[test]
+fn snapshot_symlink_target_is_rejected() {
+    let temp = TempDir::new("symlink");
+    let app = vendor_fixture(temp.path());
+    let external = temp.path().join("outside");
+    fs::write(&external, b"untouched").unwrap();
+    std::os::unix::fs::symlink(
+        &external,
+        app.join("Contents/Resources/cavalry-bilingual-settings.json"),
+    )
+    .unwrap();
+    assert!(cbpatch::transaction::capture(&app, &temp.path().join("backups")).is_err());
+    assert_eq!(fs::read(&external).unwrap(), b"untouched");
+}
+
+#[test]
+fn failed_apply_reports_and_restores_preoperation_state() {
+    let temp = TempDir::new("rollback");
+    let app = vendor_fixture(temp.path());
+    fs::write(
+        app.join("Contents/Frameworks/libExtensionLayer.dylib"),
+        keychain::build_synthetic_keychain_dylib_missing_sync_get_value(),
+    )
+    .unwrap();
+    cbpatch::signing::resign_adhoc_deep(&app).unwrap();
+    let before = snapshot_tree(&app);
+    let dylib = write_fake_dist_dylib(temp.path());
+    let root = temp.path().join("backups");
+    let error = ops::apply(&app, &dylib, "zh-Hans", &root)
+        .unwrap_err()
+        .to_string();
+    assert!(error.contains("回滚已完成"), "{error}");
+    assert_eq!(before, snapshot_tree(&app));
+    assert!(backup::latest_backup_dir(&root).unwrap().is_some());
+}
+#[test]
+fn cross_process_lock_is_per_target_and_released() {
+    let temp = TempDir::new("lock");
+    let app = vendor_fixture(temp.path());
+    let guard = cbpatch::operation_lock::OperationLock::acquire(&app).unwrap();
+    assert!(cbpatch::operation_lock::OperationLock::acquire(&app).is_err());
+    drop(guard);
+    assert!(cbpatch::operation_lock::OperationLock::acquire(&app).is_ok());
+}
+#[test]
+fn cross_version_restore_and_external_backup_are_rejected() {
+    let temp = TempDir::new("restore-boundary");
+    let app = vendor_fixture(temp.path());
+    let root = temp.path().join("backups");
+    let dir = cbpatch::transaction::capture(&app, &root).unwrap();
+    let other = temp.path().join("other");
+    fs::create_dir_all(&other).unwrap();
+    assert!(ops::restore_from_dir(&app, &dir, &other).is_err());
+    let info = app.join("Contents/Info.plist");
+    fs::write(
+        &info,
+        fs::read_to_string(&info).unwrap().replace("2.7.2", "2.8.0"),
+    )
+    .unwrap();
+    let before = snapshot_tree(&app);
+    assert!(ops::restore_from_dir(&app, &dir, &root).is_err());
+    assert_eq!(before, snapshot_tree(&app));
+}
+#[test]
+fn malformed_injector_is_rejected_before_snapshot() {
+    let temp = TempDir::new("invalid-injector");
+    let app = vendor_fixture(temp.path());
+    let dylib = temp.path().join("invalid.dylib");
+    fs::write(&dylib, b"not a dynamic library").unwrap();
+    let root = temp.path().join("backups");
+    let before = snapshot_tree(&app);
+    assert!(ops::apply(&app, &dylib, "zh-Hans", &root).is_err());
+    assert!(!root.exists());
+    assert_eq!(before, snapshot_tree(&app));
 }

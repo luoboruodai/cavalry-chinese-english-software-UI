@@ -1,9 +1,11 @@
 /**
  * [INPUT]: 依赖 Qt 6.6.3 runtime ABI、AppKit、generated_translations.inc、共享 exact-context/选择输入值/Fast 与 Classic 搜索策略、Classic 评分 ABI 适配器及独立说明索引、macOS TransformTool text-path ABI 防火墙与显式 capture/session 环境
- * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询； 对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
- * [POS]: macOS injector 核心；普通文本只在已证 Qt owner 内补译，parentless Assets 菜单只承接一个事件循环的 owner，Transform 自绘交给独立 ABI 适配器，可编辑/字体 Combo 的值及弹出列表、Time Editor 模型 identity、快捷键 prefix 与无关同文保持原值
+ * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 从受合同保护的完整标签副本恢复双语显示并保留原始可编辑控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
+ * [POS]: macOS injector 核心；普通文本只在已证 Qt owner 内补译，AttrControlRow 只读取精确 2.7.2 双架构合同的标签副本，不修改数值控件或用户内容；parentless Assets 菜单只承接一个事件循环的 owner，Transform 自绘交给独立 ABI 适配器，可编辑/字体 Combo 的值及弹出列表、Time Editor 模型 identity、快捷键 prefix 与无关同文保持原值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
+#include "cavalry_bilingual_runtime.h"
+#define CAVALRY_BILINGUAL_ENTRIES(array, count) cavalry_bilingual::entries(array, count)
 #include "cavalry_i18n_input_policy.h"
 #include "cavalry_i18n_search_policy.h"
 #include "cavalry_i18n_classic_search.h"
@@ -34,6 +36,7 @@
 #include <QtGui/qcursor.h>
 #include <QtGui/qfont.h>
 #include <QtGui/qfontmetrics.h>
+#include <QtGui/QHelpEvent>
 #include <QtGui/qpainter.h>
 #include <QtGui/QTextCursor>
 #include <QtGui/QTextDocument>
@@ -46,6 +49,7 @@
 #include <QtWidgets/qgroupbox.h>
 #include <QtWidgets/qlabel.h>
 #include <QtWidgets/qlineedit.h>
+#include <QtWidgets/qlayout.h>
 #include <QtWidgets/qdialogbuttonbox.h>
 #include <QtWidgets/qdockwidget.h>
 #include <QtWidgets/qheaderview.h>
@@ -56,7 +60,9 @@
 #include <QtWidgets/qpushbutton.h>
 #include <QtWidgets/qspinbox.h>
 #include <QtWidgets/qstatusbar.h>
+#include <QtWidgets/qsizepolicy.h>
 #include <QtWidgets/qtabbar.h>
+#include <QtWidgets/qtooltip.h>
 #include <QtWidgets/qtablewidget.h>
 #include <QtWidgets/qtabwidget.h>
 #include <QtWidgets/qtextedit.h>
@@ -111,15 +117,15 @@ const TranslationEntry *entriesForLanguageName(const char *lang, int *count)
     }
     if (strcmp(lang, "zh-Hans") == 0) {
         *count = static_cast<int>(sizeof(kZhHansEntries) / sizeof(kZhHansEntries[0]));
-        return kZhHansEntries;
+        return CAVALRY_BILINGUAL_ENTRIES(kZhHansEntries, *count);
     }
     if (strcmp(lang, "zh-Hant") == 0) {
         *count = static_cast<int>(sizeof(kZhHantEntries) / sizeof(kZhHantEntries[0]));
-        return kZhHantEntries;
+        return CAVALRY_BILINGUAL_ENTRIES(kZhHantEntries, *count);
     }
     if (strcmp(lang, "ja_JP") == 0) {
         *count = static_cast<int>(sizeof(kJaEntries) / sizeof(kJaEntries[0]));
-        return kJaEntries;
+        return CAVALRY_BILINGUAL_ENTRIES(kJaEntries, *count);
     }
 
     *count = 0;
@@ -198,10 +204,21 @@ void configureMacToolHelpTextPathFromEnvironment()
          embeddedTranslationForContext(language, kContext, "Enable Snapping"),
          1ull << 4},
     };
+    const auto fontFamily = cavalry_bilingual::settings().zhFont.toUtf8();
+    const auto englishFamily = cavalry_bilingual::settings().enFont.toUtf8();
     cavalry_i18n::configureMacToolHelpTextPath(
-        language,
-        translations,
-        sizeof(translations) / sizeof(translations[0]));
+        language, translations, sizeof(translations) / sizeof(translations[0]), fontFamily.constData(), englishFamily.constData());
+    constexpr const char *kViewportSources[] = {
+        "Active Camera: Layer Tools Disabled.",
+        "Viewport Quality: High", "Viewport Quality: Balanced",
+        "Viewport Quality: Low", "Viewport Quality: Lowest",
+        "Insert Keyframe", "Direct Layer Selection", "Play/ Stop", "Pan", "Enable Snapping",
+    };
+    cavalry_i18n::MacViewportHintTranslation hints[sizeof(kViewportSources) / sizeof(kViewportSources[0])]{};
+    for (std::size_t index = 0; index < sizeof(kViewportSources) / sizeof(kViewportSources[0]); ++index) {
+        hints[index] = {kViewportSources[index], embeddedTranslationForContext(language, "MenuBarManager", kViewportSources[index])};
+    }
+    cavalry_i18n::configureMacViewportHints(hints, sizeof(hints) / sizeof(hints[0]));
 }
 
 QString normalizeMenuText(const QString &text);
@@ -2856,14 +2873,18 @@ void replacementQPainterDrawPointText(
 
     const QString translated = translatedCenteredExtensionLayerHint(text);
     if (translated.isEmpty()) {
+        const auto originalFont = painter->font();
+        const bool uiDevice = painter->device() && painter->device()->devType() == QInternal::Widget;
+        if (uiDevice) painter->setFont(cavalry_bilingual::displayFont(originalFont));
         drawPointTextWithoutInterpose(painter, point, text);
+        if (uiDevice) painter->setFont(originalFont);
         return;
     }
 
     const QFont sourceFont = painter->font();
     const int sourceWidth = QFontMetrics(sourceFont).boundingRect(text).width();
 
-    QFont displayFont = sourceFont;
+    QFont displayFont = cavalry_bilingual::displayFont(sourceFont);
     // ExtensionLayer 可设置 NoFontMerging；清成默认策略后，Qt 才能为 CJK 选择系统 fallback。
     displayFont.setStyleStrategy(QFont::PreferDefault);
     painter->setFont(displayFont);
@@ -3263,6 +3284,7 @@ void translateQtWidgetTexts(QWidget *widget, const QString &lang, QSet<QAction *
     }
 
     translateQtWidgetActions(widget, lang, seenActions);
+    cavalry_bilingual::polishWidget(widget);
 }
 
 void translateQtWidgets(const QString &lang)
@@ -3425,6 +3447,54 @@ void enqueueRuntimeObject(QObject *object, const QString &lang)
     scheduleDirtyObjectDrain(lang);
 }
 
+// Cavalry 2.7.2 stores the unabridged text in AttrControlRowLayout at +0xb0.
+// The same class elides into a fixed-height (22 px) QLabel when the value widgets need space.
+// Do not overwrite the application's row geometry or the editable value controls.
+std::atomic<std::uint64_t> gAttributeLabelProbes{0};
+std::atomic<std::uint64_t> gAttributeLabelOwners{0};
+std::atomic<std::uint64_t> gAttributeLabelComplete{0};
+constexpr const char *kFullAttributeLabelProperty = "cavalryBilingual.fullAttributeLabel";
+QString completeAttributeLabel(QLabel *label)
+{
+    if (label == nullptr || !cavalry_i18n::macVendorContractVerified()) return {};
+    gAttributeLabelProbes.fetch_add(1, std::memory_order_relaxed);
+
+    // Cache the copied QString on the label after the guarded ABI read.  The previous
+    // implementation only returned the private value while it differed from label->text(),
+    // which meant the first paint could leave Cavalry's already-elided string in place.
+    // Re-read the guarded value so a recycled row cannot retain the previous attribute name;
+    // the copied property is only a safe fallback when the owner is being torn down.
+    const QVariant cached = label->property(kFullAttributeLabelProperty);
+    QWidget *owner = label->parentWidget();
+    while (owner != nullptr && owner != label->window() && !owner->inherits("AttrControlRowLayout")) {
+        owner = owner->parentWidget();
+    }
+    if (owner == nullptr || !owner->inherits("AttrControlRowLayout")) {
+        if (cached.isValid()) label->setProperty(kFullAttributeLabelProperty, QVariant());
+        return {};
+    }
+    gAttributeLabelOwners.fetch_add(1, std::memory_order_relaxed);
+    // Private layout access is gated by the exact dual-arch ExtensionLayer UUID contract.
+    const auto *stored = reinterpret_cast<const QString *>(reinterpret_cast<const char *>(owner) + 0xb0);
+    if (stored->size() < 4 || stored->size() > 512) return {};
+    static const QRegularExpression kCjk(QStringLiteral("[\u3400-\u9fff]"));
+    static const QRegularExpression kLatin(QStringLiteral("[A-Za-z]"));
+    if (!stored->contains(kCjk) || !stored->contains(kLatin)) return {};
+    const QString value = *stored;
+    if (!cached.isValid() || cached.toString() != value) {
+        label->setProperty(kFullAttributeLabelProperty, value);
+        gAttributeLabelComplete.fetch_add(1, std::memory_order_relaxed);
+    }
+    return value;
+}
+extern "C" bool cavalry_bilingual_attribute_label_diagnostics_v1(std::uint64_t *out, std::size_t size) noexcept {
+    if (!out || size != 3) return false;
+    out[0] = gAttributeLabelProbes.load();
+    out[1] = gAttributeLabelOwners.load();
+    out[2] = gAttributeLabelComplete.load();
+    return true;
+}
+
 class RuntimeUiEventFilter final : public QObject {
 public:
     explicit RuntimeUiEventFilter(const QString &lang)
@@ -3439,6 +3509,46 @@ protected:
             return QObject::eventFilter(watched, event);
         }
 
+        if (event->type() == QEvent::Show || event->type() == QEvent::Polish) {
+            cavalry_bilingual::polishWidget(qobject_cast<QWidget *>(watched));
+        }
+        if (event->type() == QEvent::Paint) {
+            if (auto *label = qobject_cast<QLabel *>(watched)) {
+                const auto full = completeAttributeLabel(label);
+                if (!full.isEmpty()) {
+                    // Cavalry may pass an already-elided display string to QLabel.  Restore
+                    // the verified copied value before Qt paints it, then let the ordinary
+                    // layout negotiate any available width. This removes the stale
+                    // “Position…”/“Rotation…” value without touching numeric editors.
+                    if (label->text() != full) label->setText(full);
+                    if (label->toolTip() != full) label->setToolTip(full);
+                    const int needed = qMin(240, label->fontMetrics().horizontalAdvance(full) + 8);
+                    if (needed > label->minimumWidth()) label->setMinimumWidth(needed);
+                    label->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
+                    if (QWidget *owner = label->parentWidget()) {
+                        owner->updateGeometry();
+                        if (QLayout *layout = owner->layout()) {
+                            layout->invalidate();
+                            layout->activate();
+                        }
+                    }
+                    label->updateGeometry();
+                }
+            }
+        }
+        if (event->type() == QEvent::ToolTip) {
+            if (auto *label = qobject_cast<QLabel *>(watched)) {
+                const auto full = completeAttributeLabel(label);
+                if (!full.isEmpty()) {
+                    const QPoint position = static_cast<QHelpEvent *>(event)->globalPos();
+                    // Use plain text: the label can contain user-facing punctuation and
+                    // should not be interpreted as rich HTML by QToolTip.
+                    QToolTip::showText(position, full, label, label->rect(), 5000);
+                    event->accept();
+                    return true;
+                }
+            }
+        }
         switch (event->type()) {
         case QEvent::Paint:
             if (!gRuntimeUiFullTranslationEnabled) {
@@ -3578,6 +3688,10 @@ bool installTranslator()
         return true;
     }
 
+    if (auto gui = qobject_cast<QApplication *>(app)) {
+        gui->setFont(cavalry_bilingual::displayFont(gui->font()));
+        for (auto widget : gui->allWidgets()) cavalry_bilingual::polishWidget(widget);
+    }
     configureMacToolHelpTextPathFromEnvironment();
 
     if (gTranslator == nullptr) {
@@ -3700,5 +3814,10 @@ void bootstrapInjector()
 
 __attribute__((constructor)) static void cavalryTranslatorInjectorLoad()
 {
+    // Configure exact vendor-owned UI text-path projection before the host's
+    // GraphicsViewportBase::setupToolHelp caches English Skia paths. When a
+    // library/renderer is not ready yet, the configuration remains retryable
+    // from installTranslator() after QApplication is constructed.
+    configureMacToolHelpTextPathFromEnvironment();
     bootstrapInjector();
 }

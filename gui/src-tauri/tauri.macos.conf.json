@@ -1,0 +1,7 @@
+{
+  "bundle": {
+    "resources": {
+      "runtime/libCavalryTranslatorInjector.dylib": "runtime/libCavalryTranslatorInjector.dylib"
+    }
+  }
+}

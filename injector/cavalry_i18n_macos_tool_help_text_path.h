@@ -22,7 +22,18 @@ struct MacToolHelpTextPathTranslation {
 void configureMacToolHelpTextPath(
     const char *language,
     const MacToolHelpTextPathTranslation *translations,
-    std::size_t translationCount) noexcept;
+    std::size_t translationCount,
+    const char *fontFamily = nullptr,
+    const char *englishFontFamily = nullptr) noexcept;
+
+// Only fixed vendor-owned viewport hint strings; no user text, layer names or document glyphs.
+struct MacViewportHintTranslation {
+    const char *source;
+    const char *translation;
+};
+void configureMacViewportHints(
+    const MacViewportHintTranslation *entries,
+    std::size_t count) noexcept;
 
 struct MacToolHelpTextPathDiagnostics {
     bool configured;
@@ -40,6 +51,7 @@ struct MacToolHelpTextPathDiagnostics {
 };
 
 MacToolHelpTextPathDiagnostics macToolHelpTextPathDiagnostics() noexcept;
+bool macVendorContractVerified() noexcept;
 
 } // namespace cavalry_i18n
 

@@ -47,14 +47,21 @@ pub fn atomic_write_with_mode(path: &Path, bytes: &[u8], mode: Option<u32>) -> R
         .to_string_lossy()
         .into_owned();
     let unique = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let tmp = parent.join(format!(
-        ".{name}.cbpatch-{}-{unique}",
-        std::process::id()
-    ));
+    let tmp = parent.join(format!(".{name}.cbpatch-{}-{unique}", std::process::id()));
     let result = (|| -> Result<()> {
-        fs::write(&tmp, bytes)?;
+        use std::io::Write;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&tmp)?;
+        file.write_all(bytes)?;
+        file.sync_all()?;
+        drop(file);
         let effective_mode = mode.or_else(|| permissions_mode(path));
         set_mode(&tmp, effective_mode.unwrap_or(0o644))?;
+        #[cfg(windows)]
+        crate::windows::replace_file(&tmp, path)?;
+        #[cfg(not(windows))]
         fs::rename(&tmp, path)?;
         Ok(())
     })();
@@ -67,7 +74,9 @@ pub fn atomic_write_with_mode(path: &Path, bytes: &[u8], mode: Option<u32>) -> R
 #[cfg(unix)]
 fn permissions_mode(path: &Path) -> Option<u32> {
     use std::os::unix::fs::PermissionsExt;
-    fs::metadata(path).ok().map(|meta| meta.permissions().mode())
+    fs::metadata(path)
+        .ok()
+        .map(|meta| meta.permissions().mode())
 }
 
 #[cfg(not(unix))]
@@ -107,7 +116,10 @@ pub fn now_unix_secs() -> u64 {
 
 /// RFC3339 UTC 时间戳（std 无日历格式化，调用系统 `date`）。
 pub fn rfc3339_now() -> Result<String> {
-    let output = run("date", &["-u".to_string(), "+%Y-%m-%dT%H:%M:%SZ".to_string()])?;
+    let output = run(
+        "date",
+        &["-u".to_string(), "+%Y-%m-%dT%H:%M:%SZ".to_string()],
+    )?;
     if output.success {
         Ok(output.stdout.trim().to_string())
     } else {

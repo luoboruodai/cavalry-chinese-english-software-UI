@@ -1311,7 +1311,7 @@
     <message><source>General Feedback</source><translation>一般反馈</translation></message>
     <message><source>Generate</source><translation>生成</translation></message>
     <message><source>Gipng</source><translation>爷爷</translation></message>
-    <message><source>Glyphs</source><translation>胶片</translation></message>
+    <message><source>Glyphs</source><translation>字形</translation></message>
     <message><source>Go back to the start frame to move input shapes</source><translation>返回起始框移动输入形状</translation></message>
     <message><source>Go back to the start frame to move input shapes.</source><translation>返回起始框移动输入形状.</translation></message>
     <message><source>Go Pro and enable</source><translation>升级到专业版并启用</translation></message>
@@ -2012,7 +2012,7 @@
     <message><source>Reload the current Shape.</source><translation>重新加载当前形状。</translation></message>
     <message><source>Remember Graph Editor Curve Framing</source><translation>记住图编辑器曲线线条</translation></message>
     <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with</source><translation>请记得为要使用此功能的每个形状将运动模糊设为完整</translation></message>
-    <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with.</source><translation>请记得为要使用此功能的每个形状将运动模糊设为完整。</translation></message>
+    <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with.</source><translation>请记得将每个要使用此功能的形状的运动模糊设为“完全”。</translation></message>
     <message><source>Reminders</source><translation>提醒</translation></message>
     <message><source>Remove all Attributes from the Control Centre</source><translation>从控制中心移除所有属性</translation></message>
     <message><source>Remove all Attributes from the Control Centre.</source><translation>从控制中心移除所有属性。</translation></message>
@@ -2599,7 +2599,7 @@
     <message><source>Toggle the mini-map overview in the bottom-right corner</source><translation>切换右下角的小地图概览</translation></message>
     <message><source>Toggle the mini-map overview in the bottom-right corner.</source><translation>切换右下角的小地图概览.</translation></message>
     <message><source>Toggle this mode with the &apos;U&apos; key</source><translation>使用字母键切换此模式</translation></message>
-    <message><source>Toggle this mode with the &apos;U&apos; key.</source><translation>使用字母键切换此模式。</translation></message>
+    <message><source>Toggle this mode with the &apos;U&apos; key.</source><translation>使用 U 键切换此模式。</translation></message>
     <message><source>Toggle Transform Tool</source><translation>切换变换工具</translation></message>
     <message><source>Toggle Viewport Grid</source><translation>切换视口网格</translation></message>
     <message><source>Toggle Viewport Grid.</source><translation>切换视口网格。</translation></message>

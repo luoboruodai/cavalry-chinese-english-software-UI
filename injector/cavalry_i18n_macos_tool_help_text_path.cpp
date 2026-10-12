@@ -5,6 +5,7 @@
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 #include "cavalry_i18n_macos_tool_help_text_path.h"
+#include "cavalry_bilingual_text_runs.h"
 
 #include <mach-o/dyld.h>
 #include <mach-o/loader.h>
@@ -65,7 +66,7 @@ using PathIsEmptyFunction = bool (*)(const void *);
 constexpr std::uint64_t kAllSourceBits = 0x1f;
 constexpr std::size_t kActionCount =
     cavalry_i18n::kMacToolHelpActionCount;
-constexpr std::size_t kTranslationCapacity = 128;
+constexpr std::size_t kTranslationCapacity = 512;
 constexpr std::uint32_t kNormalSkFontStyle = 0x00050190u;
 
 struct ApprovedAction {
@@ -471,7 +472,7 @@ bool fontCoversTranslations(
     return true;
 }
 
-bool buildDisplayFont(const char *language) noexcept
+bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
 {
     const char *family = nullptr;
     if (std::strcmp(language, "zh-Hans") == 0) {
@@ -511,6 +512,7 @@ bool buildDisplayFont(const char *language) noexcept
         return false;
     }
 
+    if (fontFamily != nullptr && fontFamily[0] != '\0') family = fontFamily;
     SkSpTypefaceAbi typeface = makeTypeface(family, kNormalSkFontStyle);
     if (typeface.pointer == nullptr ||
         !fontCoversTranslations(typeface.pointer, unicharToGlyph)) {
@@ -565,12 +567,17 @@ void recordFallback(const ConfiguredAction &action) noexcept
 
 } // namespace
 
+#include "cavalry_bilingual_macos_canvas.inc"
+#include "cavalry_bilingual_macos_viewport.inc"
+
 namespace cavalry_i18n {
 
 void configureMacToolHelpTextPath(
     const char *language,
     const MacToolHelpTextPathTranslation *translations,
-    std::size_t translationCount) noexcept
+    std::size_t translationCount,
+    const char *fontFamily,
+    const char *englishFontFamily) noexcept
 {
     if (language == nullptr || translations == nullptr ||
         translationCount != kActionCount ||
@@ -605,18 +612,22 @@ void configureMacToolHelpTextPath(
         return;
     }
 
-    gState.configured.store(true, std::memory_order_release);
     const bool verified = verifyVendorContract();
     gState.vendorContractVerified.store(verified, std::memory_order_release);
     if (!verified) {
         return;
     }
 
-    const bool rendererReady = buildDisplayFont(language);
+    configureCanvasText(fontFamily, englishFontFamily);
+    const bool rendererReady = buildDisplayFont(language, fontFamily);
     gState.rendererReady.store(rendererReady, std::memory_order_release);
-    if (!rendererReady) {
-        gState.rendererFailure.fetch_add(1, std::memory_order_relaxed);
-    }
+    if (rendererReady) gState.configured.store(true, std::memory_order_release);
+    else gState.rendererFailure.fetch_add(1, std::memory_order_relaxed);
+}
+
+bool macVendorContractVerified() noexcept
+{
+    return gState.vendorContractVerified.load(std::memory_order_acquire);
 }
 
 MacToolHelpTextPathDiagnostics macToolHelpTextPathDiagnostics() noexcept
@@ -682,29 +693,30 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
     }
 
     const ConfiguredAction *action = configuredActionFor(text, size);
-    if (action == nullptr) {
+    const ViewportHint *viewport = viewportPathHintFor(text, size);
+    if (action == nullptr && viewport == nullptr) {
         original(text, size, encoding, x, y, font, path);
         return;
     }
-    gState.whitelistCalls.fetch_add(1, std::memory_order_relaxed);
-
+    if (action) gState.whitelistCalls.fetch_add(1, std::memory_order_relaxed);
+    if (viewport) gViewportPath.recognized.fetch_add(1, std::memory_order_relaxed);
+    const auto fallback = [&] {
+        if (action) recordFallback(*action);
+        else gViewportPath.fallback.fetch_add(1, std::memory_order_relaxed);
+        original(text, size, encoding, x, y, font, path);
+    };
     if (!gState.vendorContractVerified.load(std::memory_order_acquire) ||
         !gState.rendererReady.load(std::memory_order_acquire) ||
         encoding != 0 || font == nullptr || path == nullptr) {
-        recordFallback(*action);
-        original(text, size, encoding, x, y, font, path);
-        return;
+        fallback(); return;
     }
-
     void *return0 = __builtin_extract_return_addr(__builtin_return_address(0));
     void *return1 = __builtin_extract_return_addr(__builtin_return_address(1));
     void *return2 = __builtin_extract_return_addr(__builtin_return_address(2));
-    if (!callerChainMatches(return0, return1, return2)) {
-        recordFallback(*action);
-        original(text, size, encoding, x, y, font, path);
-        return;
-    }
-    gState.canonicalCalls.fetch_add(1, std::memory_order_relaxed);
+    const bool approvedAction = action && callerChainMatches(return0, return1, return2);
+    const bool approvedViewport = viewport && callerChainMatchesViewport(return0, return1, return2);
+    if (!approvedAction && !approvedViewport) { fallback(); return; }
+    if (approvedAction) gState.canonicalCalls.fetch_add(1, std::memory_order_relaxed);
 
     float fontSize = 0.0f;
     std::memcpy(
@@ -714,9 +726,7 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
     if (!std::isfinite(fontSize) || fontSize <= 0.0f || fontSize > 4096.0f ||
         !gState.pathIsEmpty(path)) {
         gState.rendererFailure.fetch_add(1, std::memory_order_relaxed);
-        recordFallback(*action);
-        original(text, size, encoding, x, y, font, path);
-        return;
+        fallback(); return;
     }
 
     SkFontAbi displayFont;
@@ -728,8 +738,8 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
 
     recursionActive = true;
     original(
-        action->translation,
-        action->translationSize,
+        approvedAction ? action->translation : viewport->translation,
+        approvedAction ? action->translationSize : viewport->translationSize,
         encoding,
         x,
         y,
@@ -738,21 +748,18 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
     recursionActive = false;
 
     if (!gState.pathIsEmpty(path)) {
-        const std::size_t actionIndex =
-            static_cast<std::size_t>(action - gState.actions);
-        gState.cjkPathSuccess.fetch_add(1, std::memory_order_relaxed);
-        gState.translatedSourceMask.fetch_or(
-            action->sourceBit,
-            std::memory_order_relaxed);
-        gState.translatedSourceCalls[actionIndex].fetch_add(
-            1,
-            std::memory_order_relaxed);
+        if (approvedViewport) {
+            gViewportPath.rendered.fetch_add(1, std::memory_order_relaxed);
+        } else {
+            const std::size_t actionIndex = static_cast<std::size_t>(action - gState.actions);
+            gState.cjkPathSuccess.fetch_add(1, std::memory_order_relaxed);
+            gState.translatedSourceMask.fetch_or(action->sourceBit, std::memory_order_relaxed);
+            gState.translatedSourceCalls[actionIndex].fetch_add(1, std::memory_order_relaxed);
+        }
         return;
     }
-
     gState.rendererFailure.fetch_add(1, std::memory_order_relaxed);
-    recordFallback(*action);
-    original(text, size, encoding, x, y, font, path);
+    fallback();
 }
 
 extern "C" void skTextUtilsGetPathInterposeTarget(

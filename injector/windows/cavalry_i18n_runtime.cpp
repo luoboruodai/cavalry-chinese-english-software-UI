@@ -48,6 +48,9 @@
 #include <QtWidgets/QTextBrowser>
 #include <QtWidgets/QWidget>
 
+#ifdef CAVALRY_BILINGUAL_ENABLED
+#include "../cavalry_bilingual_runtime.h"
+#endif
 #include <array>
 #include <string>
 
@@ -489,6 +492,9 @@ bool CavalryI18nRuntime::eventFilter(QObject *watched, QEvent *event)
     maybeWriteTextPathDiagnostic();
 
     auto *widget = qobject_cast<QWidget *>(watched);
+#ifdef CAVALRY_BILINGUAL_ENABLED
+    if (widget && (event->type() == QEvent::Show || event->type() == QEvent::Polish)) cavalry_bilingual::polishWidget(widget);
+#endif
     if (widget == nullptr) {
         return false;
     }
@@ -2101,6 +2107,10 @@ void CavalryI18nRuntime::refreshWindow(QWidget *window)
     QEvent languageChange(QEvent::LanguageChange);
     QCoreApplication::sendEvent(window, &languageChange);
     displayTranslator_->translateWidgetTree(window);
+#ifdef CAVALRY_BILINGUAL_ENABLED
+    cavalry_bilingual::polishWidget(window);
+    for (auto child : window->findChildren<QWidget *>()) cavalry_bilingual::polishWidget(child);
+#endif
 }
 
 void CavalryI18nRuntime::writeDiagnostic(

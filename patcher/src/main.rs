@@ -9,14 +9,16 @@ use cbpatch::ops;
 
 const USAGE: &str = "用法:\n  \
     cbpatch status [--app <path>]\n  \
-    cbpatch apply [--dylib <path>] [--app <path>] [--lang en|zh-Hans|zh-Hant|ja_JP]\n  \
-    cbpatch restore [--app <path>]";
+    cbpatch apply [--runtime <path>] [--app <path>] [--lang zh-Hans] [--config <path>] [--backup-root <path>]\n  \
+    cbpatch restore [--app <path>] [--backup-root <path>]";
 
 #[derive(Default)]
 struct Flags {
     app: Option<PathBuf>,
     dylib: Option<PathBuf>,
     lang: Option<String>,
+    config: Option<PathBuf>,
+    backup_root: Option<PathBuf>,
 }
 
 fn parse_flags(args: &[String]) -> Result<Flags> {
@@ -32,8 +34,10 @@ fn parse_flags(args: &[String]) -> Result<Flags> {
         };
         match flag {
             "--app" => flags.app = Some(PathBuf::from(take_value(&mut index)?)),
-            "--dylib" => flags.dylib = Some(PathBuf::from(take_value(&mut index)?)),
+            "--dylib" | "--runtime" => flags.dylib = Some(PathBuf::from(take_value(&mut index)?)),
             "--lang" => flags.lang = Some(take_value(&mut index)?),
+            "--config" => flags.config = Some(PathBuf::from(take_value(&mut index)?)),
+            "--backup-root" => flags.backup_root = Some(PathBuf::from(take_value(&mut index)?)),
             other => return Err(msg(format!("未知参数: {other}\n{USAGE}"))),
         }
         index += 1;
@@ -42,10 +46,7 @@ fn parse_flags(args: &[String]) -> Result<Flags> {
 }
 
 fn resolve_app(flags: &Flags) -> PathBuf {
-    flags
-        .app
-        .clone()
-        .unwrap_or_else(|| PathBuf::from(ops::DEFAULT_APP))
+    flags.app.clone().unwrap_or_else(ops::default_app_path)
 }
 
 fn dispatch(args: Vec<String>) -> Result<Json> {
@@ -61,12 +62,28 @@ fn dispatch(args: Vec<String>) -> Result<Json> {
                 Some(path) => path,
                 None => ops::default_dylib_path()?,
             };
-            let lang = flags.lang.unwrap_or_else(|| "zh-Hans".to_string());
-            let backup_root = ops::default_backup_root()?;
-            Ok(ops::apply(&app, &dylib, &lang, &backup_root)?.to_json())
+            let mut settings = if let Some(path) = flags.config {
+                if !path.is_file() {
+                    return Err(msg("明确指定的配置文件不存在"));
+                }
+                cbpatch::config::Settings::load(&path)?
+            } else {
+                cbpatch::config::Settings::default()
+            };
+            if let Some(lang) = flags.lang {
+                settings.lang = lang;
+            }
+            let backup_root = flags
+                .backup_root
+                .map(Ok)
+                .unwrap_or_else(ops::default_backup_root)?;
+            Ok(ops::apply_with_settings(&app, &dylib, &settings, &backup_root)?.to_json())
         }
         "restore" => {
-            let backup_root = ops::default_backup_root()?;
+            let backup_root = flags
+                .backup_root
+                .map(Ok)
+                .unwrap_or_else(ops::default_backup_root)?;
             Ok(ops::restore(&app, &backup_root)?.to_json())
         }
         other => Err(msg(format!("未知命令: {other}\n{USAGE}"))),

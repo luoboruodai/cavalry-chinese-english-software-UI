@@ -4,8 +4,11 @@ import pathlib
 import re
 import sys
 
-SRC = pathlib.Path("/Users/vibecoding_prj/cavarly双语ui界面/cavalry-bilingual/gui/ui/src")
-OUT = pathlib.Path("/tmp/misans-dl/charset.txt")
+SRC = pathlib.Path(__file__).resolve().parents[1] / "src"
+if len(sys.argv) != 2:
+    raise SystemExit("usage: build-charset.py <output-text-file>")
+OUT = pathlib.Path(sys.argv[1])
+OUT.parent.mkdir(parents=True, exist_ok=True)
 
 SAMPLES = "文件（File）编辑（Edit）撤销 %1（Undo %1）累加器（Accumulator）显示网格（Show Grid）欢迎使用 Cavalry（Welcome to Cavalry）"
 

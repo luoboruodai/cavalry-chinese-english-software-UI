@@ -1,6 +1,6 @@
 [package]
 name = "cavalry-bilingual"
-version = "0.2.0"
+version = "0.1.0"
 edition = "2021"
 description = "Cavalry Bilingual desktop app — Tauri shell crate (built by the Tauri CLI)"
 publish = false

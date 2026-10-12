@@ -2,11 +2,11 @@
 
 :root {
   /* 间距节奏(全站强制引用) */
-  --gap-title-desc: 6px; /* 区标题 → 区描述 */
+  --gap-title-desc: 8px; /* 区标题 → 区描述 */
   --gap-desc-card: 16px; /* 区描述 → 首个卡 */
-  --gap-card-card: 12px; /* 卡 → 卡 */
+  --gap-card-card: 16px; /* 卡 → 卡 */
   --gap-card-actions: 16px; /* 卡 → 后续无卡操作区 */
-  --gap-actions-details: 12px; /* 操作区 → 技术细节链接 */
+  --gap-actions-details: 16px; /* 操作区 → 技术细节链接 */
   /* 卡片描边:暖调,介于白与奶油之间 */
   --card-border: #ece5d3;
 }
@@ -262,8 +262,8 @@ body {
 
 .view {
   width: 100%;
-  max-width: 720px;
-  margin: auto;
+  max-width: 920px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: var(--gap-card-card);
@@ -601,7 +601,7 @@ body {
   bottom: 4px;
   left: 4px;
   width: calc((100% - 8px) / var(--segments));
-  border-radius: 50px;
+  border-radius: 8px;
   background: var(--color-pure-white);
   box-shadow: 0 0 0 2px var(--color-fresh-grass);
   transition: transform 200ms ease;
@@ -616,7 +616,7 @@ body {
   cursor: pointer;
   flex: 1;
   background: none;
-  border-radius: 50px;
+  border-radius: 8px;
   padding: 7px 10px;
   font-family: inherit;
   font-size: 12px;

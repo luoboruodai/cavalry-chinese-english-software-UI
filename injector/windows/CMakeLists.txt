@@ -166,7 +166,7 @@ target_include_directories(cavalryi18n
         "${CMAKE_CURRENT_SOURCE_DIR}"
 )
 
-target_compile_definitions(cavalryi18n PRIVATE QT_NO_KEYWORDS)
+target_compile_definitions(cavalryi18n PRIVATE QT_NO_KEYWORDS CAVALRY_BILINGUAL_ENABLED=1)
 
 set_target_properties(cavalryi18n PROPERTIES
     OUTPUT_NAME "cavalryi18n"
@@ -782,4 +782,13 @@ if(BUILD_TESTING)
             "--explicit"
             "$<TARGET_FILE:cavalryi18n>"
     )
+endif()
+
+if(BUILD_TESTING)
+    add_executable(cavalry_bilingual_translator_test
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/qt_bilingual_translator.cpp"
+        cavalry_i18n_translator.cpp)
+    target_compile_definitions(cavalry_bilingual_translator_test PRIVATE QT_NO_KEYWORDS CAVALRY_BILINGUAL_ENABLED=1)
+    target_link_libraries(cavalry_bilingual_translator_test PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+    add_test(NAME cavalry_bilingual_translator_test COMMAND cavalry_bilingual_translator_test)
 endif()

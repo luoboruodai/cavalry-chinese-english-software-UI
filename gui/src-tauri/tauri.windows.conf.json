@@ -1,0 +1,14 @@
+{
+  "bundle": {
+    "targets": [
+      "nsis"
+    ],
+    "resources": {
+      "runtime/windows/generic/cavalryi18n.dll": "runtime/windows/generic/cavalryi18n.dll",
+      "runtime/windows/qpa/qwindows.dll": "runtime/windows/qpa/qwindows.dll"
+    },
+    "icon": [
+      "icons/icon.ico"
+    ]
+  }
+}

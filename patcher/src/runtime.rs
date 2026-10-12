@@ -6,7 +6,14 @@ use crate::error::Result;
 use crate::json::Json;
 use crate::util;
 
+#[cfg(not(windows))]
 pub const INJECTOR_DYLIB_NAME: &str = "libCavalryTranslatorInjector.dylib";
+#[cfg(windows)]
+pub const INJECTOR_DYLIB_NAME: &str = "windows/generic/cavalryi18n.dll";
+pub fn settings_path(app: &Path) -> std::path::PathBuf {
+    #[cfg(windows)] { app.join("cavalry-bilingual-settings.json") }
+    #[cfg(not(windows))] { app.join("Contents/Resources/cavalry-bilingual-settings.json") }
+}
 pub const WRAPPER_EXECUTABLE_NAME: &str = "CavalryLauncher";
 pub const LANG_MARKER_NAME: &str = "cavalry-i18n-lang.txt";
 pub const BILINGUAL_MANIFEST_NAME: &str = "cavalry-bilingual.json";
@@ -63,6 +70,7 @@ if [ -f "$INJECTOR_PATH" ] && {{ [ "$LANG_CODE" = "zh-Hans" ] || [ "$LANG_CODE" 
     export DYLD_INSERT_LIBRARIES="$INJECTOR_PATH"
   fi
   export CAVALRY_I18N_LANG="$LANG_CODE"
+  export CAVALRY_BILINGUAL_CONFIG="$APP_ROOT/Resources/cavalry-bilingual-settings.json"
 else
   if [ -n "$EXTERNAL_DYLD" ]; then
     export DYLD_INSERT_LIBRARIES="$EXTERNAL_DYLD"
@@ -70,6 +78,7 @@ else
     unset DYLD_INSERT_LIBRARIES
   fi
   unset CAVALRY_I18N_LANG
+  unset CAVALRY_BILINGUAL_CONFIG
 fi
 exec "$SELF_DIR/Cavalry" "$@"
 "#
@@ -123,4 +132,13 @@ mod tests {
             "{\"version\":\"0.1.0\",\"lang\":\"zh-Hans\",\"installedAt\":\"2026-09-15T08:00:00Z\"}"
         );
     }
+}
+
+pub fn manifest_path(app: &Path) -> std::path::PathBuf {
+    #[cfg(windows)] { app.join(BILINGUAL_MANIFEST_NAME) }
+    #[cfg(not(windows))] { app.join("Contents/Resources").join(BILINGUAL_MANIFEST_NAME) }
+}
+pub fn injector_path(app: &Path) -> std::path::PathBuf {
+    #[cfg(windows)] { app.join("generic/cavalryi18n.dll") }
+    #[cfg(not(windows))] { app.join("Contents/Frameworks").join(INJECTOR_DYLIB_NAME) }
 }

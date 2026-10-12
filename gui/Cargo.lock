@@ -274,7 +274,7 @@ dependencies = [
 
 [[package]]
 name = "cavalry-bilingual"
-version = "0.2.0"
+version = "0.1.0"
 dependencies = [
  "cavalry-bilingual-gui",
  "tauri",
@@ -282,7 +282,7 @@ dependencies = [
 
 [[package]]
 name = "cavalry-bilingual-gui"
-version = "0.2.0"
+version = "0.1.0"
 dependencies = [
  "cbpatch",
  "serde",
@@ -294,6 +294,11 @@ dependencies = [
 [[package]]
 name = "cbpatch"
 version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "windows-sys 0.61.2",
+]
 
 [[package]]
 name = "cc"
