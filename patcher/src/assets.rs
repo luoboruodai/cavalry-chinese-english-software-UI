@@ -200,9 +200,22 @@ pub fn compose(input: &[u8], settings: &Settings, previous: &Settings) -> Result
     let mut apply_record = |value: &mut Value| -> Result<()> {
         let kind = value["nodeType"].as_str().unwrap().to_owned();
         let key = record_key(value)?;
-        let (Some(en), Some(zh)) = (english.get(&key), chinese.get(&key)) else {
-            return Ok(());
+        // Installed language packs may omit an optional field (e.g. basicShape.niceName).
+        // Still translate existing stable fields if exactly ONE catalog record is a superset.
+        // Do not add fields, match arrays by position, or guess between partial records.
+        let matched = if english.contains_key(&key) && chinese.contains_key(&key) {
+            Some(key)
+        } else {
+            let keys = value.as_object().unwrap().keys().collect::<Vec<_>>();
+            let candidates = english.iter().filter(|(key, en)| {
+                en["nodeType"].as_str() == Some(kind.as_str()) &&
+                keys.iter().all(|field| en.get(*field).is_some()) &&
+                chinese.get(*key).map(|zh| keys.iter().all(|field| zh.get(*field).is_some())).unwrap_or(false)
+            }).map(|(key, _)| key.clone()).collect::<Vec<_>>();
+            if candidates.len() == 1 { Some(candidates[0].clone()) } else { None }
         };
+        let Some(key) = matched else { return Ok(()); };
+        let (en, zh) = (&english[&key], &chinese[&key]);
         for key in FIELDS {
             if let (Some(live), Some(en), Some(zh)) = (value.get_mut(key), en.get(key), zh.get(key))
             {
@@ -292,6 +305,24 @@ mod tests {
                 .unwrap()["attributes"]["position"][0],
             "Position / 位置"
         );
+    }
+    #[test]
+    fn omitted_optional_field_does_not_silently_skip_existing_labels() {
+        let input = r#"[{"type":"nodeStrings","value":{"nodeType":"basicShape","nodeInfo":"基本图形，如矩形、椭圆或多边形。","attributes":{"generator":"基本体类型"}}}]"#;
+        let (result, n) = compose(input.as_bytes(), &Settings::default(), &Settings::default()).unwrap();
+        let value: Value = serde_json::from_slice(&result).unwrap();
+        assert_eq!(n, 2);
+        assert_eq!(value[0]["value"]["attributes"]["generator"], "基本体类型（Primitive Type）");
+        assert!(value[0]["value"].get("niceName").is_none());
+        let (same,n) = compose(&result, &Settings::default(), &Settings::default()).unwrap();
+        assert_eq!(n,0); assert_eq!(same,result);
+    }
+    #[test]
+    fn ambiguous_partial_record_is_not_guessed() {
+        // behaviour has separate scalar and [label, help] strength records.
+        let input = br#"[{"type":"nodeStrings","value":{"nodeType":"behaviour","attributes":{"strength":"Strength"}}}]"#;
+        let (result,n)=compose(input,&Settings::default(),&Settings::default()).unwrap();
+        assert_eq!(n,0); assert_eq!(result,input);
     }
     #[test]
     fn unknown_user_nodes_preserved_and_known_drift_rejected() {

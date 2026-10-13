@@ -1,5 +1,6 @@
 // Isolated public-Qt regression harness. This is NOT Cavalry end-to-end acceptance.
 #include "../injector/cavalry_bilingual_runtime.h"
+#include "../injector/cavalry_i18n_translation_policy.h"
 #include <QtWidgets/QApplication>
 #include <QtGui/QTextLayout>
 #include <QtGui/QGlyphRun>
@@ -13,6 +14,8 @@ struct TranslationEntry { const char *context, *sourceText, *translation; };
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
     using namespace cavalry_bilingual;
+    assert(cavalry_i18n::requiresExactTranslationContext("BilingualVendorEffects", "Paint"));
+    assert(cavalry_i18n::requiresExactTranslationContext("BilingualVendorEffects", "Extract"));
     const QString pattern = argc > 1 ? QString::fromUtf8(argv[1]) : QStringLiteral("{zh}（{en}）");
     assert(settings().pattern == pattern);
     assert(format("Undo %1", "撤销 %1", pattern).arg("Move").count("Move") == 2);
@@ -42,6 +45,10 @@ int main(int argc, char **argv) {
     if (argc > 2) assert(preview.save(QString::fromUtf8(argv[2])));
     QPushButton button(QStringLiteral("生成器（Generator）")); button.setFixedWidth(36);
     polishWidget(&button); assert(button.minimumWidth() >= button.sizeHint().width());
+    QToolButton tool; tool.setText(QStringLiteral("清除选中内容（Clear Selected）"));
+    tool.setToolButtonStyle(Qt::ToolButtonTextOnly); tool.setFixedWidth(36);
+    polishWidget(&tool); assert(tool.minimumWidth() == 36 && tool.maximumWidth() == 36);
+    assert(tool.toolTip() == tool.text());
     QTabBar tabs; tabs.addTab(QStringLiteral("属性编辑器（Attribute Editor）")); polishWidget(&tabs);
     assert(tabs.usesScrollButtons() && tabs.elideMode() == Qt::ElideNone);
     printf("PASS: %d entries, %d bilingual entries, %d nonzero glyphs; placeholder, font, button and tabs checks\n", count, bilingual, glyphs);

@@ -115,6 +115,8 @@ inline constexpr bool requiresExactTranslationContext(
     }
 
     const std::string_view contextView(context);
+    if (contextView == "BilingualVendorEffects") return true; // only Create > Effects / verified graph type
+
     const std::string_view sourceView(sourceText);
     if (contextView == kCogToolPitchContext) {
         return sourceView == kCogToolPitchSource;

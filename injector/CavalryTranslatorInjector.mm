@@ -1,10 +1,11 @@
 /**
  * [INPUT]: 依赖 Qt 6.6.3 runtime ABI、AppKit、generated_translations.inc、共享 exact-context/选择输入值/Fast 与 Classic 搜索策略、Classic 评分 ABI 适配器及独立说明索引、macOS TransformTool text-path ABI 防火墙与显式 capture/session 环境
- * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 从受合同保护的完整标签副本恢复双语显示并保留原始可编辑控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
+ * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
  * [POS]: macOS injector 核心；普通文本只在已证 Qt owner 内补译，AttrControlRow 只读取精确 2.7.2 双架构合同的标签副本，不修改数值控件或用户内容；parentless Assets 菜单只承接一个事件循环的 owner，Transform 自绘交给独立 ABI 适配器，可编辑/字体 Combo 的值及弹出列表、Time Editor 模型 identity、快捷键 prefix 与无关同文保持原值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 #include "cavalry_bilingual_runtime.h"
+#include "cavalry_bilingual_attribute_label.h"
 #define CAVALRY_BILINGUAL_ENTRIES(array, count) cavalry_bilingual::entries(array, count)
 #include "cavalry_i18n_input_policy.h"
 #include "cavalry_i18n_search_policy.h"
@@ -103,7 +104,7 @@ struct TranslationEntry {
 #include "generated_translations.inc"
 
 /* -----------------------------------------------------------------------
- * ExtensionLayer 自绘提示 — 仅翻译已确认由 textAtWidgetCentre 绘制的四处空状态
+ * ExtensionLayer 自绘提示 — 仅翻译 widget 上的五条固定空状态
  *
  * 禁止恢复 __cstring 内存补丁：调用点把英文 byte length 编进机器码，原地改 UTF-8
  * 会破坏 QString 边界。绘制层定点拦截能保留原图标、纵向基线和 panel 几何，
@@ -1987,7 +1988,15 @@ void translateQtMenu(QMenu *menu, const QString &lang)
         menu->setTitle(translatedTitle);
     }
 
+    const bool effectMenu = title == QStringLiteral("Effects") ||
+        title == lookupEmbeddedTranslation(lang, QStringLiteral("Effects"));
     for (QAction *action : menu->actions()) {
+        if (effectMenu && action) {
+            const auto source = action->text().toUtf8();
+            const auto language = lang.toUtf8();
+            const char *effect = embeddedTranslationForContext(language.constData(), "BilingualVendorEffects", source.constData());
+            if (effect) action->setText(QString::fromUtf8(effect));
+        }
         translateQtAction(action, lang, ownerHint);
     }
 }
@@ -2836,6 +2845,7 @@ bool isCenteredExtensionLayerEmptyStateHint(const QString &text)
     static const QSet<QString> kCenteredEmptyStateHints = {
         QStringLiteral("Double click here to import Assets."),
         QStringLiteral("Drag layers here to see their settings."),
+        QStringLiteral("Select layers to see their settings"),
         QStringLiteral("Drag some JavaScript here to make a Snippet."),
         QStringLiteral("Use the Create menu to add a layer to your Composition."),
     };
@@ -2871,7 +2881,8 @@ void replacementQPainterDrawPointText(
         return;
     }
 
-    const QString translated = translatedCenteredExtensionLayerHint(text);
+    const bool widgetDevice = painter->device() && painter->device()->devType() == QInternal::Widget;
+    const QString translated = widgetDevice ? translatedCenteredExtensionLayerHint(text) : QString();
     if (translated.isEmpty()) {
         const auto originalFont = painter->font();
         const bool uiDevice = painter->device() && painter->device()->devType() == QInternal::Widget;
@@ -2891,10 +2902,17 @@ void replacementQPainterDrawPointText(
     const int translatedWidth = QFontMetrics(displayFont).boundingRect(translated).width();
 
     // ui::textAtWidgetCentre 已算好英文中心；仅补偿字宽差，纵向基线和图标位置完全不动。
-    const QPointF centeredPoint(
-        point.x() + static_cast<qreal>(sourceWidth - translatedWidth) / 2.0,
-        point.y());
-    drawPointTextWithoutInterpose(painter, centeredPoint, translated);
+    const int available = qMax(1, painter->device()->width() - 32);
+    if (translatedWidth > available) {
+        const QFontMetrics metrics(displayFont);
+        painter->drawText(QRectF(16, point.y() - metrics.ascent(), available, metrics.height() * 4),
+            Qt::AlignHCenter | Qt::AlignTop | Qt::TextWordWrap, translated);
+    } else {
+        const QPointF centeredPoint(
+            point.x() + static_cast<qreal>(sourceWidth - translatedWidth) / 2.0,
+            point.y());
+        drawPointTextWithoutInterpose(painter, centeredPoint, translated);
+    }
     painter->setFont(sourceFont);
 }
 
@@ -3447,45 +3465,29 @@ void enqueueRuntimeObject(QObject *object, const QString &lang)
     scheduleDirtyObjectDrain(lang);
 }
 
-// Cavalry 2.7.2 stores the unabridged text in AttrControlRowLayout at +0xb0.
-// The same class elides into a fixed-height (22 px) QLabel when the value widgets need space.
-// Do not overwrite the application's row geometry or the editable value controls.
+// Both 2.7.2 slices: elideText reads source at +0xb0 and primary QLabel at +0xd0.
+// Icon/connection/hint labels in the SAME row must never inherit the attribute name.
 std::atomic<std::uint64_t> gAttributeLabelProbes{0};
 std::atomic<std::uint64_t> gAttributeLabelOwners{0};
 std::atomic<std::uint64_t> gAttributeLabelComplete{0};
-constexpr const char *kFullAttributeLabelProperty = "cavalryBilingual.fullAttributeLabel";
-QString completeAttributeLabel(QLabel *label)
+struct AttributeLabelBinding { QWidget *owner = nullptr; QLabel *primary = nullptr; QString full; };
+AttributeLabelBinding attributeLabelBinding(QLabel *label)
 {
-    if (label == nullptr || !cavalry_i18n::macVendorContractVerified()) return {};
+    if (!label || !cavalry_i18n::macVendorContractVerified()) return {};
     gAttributeLabelProbes.fetch_add(1, std::memory_order_relaxed);
-
-    // Cache the copied QString on the label after the guarded ABI read.  The previous
-    // implementation only returned the private value while it differed from label->text(),
-    // which meant the first paint could leave Cavalry's already-elided string in place.
-    // Re-read the guarded value so a recycled row cannot retain the previous attribute name;
-    // the copied property is only a safe fallback when the owner is being torn down.
-    const QVariant cached = label->property(kFullAttributeLabelProperty);
     QWidget *owner = label->parentWidget();
-    while (owner != nullptr && owner != label->window() && !owner->inherits("AttrControlRowLayout")) {
+    while (owner && owner != label->window() && !owner->inherits("AttrControlRowLayout"))
         owner = owner->parentWidget();
-    }
-    if (owner == nullptr || !owner->inherits("AttrControlRowLayout")) {
-        if (cached.isValid()) label->setProperty(kFullAttributeLabelProperty, QVariant());
-        return {};
-    }
+    if (!owner || !owner->inherits("AttrControlRowLayout")) return {};
+    // The read itself is permitted only by the exact ExtensionLayer/Core/Skia UUID contract.
+    QLabel *primary = nullptr;
+    std::memcpy(&primary, reinterpret_cast<const char *>(owner) + 0xd0, sizeof(primary));
+    if (primary != label) return {};
     gAttributeLabelOwners.fetch_add(1, std::memory_order_relaxed);
-    // Private layout access is gated by the exact dual-arch ExtensionLayer UUID contract.
     const auto *stored = reinterpret_cast<const QString *>(reinterpret_cast<const char *>(owner) + 0xb0);
-    if (stored->size() < 4 || stored->size() > 512) return {};
-    static const QRegularExpression kCjk(QStringLiteral("[\u3400-\u9fff]"));
-    static const QRegularExpression kLatin(QStringLiteral("[A-Za-z]"));
-    if (!stored->contains(kCjk) || !stored->contains(kLatin)) return {};
-    const QString value = *stored;
-    if (!cached.isValid() || cached.toString() != value) {
-        label->setProperty(kFullAttributeLabelProperty, value);
-        gAttributeLabelComplete.fetch_add(1, std::memory_order_relaxed);
-    }
-    return value;
+    if (stored->size() < 4 || stored->size() > 512 || !cavalry_bilingual::hasCjk(*stored)) return {};
+    gAttributeLabelComplete.fetch_add(1, std::memory_order_relaxed);
+    return {owner, primary, *stored};
 }
 extern "C" bool cavalry_bilingual_attribute_label_diagnostics_v1(std::uint64_t *out, std::size_t size) noexcept {
     if (!out || size != 3) return false;
@@ -3512,40 +3514,33 @@ protected:
         if (event->type() == QEvent::Show || event->type() == QEvent::Polish) {
             cavalry_bilingual::polishWidget(qobject_cast<QWidget *>(watched));
         }
-        if (event->type() == QEvent::Paint) {
+        if (event->type() == QEvent::Paint || event->type() == QEvent::ToolTip) {
             if (auto *label = qobject_cast<QLabel *>(watched)) {
-                const auto full = completeAttributeLabel(label);
-                if (!full.isEmpty()) {
-                    // Cavalry may pass an already-elided display string to QLabel.  Restore
-                    // the verified copied value before Qt paints it, then let the ordinary
-                    // layout negotiate any available width. This removes the stale
-                    // “Position…”/“Rotation…” value without touching numeric editors.
-                    if (label->text() != full) label->setText(full);
-                    if (label->toolTip() != full) label->setToolTip(full);
-                    const int needed = qMin(240, label->fontMetrics().horizontalAdvance(full) + 8);
-                    if (needed > label->minimumWidth()) label->setMinimumWidth(needed);
-                    label->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
-                    if (QWidget *owner = label->parentWidget()) {
-                        owner->updateGeometry();
-                        if (QLayout *layout = owner->layout()) {
-                            layout->invalidate();
-                            layout->activate();
-                        }
+                const auto binding = attributeLabelBinding(label);
+                if (cavalry_bilingual::projectAttributeLabel(label, binding.owner, binding.primary, binding.full)) {
+                    // Resize the NAME column through its ordinary layout after painting,
+                    // capping this width request at half a row to avoid starving value editors.
+                    const int width = cavalry_bilingual::attributeColumnMinimum(label, binding.owner, binding.full);
+                    if (width > 0 && binding.owner->minimumWidth() != width &&
+                        !binding.owner->property("cb.attribute.widthQueued").toBool()) {
+                        binding.owner->setProperty("cb.attribute.widthQueued", true);
+                        QPointer<QLabel> guardedLabel(label);
+                        QPointer<QWidget> guardedOwner(binding.owner);
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (!guardedOwner) return;
+                            guardedOwner->setProperty("cb.attribute.widthQueued", false);
+                            if (!guardedLabel) return;
+                            const auto current = attributeLabelBinding(guardedLabel);
+                            if (current.owner != guardedOwner) return;
+                            const int wanted = cavalry_bilingual::attributeColumnMinimum(
+                                guardedLabel, current.owner, current.full);
+                            if (wanted > 0 && current.owner->minimumWidth() != wanted)
+                                current.owner->setMinimumWidth(wanted);
+                        });
                     }
-                    label->updateGeometry();
-                }
-            }
-        }
-        if (event->type() == QEvent::ToolTip) {
-            if (auto *label = qobject_cast<QLabel *>(watched)) {
-                const auto full = completeAttributeLabel(label);
-                if (!full.isEmpty()) {
-                    const QPoint position = static_cast<QHelpEvent *>(event)->globalPos();
-                    // Use plain text: the label can contain user-facing punctuation and
-                    // should not be interpreted as rich HTML by QToolTip.
-                    QToolTip::showText(position, full, label, label->rect(), 5000);
-                    event->accept();
-                    return true;
+                    // Let QLabel/native ToolTip process the event. No immediate Enter popup,
+                    // recursive layout activation or minimum-width inflation during Paint.
+                    return QObject::eventFilter(watched, event);
                 }
             }
         }

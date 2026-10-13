@@ -105,7 +105,9 @@ inline void polishWidget(QWidget *widget) {
         if (hasCjk(text) && text.contains(QRegularExpression("[A-Za-z]"))) {
             button->setToolTip(text);
             // Never expand icon-only toggles or viewport geometry; text buttons can ask their layout for space.
-            if (qobject_cast<QPushButton *>(button) || (qobject_cast<QToolButton *>(button) && static_cast<QToolButton *>(button)->toolButtonStyle() != Qt::ToolButtonIconOnly)) {
+            // Toolbars must remain compressible: expanding every text tool button
+            // forces the entire Cavalry window wider than the physical display.
+            if (qobject_cast<QPushButton *>(button)) {
                 const auto hint = button->sizeHint();
                 if (hint.isValid()) {
                     if (button->maximumWidth() < hint.width()) button->setMaximumWidth(QWIDGETSIZE_MAX);

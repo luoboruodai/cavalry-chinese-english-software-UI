@@ -2682,7 +2682,7 @@
     <message><source>unclosed token</source><translation>未关闭的代号</translation></message>
     <message><source>undefined entity</source><translation>未定义实体</translation></message>
     <message><source>Undo (Text Editing)</source><translation>撤消（文本编辑)</translation></message>
-    <message><source>Undock</source><translation>打开</translation></message>
+    <message><source>Undock</source><translation>浮动窗口</translation></message>
     <message><source>Unkn</source><translation>无效</translation></message>
     <message><source>Unknown</source><translation>不详</translation></message>
     <message><source>Unknown Asset</source><translation>未知素材</translation></message>
@@ -7189,5 +7189,34 @@
   <context>
     <name>MessageBar</name>
     <message><source>Pencil Tool: You're drawing too far away from the camera, try drawing in 2d.</source><translation>铅笔工具：绘制位置离相机太远，请尝试在 2D 中绘制</translation></message>
+  </context>
+  <context>
+    <name>BilingualVendorEffects</name>
+    <message><source>Composite Video</source><translation>复合视频</translation></message>
+    <message><source>Display Simulation</source><translation>显示器模拟</translation></message>
+    <message><source>Extract</source><translation>提取</translation></message>
+    <message><source>Film Burn</source><translation>胶片灼烧</translation></message>
+    <message><source>Film Damage</source><translation>胶片损伤</translation></message>
+    <message><source>Film Emulation</source><translation>胶片模拟</translation></message>
+    <message><source>Godray</source><translation>体积光</translation></message>
+    <message><source>Hatching</source><translation>排线</translation></message>
+    <message><source>LED</source><translation>发光二极管</translation></message>
+    <message><source>Lens Blur</source><translation>镜头模糊</translation></message>
+    <message><source>Lens Distortion</source><translation>镜头畸变</translation></message>
+    <message><source>Lens Flare</source><translation>镜头光晕</translation></message>
+    <message><source>Light Leak</source><translation>漏光</translation></message>
+    <message><source>Lightwrap</source><translation>光线包裹</translation></message>
+    <message><source>Linear Refraction</source><translation>线性折射</translation></message>
+    <message><source>Liquid Metal</source><translation>液态金属</translation></message>
+    <message><source>Mesh Gradient</source><translation>网格渐变</translation></message>
+    <message><source>Paint</source><translation>绘画</translation></message>
+    <message><source>Paper Texture</source><translation>纸张纹理</translation></message>
+    <message><source>Photocopy</source><translation>复印效果</translation></message>
+    <message><source>Screen Print</source><translation>丝网印刷</translation></message>
+    <message><source>Smoke Ring</source><translation>烟环</translation></message>
+    <message><source>Ultra Glow</source><translation>超强辉光</translation></message>
+    <message><source>VHS</source><translation>录像带效果</translation></message>
+    <message><source>Warp</source><translation>变形扭曲</translation></message>
+    <message><source>Water</source><translation>水波</translation></message>
   </context>
 </TS>
