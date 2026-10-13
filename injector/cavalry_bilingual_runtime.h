@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QtGui/QFontDatabase>
 #include <QtGui/QFont>
+#include <QtGui/QFontMetrics>
 #include <QRegularExpression>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QAbstractButton>
@@ -110,10 +111,31 @@ inline void polishWidget(QWidget *widget) {
             if (qobject_cast<QPushButton *>(button)) {
                 const auto hint = button->sizeHint();
                 if (hint.isValid()) {
-                    if (button->maximumWidth() < hint.width()) button->setMaximumWidth(QWIDGETSIZE_MAX);
-                    button->setMinimumWidth(hint.width());
+                    const int textWidth = button->fontMetrics().horizontalAdvance(text) + 32;
+                    const int wanted = qMax(hint.width(), textWidth);
+                    if (button->maximumWidth() < wanted) button->setMaximumWidth(QWIDGETSIZE_MAX);
+                    if (button->minimumWidth() < wanted) button->setMinimumWidth(wanted);
                     button->updateGeometry();
                 }
+            }
+        }
+    }
+    if (auto combo = qobject_cast<QComboBox *>(widget)) {
+        const auto text = combo->currentText();
+        if (hasCjk(text) && text.contains(QRegularExpression("[A-Za-z]"))) {
+            // Preferences and other value selectors are often fixed to the English
+            // width.  Let the normal layout ask for the bilingual size instead of
+            // clipping the translated value at the right edge.  This does not touch
+            // editable/current model data; it only raises the widget's display minimum.
+            const auto hint = combo->sizeHint();
+            if (hint.isValid()) {
+                // QComboBox may retain a pre-translation sizeHint cache; use the
+                // current display string as a lower bound as well.
+                const int textWidth = combo->fontMetrics().horizontalAdvance(text) + 48;
+                const int wanted = qMax(hint.width(), textWidth);
+                if (combo->maximumWidth() < wanted) combo->setMaximumWidth(QWIDGETSIZE_MAX);
+                if (combo->minimumWidth() < wanted) combo->setMinimumWidth(wanted);
+                combo->updateGeometry();
             }
         }
     }

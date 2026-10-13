@@ -49,6 +49,8 @@ int main(int argc, char **argv) {
     tool.setToolButtonStyle(Qt::ToolButtonTextOnly); tool.setFixedWidth(36);
     polishWidget(&tool); assert(tool.minimumWidth() == 36 && tool.maximumWidth() == 36);
     assert(tool.toolTip() == tool.text());
+    QComboBox combo; combo.addItem(QStringLiteral("不错（Pretty）")); combo.setFixedWidth(80);
+    polishWidget(&combo); assert(combo.minimumWidth() >= combo.sizeHint().width());
     QTabBar tabs; tabs.addTab(QStringLiteral("属性编辑器（Attribute Editor）")); polishWidget(&tabs);
     assert(tabs.usesScrollButtons() && tabs.elideMode() == Qt::ElideNone);
     printf("PASS: %d entries, %d bilingual entries, %d nonzero glyphs; placeholder, font, button and tabs checks\n", count, bilingual, glyphs);

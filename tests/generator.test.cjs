@@ -30,6 +30,19 @@ test('generated runtime tables are deterministic and support dynamic formatting'
   });
 });
 
+test('runtime playback-range wording has a bilingual compatibility alias', () => {
+  const entries=parseTs(path.join(__dirname,'../translations/pristine/zh-Hans.ts'));
+  const matches=entries.filter(entry=>entry.context==='MenuBarManager' && entry.source==='Set Playback Range to Selection');
+  assert.deepEqual(matches.map(entry=>entry.translation), ['将播放范围设为所选内容']);
+});
+
+test('preferences surfaces include bilingual rendering and Bézier labels', () => {
+  const entries=parseTs(path.join(__dirname,'../translations/pristine/zh-Hans.ts'));
+  const bySource=new Map(entries.filter(entry=>entry.context==='MenuBarManager').map(entry=>[entry.source,entry.translation]));
+  assert.equal(bySource.get('Viewport/Rendering'), '视口/渲染');
+  assert.equal(bySource.get('Use Absolute Bézier Positions'), '使用绝对 Bézier 位置');
+});
+
 test('graph input actions and graph-only removal have distinct, non-destructive wording', () => {
   const entries=parseTs(path.join(__dirname,'../translations/pristine/zh-Hans.ts'));
   for (const [source,translation] of [

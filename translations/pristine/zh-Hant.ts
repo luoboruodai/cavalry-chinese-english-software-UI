@@ -513,6 +513,10 @@
       <translation>將播放範圍設為所選內容</translation>
     </message>
     <message>
+      <source>Set Playback Range to Selection</source>
+      <translation>將播放範圍設為所選內容</translation>
+    </message>
+    <message>
       <source>Set Playback Start to Current Frame</source>
       <translation>將播放開始設為目前影格</translation>
     </message>
@@ -3254,6 +3258,8 @@
 <message><source>Show Viewport Tool Help</source><translation>顯示檢視區工具說明</translation></message>
     <message><source>Show Layer Tools</source><translation>顯示圖層工具</translation></message>
 <message><source>Viewport Quality</source><translation>檢視區品質</translation></message>
+<message><source>Viewport/Rendering</source><translation>檢視區／算繪</translation></message>
+<message><source>Use Absolute Bézier Positions</source><translation>使用絕對 Bézier 位置</translation></message>
     <message><source>High</source><translation>高</translation></message>
     <message><source>Balanced</source><translation>平衡</translation></message>
     <message><source>Low</source><translation>低</translation></message>

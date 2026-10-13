@@ -513,6 +513,10 @@
       <translation>再生範囲を選択範囲に設定</translation>
     </message>
     <message>
+      <source>Set Playback Range to Selection</source>
+      <translation>再生範囲を選択範囲に設定</translation>
+    </message>
+    <message>
       <source>Set Playback Start to Current Frame</source>
       <translation>再生開始を現在のフレームに設定</translation>
     </message>
@@ -844,6 +848,8 @@
       <source>Viewport Quality</source>
       <translation>ビューポート品質</translation>
     </message>
+    <message><source>Viewport/Rendering</source><translation>ビューポート／レンダリング</translation></message>
+    <message><source>Use Absolute Bézier Positions</source><translation>絶対 Bézier 位置を使用</translation></message>
     <message>
       <source>High</source>
       <translation>高</translation>
