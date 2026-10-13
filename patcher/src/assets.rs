@@ -202,7 +202,8 @@ pub fn compose(input: &[u8], settings: &Settings, previous: &Settings) -> Result
         let key = record_key(value)?;
         // Installed language packs may omit an optional field (e.g. basicShape.niceName).
         // Still translate existing stable fields if exactly ONE catalog record is a superset.
-        // Do not add fields, match arrays by position, or guess between partial records.
+        // Never add attributes, match arrays by position, or guess between partial records.
+        // The one reviewed optional display-title repair below is separate from field merging.
         let matched = if english.contains_key(&key) && chinese.contains_key(&key) {
             Some(key)
         } else {
@@ -216,6 +217,17 @@ pub fn compose(input: &[u8], settings: &Settings, previous: &Settings) -> Result
         };
         let Some(key) = matched else { return Ok(()); };
         let (en, zh) = (&english[&key], &chinese[&key]);
+        // Cavalry 2.7.2's installed basicShape record can omit niceName, causing
+        // DG's TextRegistry to fall back to hardcoded "Basic Shape". Reintroduce
+        // only this schema-supported DISPLAY field, after an unambiguous catalog
+        // match with both generator and nodeInfo present. Never invent keys for
+        // unknown types, attributes, partial snippets or user scene objects.
+        let insert_basic_shape_title = kind == "basicShape"
+            && value.get("niceName").is_none()
+            && value.get("nodeInfo").is_some()
+            && value.pointer("/attributes/generator").is_some()
+            && en.get("niceName").and_then(Value::as_str) == Some("Basic Shape")
+            && zh.get("niceName").and_then(Value::as_str).map(has_cjk).unwrap_or(false);
         for key in FIELDS {
             if let (Some(live), Some(en), Some(zh)) = (value.get_mut(key), en.get(key), zh.get(key))
             {
@@ -229,6 +241,13 @@ pub fn compose(input: &[u8], settings: &Settings, previous: &Settings) -> Result
                 )
                 .map_err(|e| msg(format!("{kind}.{key}: {e}")))?;
             }
+        }
+        if insert_basic_shape_title {
+            value.as_object_mut().unwrap().insert(
+                "niceName".into(),
+                Value::String(format(&settings.template, "Basic Shape", zh["niceName"].as_str().unwrap())),
+            );
+            count += 1;
         }
         Ok(())
     };
@@ -311,11 +330,29 @@ mod tests {
         let input = r#"[{"type":"nodeStrings","value":{"nodeType":"basicShape","nodeInfo":"基本图形，如矩形、椭圆或多边形。","attributes":{"generator":"基本体类型"}}}]"#;
         let (result, n) = compose(input.as_bytes(), &Settings::default(), &Settings::default()).unwrap();
         let value: Value = serde_json::from_slice(&result).unwrap();
-        assert_eq!(n, 2);
+        assert_eq!(n, 3);
         assert_eq!(value[0]["value"]["attributes"]["generator"], "基本体类型（Primitive Type）");
-        assert!(value[0]["value"].get("niceName").is_none());
+        assert_eq!(value[0]["value"]["niceName"], "基本形状（Basic Shape）");
         let (same,n) = compose(&result, &Settings::default(), &Settings::default()).unwrap();
         assert_eq!(n,0); assert_eq!(same,result);
+    }
+    #[test]
+    fn optional_title_repair_never_expands_partial_or_unknown_records() {
+        for input in [
+            r#"[{"type":"nodeStrings","value":{"nodeType":"basicShape"}}]"#,
+            r#"[{"type":"nodeStrings","value":{"nodeType":"userShape","attributes":{"generator":"Primitive Type"}}}]"#,
+        ] {
+            let (result,n)=compose(input.as_bytes(), &Settings::default(), &Settings::default()).unwrap();
+            assert_eq!(n,0); assert_eq!(result,input.as_bytes());
+        }
+        let input = r#"[{"type":"nodeStrings","value":{"nodeType":"basicShape","nodeInfo":"基本图形，如矩形、椭圆或多边形。","attributes":{"generator":"基本体类型"}}}]"#;
+        let custom=Settings { template: "{en} / {zh}".into(), ..Default::default() };
+        let (result,_) = compose(input.as_bytes(), &custom, &Settings::default()).unwrap();
+        let value:Value=serde_json::from_slice(&result).unwrap();
+        assert_eq!(value[0]["value"]["niceName"], "Basic Shape / 基本形状");
+        let before:Value=serde_json::from_str(input).unwrap();
+        assert_eq!(value[0]["value"]["attributes"].as_object().unwrap().keys().collect::<Vec<_>>(),
+                   before[0]["value"]["attributes"].as_object().unwrap().keys().collect::<Vec<_>>());
     }
     #[test]
     fn ambiguous_partial_record_is_not_guessed() {

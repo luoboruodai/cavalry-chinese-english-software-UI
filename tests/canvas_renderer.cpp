@@ -21,6 +21,7 @@ static void draw(void*,const void *text,std::size_t size,int,float x,float y,con
     drawn.push_back({std::string(static_cast<const char*>(text),size),x,y,paint,face(font)});
 }
 static void init(SkFontAbi &font,std::uintptr_t value) { std::memcpy(font.storage.data(),&value,sizeof(value));float size=12;std::memcpy(font.storage.data()+sizeof(void*),&size,4); }
+SkSpBlobAbi skTextBlobMakeFromTextInterposeTarget(const void *,std::size_t,const void *,int) { return {}; }
 int main() {
     SkFontAbi latin,zh,fallback; init(latin,1);init(zh,2);init(fallback,3);
     gCanvasText.chinese=&zh;gCanvasText.fallback=&fallback;gCanvasText.english=&latin;

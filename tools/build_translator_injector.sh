@@ -99,6 +99,11 @@ extern "C" void cavalryBilingualCanvasLinkStub(void *, const void *, std::size_t
 extern "C" float cavalryBilingualMeasureLinkStub(const void *, const void *, std::size_t, int, void *, const void *)
     __asm("__ZNK6SkFont11measureTextEPKvm14SkTextEncodingP6SkRectPK7SkPaint");
 extern "C" float cavalryBilingualMeasureLinkStub(const void *, const void *, std::size_t, int, void *, const void *) { return 0; }
+struct BlobLinkAbi {void *pointer=nullptr;BlobLinkAbi()=default;~BlobLinkAbi(){}};
+BlobLinkAbi cavalryBilingualBlobLinkStub(const void *,std::size_t,const void *,int)
+    __asm("__ZN10SkTextBlob12MakeFromTextEPKvmRK6SkFont14SkTextEncoding");
+BlobLinkAbi cavalryBilingualBlobLinkStub(const void *,std::size_t,const void *,int) { return {}; }
+
 
 
 EOF

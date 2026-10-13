@@ -5,9 +5,10 @@
 - 修复真实宿主中的数据写回回归：QLineEdit 不再翻译提交值，移除 textChanged 改写及 Time Editor 反向模型值归一化；可编辑列表/树/表格项不做文本写回。Windows 同步输入边界，但未原生验收。
 - 真实测试先复现图层名被错误写成双语，再验证修复后英文及长中文名称在保存的 `.cv` 中逐字保持。
 - Lina 三条 exact 测宽 caller 共用 Canvas 字体/回退规划，并校验完整函数 SHA-256；拒绝省略循环中切断 Unicode scalar 的候选。原始宿主的长中文节点样例已真实命中。
+- 新增受 UUID、producer 摘要和精确 caller 守卫保护的视口/时间线图层名字体路径；原始 2.7.2 arm64 独立场景中长中文样例可见且无方框，未知版本继续回退。
 - 修正 7 条节点输入/移除提示，补充 3 条菜单用语；新增输入 delegate 提交、2,008 组边界/宽度及摘要拒绝测试。
 - 工具与宿主更新为本轮候选，保留回滚；正式文件名构建并核对最终 runtime，防止临时库名签名引起更新误报。
-- **未完成：** Scene Tree 真实拖入、端口展开/连线、视口中文图层名方框、时间线该长名称缺字、全界面覆盖、2.8.0、Windows/Intel 实机。未推送、打标签或发布。
+- **未完成：** Scene Tree 真实拖入、端口展开/连线、全界面覆盖、2.8.0、Windows/Intel 实机。视口/时间线长中文样例已在最新候选中通过，但不扩大为全自绘路径通过。未推送、打标签或发布。
 
 
 ## 0.1.0 — unreleased candidate / 未发布候选
@@ -36,4 +37,4 @@
 - Enable CJK font fallback in supported Qt UI drawing paths; correct the Glyphs translation.
 
 ### Not yet accepted
-The current candidate has partial native macOS arm64 Cavalry 2.7.2 / Qt 6.6.3 evidence. Dependency-graph node/port drag/drop, complete UI coverage, strict per-script font selection, Cavalry 2.8.0 / Qt 6.9.2 adaptation, Windows packaging/runtime and final release acceptance remain open. The October 14 continuation verified input-name preservation and a long CJK DG title in an isolated scene on the original host. Scene-tree drop and port connections remain unaccepted; viewport-name tofu and the long timeline-name rendering are also still open. See `docs/COMPATIBILITY.md`.
+The current candidate has partial native macOS arm64 Cavalry 2.7.2 / Qt 6.6.3 evidence. Dependency-graph node/port drag/drop, complete UI coverage, strict per-script font selection, Cavalry 2.8.0 / Qt 6.9.2 adaptation, Windows packaging/runtime and final release acceptance remain open. The October 14 continuation verified input-name preservation, a long CJK DG title, and a long CJK layer name rendered without tofu in the viewport and timeline of an isolated scene on the original host. Scene-tree drop and port connections remain unaccepted. See `docs/COMPATIBILITY.md`.

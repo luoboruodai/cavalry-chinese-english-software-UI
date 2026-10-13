@@ -49,6 +49,7 @@ static std::string elide(std::string text,float limit,const void *font,unsigned 
     }
     return width("...",font,1)<=limit ? "..." : "";
 }
+SkSpBlobAbi skTextBlobMakeFromTextInterposeTarget(const void *,std::size_t,const void *,int) { return {}; }
 int main() {
     using cavalry_bilingual::hasSplitScalarBeforeEllipsis;
     for(const auto &scalar:{std::string(u8"中"),std::string(u8"é"),std::string(u8"𠀀"),std::string(u8"😀")})

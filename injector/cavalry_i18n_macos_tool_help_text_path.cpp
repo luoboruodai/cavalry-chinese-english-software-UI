@@ -568,6 +568,7 @@ void recordFallback(const ConfiguredAction &action) noexcept
 } // namespace
 
 #include "cavalry_bilingual_macos_canvas.inc"
+#include "cavalry_bilingual_macos_viewport_names.inc"
 #include "cavalry_bilingual_macos_graph_measure.inc"
 #include "cavalry_bilingual_macos_viewport.inc"
 
@@ -621,6 +622,7 @@ void configureMacToolHelpTextPath(
 
     configureCanvasText(fontFamily, englishFontFamily);
     configureGraphMeasure();
+    configureViewportNames();
     const bool rendererReady = buildDisplayFont(language, fontFamily);
     gState.rendererReady.store(rendererReady, std::memory_order_release);
     if (rendererReady) gState.configured.store(true, std::memory_order_release);

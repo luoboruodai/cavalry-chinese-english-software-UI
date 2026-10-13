@@ -91,11 +91,16 @@ extern "C" __attribute__((noinline)) float cavalryBilingualMeasureGraphText(cons
     const void *text, std::size_t size, int encoding, void *bounds, const void *paint) noexcept {
     const auto original=originalGraphMeasure();
     if (!original) { if (bounds) std::memset(bounds,0,sizeof(CanvasInkBounds)); return 0; }
-    if (!graphMeasureRecursion && gGraphMeasure.ready.load(std::memory_order_acquire) && bounds) {
+    if (!graphMeasureRecursion && (gGraphMeasure.ready.load(std::memory_order_acquire) || gViewportName.ready.load(std::memory_order_acquire)) && bounds) {
         graphMeasureRecursion=true;
         float advance=0; CanvasInkBounds ink{}; bool handled=false;
-        try { handled=measureGraphTextForCaller(__builtin_extract_return_addr(__builtin_return_address(0)),
-            font,static_cast<const char *>(text),size,encoding,paint,advance,ink); } catch (...) { handled=false; }
+        void *caller=__builtin_extract_return_addr(__builtin_return_address(0));
+        try {
+            if (gGraphMeasure.ready.load(std::memory_order_acquire))
+                handled=measureGraphTextForCaller(caller,font,static_cast<const char *>(text),size,encoding,paint,advance,ink);
+            if (!handled)
+                handled=measureViewportNameForCaller(caller,font,static_cast<const char *>(text),size,encoding,paint,advance,ink);
+        } catch (...) { handled=false; }
         graphMeasureRecursion=false;
         if (handled) { std::memcpy(bounds,&ink,sizeof(ink)); return advance; }
         // Only count a reviewed caller's fallback, not unrelated scene rendering.

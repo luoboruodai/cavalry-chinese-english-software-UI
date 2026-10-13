@@ -47,6 +47,26 @@ def verify_graph_elision(image, branch, arch):
     return {'graphMeasureCallsitesVerified': len(sites), 'graphElisionDigestVerified': True,
             'graphElisionCodeBytes': size, 'graphElisionTamperRejected': True}
 
+def verify_viewport_names(image, branch, arch):
+    start=int(re.search(r'kViewportNameOffset=(0x[0-9a-f]+)', branch).group(1),16)
+    size=int(re.search(r'kViewportNameSize=(0x[0-9a-f]+)', branch).group(1),16)
+    digest=re.search(r'kViewportNameSha256\[\]="([0-9a-f]{64})"', branch).group(1)
+    if start+size>len(image) or hashlib.sha256(image[start:start+size]).hexdigest()!=digest:
+        raise ValueError(f'{arch}: viewport-name producer digest mismatch')
+    counts={}
+    for label,expected in [('Make',2),('Measure',4)]:
+        body=branch.split('kViewportName'+label+'Callsites[]=',1)[1].split('};',1)[0]
+        sites=re.findall(r'\{(0x[0-9a-f]+),\s*\{([^}]+)\}\}',body)
+        if len(sites)!=expected:raise ValueError(f'{arch}: viewport-name {label} callsite count mismatch')
+        for offset,encoded in sites:
+            at=int(offset,16);want=bytes(int(x.strip(),16) for x in encoded.split(','))
+            if not start<=at or at+len(want)>start+size or image[at:at+len(want)]!=want:
+                raise ValueError(f'{arch}: viewport-name {label} instruction mismatch')
+        counts['viewportName'+label+'CallsVerified']=len(sites)
+    tampered=bytearray(image[start:start+size]);tampered[-1]^=1
+    if hashlib.sha256(tampered).hexdigest()==digest:raise ValueError('unexpected tamper match')
+    return {**counts,'viewportNameProducerDigestVerified':True,'viewportNameTamperRejected':True}
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--app',required=True);args=parser.parse_args()
     code=(ROOT/'injector/cavalry_bilingual_macos_canvas.inc').read_text()
@@ -75,5 +95,8 @@ def main():
     graph=(ROOT/'injector/cavalry_bilingual_macos_graph_measure.inc').read_text().split('#if defined(__arm64__)')[1].split('#endif')[0].split('#elif defined(__x86_64__)')
     for i,(arch,cpu) in enumerate(CPUS.items()):
         report[i].update(verify_graph_elision(data[cpu], graph[i], arch))
+    names=(ROOT/'injector/cavalry_bilingual_macos_viewport_names.inc').read_text().split('#if defined(__arm64__)')[1].split('#endif')[0].split('#elif defined(__x86_64__)')
+    for i,(arch,cpu) in enumerate(CPUS.items()):
+        report[i].update(verify_viewport_names(data[cpu],names[i],arch))
     print(json.dumps({'scope':'static binary contract, not a host rendering test','results':report},indent=2))
 if __name__=='__main__':main()
