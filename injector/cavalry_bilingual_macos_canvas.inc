@@ -1,4 +1,6 @@
-// Included by the macOS private-ABI firewall. Exactly seven UI callsites, not a global document renderer.
+// Included by the macOS private-ABI firewall. Seven UI drawing callsites only.
+// Shared run planning also keeps the separately guarded Lina elision metrics in sync.
+#include <algorithm>
 namespace {
 using DrawSimpleTextFunction = void (*)(void *, const void *, std::size_t, int, float, float, const void *, const void *);
 using MeasureTextFunction = float (*)(const void *, const void *, std::size_t, int, void *, const void *);
@@ -93,21 +95,27 @@ bool canvasFontCovers(const void *font, const char *text, std::size_t size) noex
     }
     return true;
 }
+// SkRect is four floats in the already UUID-locked Skia ABI.
+struct CanvasInkBounds { float left = 0, top = 0, right = 0, bottom = 0; };
+static_assert(sizeof(CanvasInkBounds) == 16);
 struct PlannedCanvasRun {
     cavalry_bilingual::Utf8Run run;
     const SkFontAbi *family;
     float advance;
+    CanvasInkBounds bounds;
 };
-// Plan every run before painting so a late unsupported glyph cannot leave half-translated/double-painted text.
-bool paintCanvasRuns(DrawSimpleTextFunction original, void *canvas, const char *text, std::size_t size,
-    float x, float y, const void *font, const void *paint) {
+// Measurement and drawing MUST use the same fonts, glyph fallback and advances.
+// Plan all runs first, so late failure cannot leave half-painted/double-painted text.
+bool planCanvasRuns(const char *text, std::size_t size, const void *font, const void *paint,
+                    bool withBounds, std::vector<PlannedCanvasRun> &plan) {
+    plan.clear();
     thread_local std::vector<cavalry_bilingual::Utf8Run> runs;
-    if (!cavalry_bilingual::textRuns(text,size,runs)) return false;
+    if (!font || !gCanvasText.measure || !gCanvasText.glyph || !cavalry_bilingual::textRuns(text,size,runs)) return false;
     bool hasCjk=false; for (const auto &run:runs) hasCjk |= run.cjk;
     if (!hasCjk && !gCanvasText.english) return false;
     float fontSize=0; std::memcpy(&fontSize,static_cast<const char *>(font)+sizeof(void *),sizeof(fontSize));
-    if (!std::isfinite(fontSize) || fontSize <= 0 || fontSize > 4096 || !std::isfinite(x) || !std::isfinite(y)) return false;
-    thread_local std::vector<PlannedCanvasRun> plan; plan.clear(); plan.reserve(runs.size());
+    if (!std::isfinite(fontSize) || fontSize <= 0 || fontSize > 4096) return false;
+    plan.reserve(runs.size());
     double total=0;
     for (const auto &run:runs) {
         const SkFontAbi *family=run.cjk ? gCanvasText.chinese : gCanvasText.english;
@@ -116,11 +124,45 @@ bool paintCanvasRuns(DrawSimpleTextFunction original, void *canvas, const char *
             family=gCanvasText.fallback; copyCanvasFont(display,font,family);
             if (!canvasFontCovers(&display,text+run.offset,run.length)) return false;
         }
-        const float advance=gCanvasText.measure(&display,text+run.offset,run.length,0,nullptr,paint);
+        CanvasInkBounds bounds{};
+        const float advance=gCanvasText.measure(&display,text+run.offset,run.length,0,withBounds ? &bounds : nullptr,paint);
         if (!std::isfinite(advance) || advance < 0 || advance > 1e6) return false;
-        total+=advance; if (!std::isfinite(x+total) || total>1e6) return false;
-        plan.push_back({run,family,advance});
+        if (withBounds && (!std::isfinite(bounds.left) || !std::isfinite(bounds.top) ||
+            !std::isfinite(bounds.right) || !std::isfinite(bounds.bottom) ||
+            std::fabs(bounds.left)>1e6 || std::fabs(bounds.top)>1e6 ||
+            std::fabs(bounds.right)>1e6 || std::fabs(bounds.bottom)>1e6)) return false;
+        total+=advance; if (total>1e6) return false;
+        plan.push_back({run,family,advance,bounds});
     }
+    return true;
+}
+bool measureCanvasRuns(const char *text, std::size_t size, const void *font, const void *paint,
+                       float &advance, CanvasInkBounds &bounds) {
+    thread_local std::vector<PlannedCanvasRun> plan;
+    if (!planCanvasRuns(text,size,font,paint,true,plan)) return false;
+    CanvasInkBounds combined{};
+    bool hasInk=false;
+    float cursor=0;
+    for (const auto &item:plan) {
+        auto ink=item.bounds;
+        if (ink.left<ink.right && ink.top<ink.bottom) {
+            ink.left+=cursor; ink.right+=cursor;
+            if (!hasInk) { combined=ink; hasInk=true; }
+            else {
+                combined.left=std::min(combined.left,ink.left); combined.top=std::min(combined.top,ink.top);
+                combined.right=std::max(combined.right,ink.right); combined.bottom=std::max(combined.bottom,ink.bottom);
+            }
+        }
+        cursor+=item.advance;
+    }
+    advance=cursor; bounds=combined;
+    return true;
+}
+bool paintCanvasRuns(DrawSimpleTextFunction original, void *canvas, const char *text, std::size_t size,
+                     float x, float y, const void *font, const void *paint) {
+    if (!std::isfinite(x) || !std::isfinite(y)) return false;
+    thread_local std::vector<PlannedCanvasRun> plan;
+    if (!planCanvasRuns(text,size,font,paint,false,plan)) return false;
     float cursor=x;
     for (const auto &item:plan) {
         SkFontAbi display; copyCanvasFont(display,font,item.family);

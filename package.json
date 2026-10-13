@@ -8,6 +8,7 @@
     "compose:reset": "rm -f translations/working/zh-Hans.ts translations/working/model_display_translations.json tools/model_display_translations.json tools/zh-*.ts tools/ja_JP.ts",
     "build:macos": "node tools/prepare_runtime.js && bash tools/build_translator_injector.sh dist/libCavalryTranslatorInjector.dylib",
     "prepare:runtime": "node tools/prepare_runtime.js",
-    "test:generator": "node tools/prepare_runtime.js && node --test tests/generator.test.cjs"
+    "test:generator": "node tools/prepare_runtime.js && node --test tests/generator.test.cjs",
+    "test:macos-canvas": "bash tools/test_macos_canvas.sh"
   }
 }

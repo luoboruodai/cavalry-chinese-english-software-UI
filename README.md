@@ -10,15 +10,15 @@ A bilingual UI patch manager with previewable settings and validated snapshots.
 
 ## 当前验收状态 / Validation status
 
-本轮已将最新项目候选安装到 macOS 的 Cavalry Bilingual，并在原始 Cavalry 2.7.2 / Qt 6.6.3 上验证了部分表面。**这不是“全界面双语已完成”或“全部版本兼容”的结论。**
+2026-10-14 的输入安全与 DG/Lina 测宽候选已在本机工具及原始 Cavalry 2.7.2 / Qt 6.6.3 上部署。原始宿主已验证图层名称不再因重命名确认而被译文写回，以及长中文 DG 名称的安全省略；真实拖入/端口连接及其他遗漏仍未完成。**这不是“全界面双语已完成”或“全部版本兼容”的结论。**
 
 | 范围 | 状态 |
 |---|---|
 | 工具 UI、草稿、字体、预览 | 80 项浏览器断言通过；已安装 macOS 工具的草稿/顺序/取消和运行中守卫已操作验证。 |
 | 备份/应用/还原 | 22 个 Rust lib + 16 个集成测试通过；各次测试保留独立快照。 |
-| macOS 注入器 | arm64 + x86_64 编译；431 个 Qt imports 在每个目标宿主 slice 中均能解析。Intel 未实机验证。 |
+| macOS 注入器 | arm64 + x86_64 编译；429 个 Qt imports 在每个目标宿主 slice 中均能解析。Intel 未实机验证。 |
 | 2.7.2 原始宿主 | 视口固定提示与部分属性标签已验证；旧候选误写同父图标的回归已修正。最终完整验收尚未结束。 |
-| Dependency Graph | 独立并排测试场景已建立；实际使用 DGView/lina。图层拖入、节点/端口连接未完成，不标通过。 |
+| Dependency Graph | 独立并排测试场景已建立；实际使用 DGView/lina。长中文节点名和图内移动有实测；图层拖入、端口连接未通过。视口中文名称仍有方框，时间线该样例缺字。 |
 | Cavalry 2.8.0 / Qt 6.9.2 | 已从官方安装包核实版本与 ABI 变化；尚未适配，写入前拒绝，未用旧偏移强行注入。 |
 | Windows | Rust check/事务 fixture 通过；Qt/QPA、NSIS、安装器及真实宿主未验收，不发布 Windows 已验证包。 |
 
@@ -43,7 +43,7 @@ A bilingual UI patch manager with previewable settings and validated snapshots.
 4. “备份”恢复到选中快照的状态，**不等同于一律还原英文**。还原动作本身也会保留操作前快照。
 5. 旧版本没有完整校验清单的备份只读展示，不能安全地自动恢复；不要删除它们。损坏设置不会被默认值静默覆盖。
 
-字体只影响支持的 UI 渲染路径，不修改工程文本图层。自绘文字与第三方脚本尚未全部覆盖。
+用户输入值、图层自定义名称、路径和表达式保持原文；仅其 UI 标签/placeholder 双语化。字体只影响支持的 UI 渲染路径，不修改工程文本图层。自绘文字与第三方脚本尚未全部覆盖。
 
 ## 本地构建 / Local build
 
@@ -56,6 +56,8 @@ npm ci --prefix gui/ui
 npm test --prefix gui/ui
 cargo test --manifest-path patcher/Cargo.toml
 bash tools/test_qt_runtime.sh
+npm run test:generator
+npm run test:macos-canvas
 npm run tauri:build --prefix gui/ui -- --bundles app
 ```
 

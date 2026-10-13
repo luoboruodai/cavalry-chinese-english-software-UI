@@ -14,3 +14,5 @@ printf '%s' '{"schemaVersion":99,"template":"{en}"}' > "$OUT/qt-settings.json"
 QT_QPA_PLATFORM=offscreen CAVALRY_BILINGUAL_CONFIG="$OUT/qt-settings.json" "$OUT/qt-runtime-test" '{zh}（{en}）'
 clang++ -std=c++17 -DQT_NO_VERSION_TAGGING "$ROOT/tests/attribute_label.cpp" -o "$OUT/attribute-label-test" -F"$QT" -I"$QT/QtCore.framework/Headers" -framework QtWidgets -framework QtGui -framework QtCore -Wl,-rpath,"$QT"
 QT_QPA_PLATFORM=offscreen "$OUT/attribute-label-test"
+clang++ -std=c++17 -DQT_NO_VERSION_TAGGING "$ROOT/tests/input_value.cpp" -o "$OUT/input-value-test" -F"$QT" -I"$QT/QtCore.framework/Headers" -framework QtWidgets -framework QtGui -framework QtCore -Wl,-rpath,"$QT"
+QT_QPA_PLATFORM=offscreen "$OUT/input-value-test"

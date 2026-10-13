@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Qt 6.6.3 runtime ABI、AppKit、generated_translations.inc、共享 exact-context/选择输入值/Fast 与 Classic 搜索策略、Classic 评分 ABI 适配器及独立说明索引、macOS TransformTool text-path ABI 防火墙与显式 capture/session 环境
- * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
+ * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；所有 QLineEdit 仅翻译 placeholder，输入值不读取/改写；Time Editor 模型不再做反向翻译写回；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
  * [POS]: macOS injector 核心；普通文本只在已证 Qt owner 内补译，AttrControlRow 只读取精确 2.7.2 双架构合同的标签副本，不修改数值控件或用户内容；parentless Assets 菜单只承接一个事件循环的 owner，Transform 自绘交给独立 ABI 适配器，可编辑/字体 Combo 的值及弹出列表、Time Editor 模型 identity、快捷键 prefix 与无关同文保持原值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -729,7 +729,6 @@ EmbeddedTranslator *gTranslator = nullptr;
 bool gInstallAttempted = false;
 bool gRefreshScheduled = false;
 QSet<QMenu *> gHookedMenus;
-QSet<QLineEdit *> gHookedLineEdits;
 QHash<QAbstractItemView *, QPointer<QAbstractItemModel>> gHookedItemViewModels;
 QPointer<QWidget> gPendingScopedContextMenuOwner;
 QHash<QMenu *, QPointer<QWidget>> gScopedMenuOwners;
@@ -2168,7 +2167,6 @@ QString translatedGeneratedLayerName(const QString &lang, const QString &sourceT
 QString translatedMixedNoPrefixText(const QString &lang, const QString &sourceText);
 QString translatedCopiedLogMessage(const QString &lang, const QString &message);
 QString translatedUndoRedoLogMessage(const QString &lang, const QString &message);
-QString timeEditorSafeItemText(const QString &lang, const QString &sourceText);
 
 QString translatedWidgetText(const QString &lang, const QString &sourceText)
 {
@@ -2367,11 +2365,6 @@ QString translatedDynamicBracketLayerName(const QString &lang, const QString &so
     return QStringLiteral("%1 [%2.%3]").arg(displayPrefix, index, displayLabel);
 }
 
-QString timeEditorSafeItemText(const QString &lang, const QString &sourceText)
-{
-    return translatedDynamicBracketLayerName(lang, sourceText, true);
-}
-
 QString translatedGeneratedLayerName(const QString &lang, const QString &sourceText)
 {
     static const QString kShapeSuffix = QStringLiteral(" Shape");
@@ -2454,13 +2447,8 @@ void translateListWidgetItems(QListWidget *listWidget, const QString &lang)
             continue;
         }
         const QString source = item->text();
-        if (shouldPreserveModelBackedItemText(listWidget, source)) {
-            const QString safeText = timeEditorSafeItemText(lang, source);
-            if (!safeText.isEmpty() && safeText != source) {
-                item->setText(safeText);
-            }
-            continue;
-        }
+        if (cavalry_i18n::preservesEditableItemValue(item->flags()) ||
+            shouldPreserveModelBackedItemText(listWidget, source)) continue;
         const QString translated = translatedWidgetText(lang, source);
         if (!translated.isEmpty()) {
             item->setText(translated);
@@ -2476,13 +2464,8 @@ void translateTreeWidgetItem(QTreeWidget *owner, QTreeWidgetItem *item, const QS
     }
     for (int column = 0; column < item->columnCount(); ++column) {
         const QString source = item->text(column);
-        if (shouldPreserveModelBackedItemText(owner, source)) {
-            const QString safeText = timeEditorSafeItemText(lang, source);
-            if (!safeText.isEmpty() && safeText != source) {
-                item->setText(column, safeText);
-            }
-            continue;
-        }
+        if (cavalry_i18n::preservesEditableItemValue(item->flags()) ||
+            shouldPreserveModelBackedItemText(owner, source)) continue;
         const QString translated = translatedWidgetText(lang, source);
         if (!translated.isEmpty()) {
             item->setText(column, translated);
@@ -2502,7 +2485,7 @@ void translateTableWidgetItems(QTableWidget *tableWidget, const QString &lang)
     for (int row = 0; row < tableWidget->rowCount(); ++row) {
         for (int column = 0; column < tableWidget->columnCount(); ++column) {
             QTableWidgetItem *item = tableWidget->item(row, column);
-            if (item == nullptr) {
+            if (item == nullptr || cavalry_i18n::preservesEditableItemValue(item->flags())) {
                 continue;
             }
             const QString translated = translatedWidgetText(lang, item->text());
@@ -2513,43 +2496,13 @@ void translateTableWidgetItems(QTableWidget *tableWidget, const QString &lang)
     }
 }
 
-QString translatedLineEditValue(const QString &lang, const QString &sourceText)
-{
-    QString translated = translatedWidgetText(lang, sourceText);
-    if (!translated.isEmpty()) {
-        return translated;
-    }
-
-    static const QRegularExpression kNumericSuffixPattern(QStringLiteral("^(.*?)(\\s+[0-9]+)$"));
-    QRegularExpressionMatch match = kNumericSuffixPattern.match(sourceText);
-    if (!match.hasMatch()) {
-        return QString();
-    }
-
-    const QString baseTranslation = translatedWidgetText(lang, match.captured(1).trimmed());
-    if (baseTranslation.isEmpty()) {
-        return QString();
-    }
-    return baseTranslation + match.captured(2);
-}
-
 void translateLineEditDisplayText(QLineEdit *lineEdit, const QString &lang)
 {
-    if (lineEdit == nullptr || lang.isEmpty()) {
-        return;
-    }
-
-    QString translated = translatedLineEditValue(lang, lineEdit->text());
-    if (!translated.isEmpty() && !cavalry_i18n::preservesSelectionValue(lineEdit) &&
-        !cavalry_i18n::preservesCompleterInputValue(lineEdit)) {
-        QSignalBlocker blocker(lineEdit);
-        lineEdit->setText(translated);
-    }
-
-    translated = translatedWidgetText(lang, lineEdit->placeholderText());
-    if (!translated.isEmpty()) {
-        lineEdit->setPlaceholderText(translated);
-    }
+    if (lineEdit == nullptr || lang.isEmpty()) return;
+    // Names, numbers, paths, expressions and search queries are model INPUT.
+    // Even a read-only editor may expose a canonical value for copying/commit.
+    cavalry_i18n::setTranslatedPlaceholder(lineEdit,
+        translatedWidgetText(lang, lineEdit->placeholderText()));
 }
 
 void translateLabelDisplayText(QLabel *label, const QString &lang)
@@ -2627,60 +2580,13 @@ void translateLabelBeforePaint(QLabel *label, const QString &lang)
     rememberPaintTextFingerprint(label, lang, label->text());
 }
 
-void hookLineEditTextChanges(QLineEdit *lineEdit, const QString &lang)
-{
-    if (lineEdit == nullptr || lang.isEmpty() || gHookedLineEdits.contains(lineEdit)) {
-        return;
-    }
-
-    gHookedLineEdits.insert(lineEdit);
-    QObject::connect(
-        lineEdit,
-        &QObject::destroyed,
-        lineEdit,
-        [lineEdit]() {
-            gHookedLineEdits.remove(lineEdit);
-        }
-    );
-
-    QPointer<QLineEdit> guardedLineEdit(lineEdit);
-    QObject::connect(
-        lineEdit,
-        &QLineEdit::textChanged,
-        lineEdit,
-        [guardedLineEdit, lang](const QString &text) {
-            if (guardedLineEdit.isNull() || text.isEmpty() ||
-                cavalry_i18n::preservesSelectionValue(guardedLineEdit.data()) ||
-                cavalry_i18n::preservesCompleterInputValue(guardedLineEdit.data())) {
-                return;
-            }
-            const QString translated = translatedLineEditValue(lang, text);
-            if (translated.isEmpty() || guardedLineEdit->text() != text) {
-                return;
-            }
-
-            QSignalBlocker blocker(guardedLineEdit.data());
-            guardedLineEdit->setText(translated);
-        }
-    );
-
-    translateLineEditDisplayText(lineEdit, lang);
-}
-
 void translateLineEditBeforePaint(QLineEdit *lineEdit, const QString &lang)
 {
     if (lineEdit == nullptr || lang.isEmpty() ||
-        paintTextFingerprintMatches(lineEdit, lang, lineEdit->text(), lineEdit->placeholderText())) {
-        return;
-    }
-
-    if (!gHookedLineEdits.contains(lineEdit)) {
-        hookLineEditTextChanges(lineEdit, lang);
-    } else {
-        // 某些 Cavalry 控件会阻断 textChanged 后直接改值；Paint 前仍做一次精确显示层兜底。
-        translateLineEditDisplayText(lineEdit, lang);
-    }
-    rememberPaintTextFingerprint(lineEdit, lang, lineEdit->text(), lineEdit->placeholderText());
+        paintTextFingerprintMatches(lineEdit, lang, QString(), lineEdit->placeholderText())) return;
+    translateLineEditDisplayText(lineEdit, lang);
+    // Do not cache or inspect the value; only the placeholder is presentation.
+    rememberPaintTextFingerprint(lineEdit, lang, QString(), lineEdit->placeholderText());
 }
 
 QString translatedCopiedLogMessage(const QString &lang, const QString &message)
@@ -2978,55 +2884,6 @@ void translateQtWidgetActions(QWidget *widget, const QString &lang, QSet<QAction
     }
 }
 
-void normalizeTimeEditorModelRows(QAbstractItemView *view, QAbstractItemModel *model, const QModelIndex &parent, const QString &lang, int depth)
-{
-    if (view == nullptr || model == nullptr || lang.isEmpty() || depth > 2) {
-        return;
-    }
-
-    const int rowCount = qMin(model->rowCount(parent), 200);
-    const int columnCount = qMin(qMax(model->columnCount(parent), 1), 8);
-    const int roles[] = { Qt::DisplayRole, Qt::EditRole };
-    for (int row = 0; row < rowCount; ++row) {
-        for (int column = 0; column < columnCount; ++column) {
-            const QModelIndex index = model->index(row, column, parent);
-            if (!index.isValid()) {
-                continue;
-            }
-
-            for (int role : roles) {
-                const QVariant value = model->data(index, role);
-                if (!value.canConvert<QString>()) {
-                    continue;
-                }
-                const QString source = value.toString();
-                const QString safeText = timeEditorSafeItemText(lang, source);
-                if (!safeText.isEmpty() && safeText != source) {
-                    model->setData(index, safeText, role);
-                }
-            }
-
-            if (model->hasChildren(index)) {
-                normalizeTimeEditorModelRows(view, model, index, lang, depth + 1);
-            }
-        }
-    }
-}
-
-void normalizeTimeEditorItemModel(QAbstractItemView *view, const QString &lang)
-{
-    if (view == nullptr || lang.isEmpty() || !isTimeEditorItemWidget(view)) {
-        return;
-    }
-
-    QAbstractItemModel *model = view->model();
-    if (model == nullptr) {
-        return;
-    }
-
-    normalizeTimeEditorModelRows(view, model, QModelIndex(), lang, 0);
-}
-
 void enqueueRuntimeObject(QObject *object, const QString &lang);
 
 void hookItemViewModelChanges(QAbstractItemView *view, const QString &lang)
@@ -3142,7 +2999,7 @@ void translateQtWidgetTexts(QWidget *widget, const QString &lang, QSet<QAction *
     }
 
     if (QLineEdit *lineEdit = qobject_cast<QLineEdit *>(widget)) {
-        hookLineEditTextChanges(lineEdit, lang);
+        translateLineEditDisplayText(lineEdit, lang);
     }
 
     if (QAbstractItemView *itemView = qobject_cast<QAbstractItemView *>(widget)) {
@@ -3156,7 +3013,6 @@ void translateQtWidgetTexts(QWidget *widget, const QString &lang, QSet<QAction *
                 [lang](const QString &source) { return translatedWidgetText(lang, source); },
                 cavalry_i18n::macToolHelpTextPathDiagnostics().vendorContractVerified);
         }
-        normalizeTimeEditorItemModel(itemView, lang);
     }
 
     if (QComboBox *comboBox = qobject_cast<QComboBox *>(widget);

@@ -424,6 +424,9 @@
   </context>
   <context>
     <name>MenuBarManager</name>
+    <message><source>Copy Layer</source><translation>复制图层</translation></message>
+    <message><source>Copy Layers</source><translation>复制多个图层</translation></message>
+    <message><source>Rect Pattern Shape</source><translation>矩形图案形状</translation></message>
     <message>
       <source>File</source>
       <translation>文件</translation>
@@ -1053,7 +1056,7 @@
     <message><source>Disconnect Clip End</source><translation>断开剪切端</translation></message>
     <message><source>Disconnect Clip Start</source><translation>断开剪贴板</translation></message>
     <message><source>Disconnect from marker</source><translation>断开标记</translation></message>
-    <message><source>Disconnect Input</source><translation>断开连接输入</translation></message>
+    <message><source>Disconnect Input</source><translation>断开输入连接</translation></message>
     <message><source>Disconnect Keyframe</source><translation>断开关键帧</translation></message>
     <message><source>Disconnect time control</source><translation>断开时间控制</translation></message>
     <message><source>Display Color Space</source><translation>显示颜色空间</translation></message>
@@ -1640,7 +1643,7 @@
     <message><source>must not undeclare prefix</source><translation>不得取消声明前缀</translation></message>
     <message><source>Mute</source><translation>静音</translation></message>
     <message><source>Mute Attribute</source><translation>静音属性</translation></message>
-    <message><source>Mute Input</source><translation>静音输入</translation></message>
+    <message><source>Mute Input</source><translation>停用输入连接</translation></message>
     <message><source>My Preset</source><translation>我的预设</translation></message>
     <message><source>Mykx</source><translation>密克逊</translation></message>
     <message><source>n file: I</source><translation>文件: 输入</translation></message>
@@ -2016,8 +2019,8 @@
     <message><source>Reminders</source><translation>提醒</translation></message>
     <message><source>Remove all Attributes from the Control Centre</source><translation>从控制中心移除所有属性</translation></message>
     <message><source>Remove all Attributes from the Control Centre.</source><translation>从控制中心移除所有属性。</translation></message>
-    <message><source>Remove all layers from the Dependency Graph</source><translation>从依赖图中删除所有层</translation></message>
-    <message><source>Remove all layers from the Dependency Graph.</source><translation>从依赖图中删除所有层。</translation></message>
+    <message><source>Remove all layers from the Dependency Graph</source><translation>从依赖图中移除所有图层</translation></message>
+    <message><source>Remove all layers from the Dependency Graph.</source><translation>从依赖图中移除所有图层。</translation></message>
     <message><source>Remove all of this Composition&apos;s Attributes from the Control Centre</source><translation>从控制中心移除此合成的所有属性</translation></message>
     <message><source>Remove all of this Composition&apos;s Attributes from the Control Centre.</source><translation>从控制中心移除此合成的所有属性。</translation></message>
     <message><source>Remove all the layers from the Attribute Editor</source><translation>从属性编辑器移除所有图层</translation></message>
@@ -2028,8 +2031,8 @@
     <message><source>Remove from Component</source><translation>从组件中删除</translation></message>
     <message><source>Remove from Control Centre</source><translation>从控制中心删除</translation></message>
     <message><source>Remove Pre-Comp Override</source><translation>删除覆盖前</translation></message>
-    <message><source>Remove selected layers from the Dependency Graph</source><translation>从依赖图中删除选中的图层</translation></message>
-    <message><source>Remove selected layers from the Dependency Graph.</source><translation>从依赖图中删除选中的层。</translation></message>
+    <message><source>Remove selected layers from the Dependency Graph</source><translation>从依赖图中移除选中的图层</translation></message>
+    <message><source>Remove selected layers from the Dependency Graph.</source><translation>从依赖图中移除选中的图层。</translation></message>
     <message><source>Remove Speed Values</source><translation>删除速度值</translation></message>
     <message><source>Remove the selected tracker</source><translation>删除选中的跟踪器</translation></message>
     <message><source>Remove the selected tracker.</source><translation>删除选中的跟踪器。</translation></message>
@@ -2697,7 +2700,7 @@
     <message><source>unknown token</source><translation>未知的符号</translation></message>
     <message><source>Unlock B</source><translation>解锁字节</translation></message>
     <message><source>Unlock Selected</source><translation>解锁选中</translation></message>
-    <message><source>Unmute Input</source><translation>解密输入</translation></message>
+    <message><source>Unmute Input</source><translation>恢复输入连接</translation></message>
     <message><source>Unprocessable Entity</source><translation>无法处理的实体</translation></message>
     <message><source>Unsupported codec</source><translation>不支持的编解码器</translation></message>
     <message><source>Unsupported Media Type</source><translation>不支持的媒体类型</translation></message>

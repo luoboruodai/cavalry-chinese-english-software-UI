@@ -4,6 +4,7 @@
 #include <string>
 extern "C" void skTextUtilsGetPathInterposeTarget(const void *, std::size_t, int, float, float, const void *, void *) {}
 extern "C" void skCanvasDrawSimpleTextInterposeTarget(void *, const void *, std::size_t, int, float, float, const void *, const void *) {}
+extern "C" float skFontMeasureTextInterposeTarget(const void *, const void *, std::size_t, int, void *, const void *) { return 0; }
 struct Draw { std::string text; float x,y; const void *paint; std::uintptr_t face; };
 static std::vector<Draw> drawn;
 static std::uintptr_t face(const void *font) { std::uintptr_t out; std::memcpy(&out,font,sizeof(out)); return out; }

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Cavalry 2.7.2 的 libExtensionLayer/libCore/libskia 双 slice UUID、机器码包络、Mach-O 符号表与 Skia 字体/Path ABI
- * [OUTPUT]: 对外提供仅命中五条 TransformTool action 的 CJK Path 投影、逐 source 原子成功/回退计数及版本化只读 C ABI 快照；快捷键 prefix、未知 caller、ABI 漂移与渲染失败全部转发英文原路径
+ * [OUTPUT]: 提供五条 TransformTool CJK Path、七条 UI Canvas 绘制与三条 Lina 省略测宽适配；全函数摘要限制 UTF-8 边界修复，未知 caller/ABI 原样透传；诊断仅含聚合计数
  * [POS]: injector 的 macOS 自绘文字适配器；以进程级 SkTextUtils::GetPath interpose 承接调用，但用三层 return-address 与逐 image 合同把有效范围收敛到唯一 action producer
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -568,6 +568,7 @@ void recordFallback(const ConfiguredAction &action) noexcept
 } // namespace
 
 #include "cavalry_bilingual_macos_canvas.inc"
+#include "cavalry_bilingual_macos_graph_measure.inc"
 #include "cavalry_bilingual_macos_viewport.inc"
 
 namespace cavalry_i18n {
@@ -619,6 +620,7 @@ void configureMacToolHelpTextPath(
     }
 
     configureCanvasText(fontFamily, englishFontFamily);
+    configureGraphMeasure();
     const bool rendererReady = buildDisplayFont(language, fontFamily);
     gState.rendererReady.store(rendererReady, std::memory_order_release);
     if (rendererReady) gState.configured.store(true, std::memory_order_release);

@@ -29,3 +29,28 @@ test('generated runtime tables are deterministic and support dynamic formatting'
     assert.ok(fs.readFileSync(a,'utf8').includes('return CAVALRY_BILINGUAL_ENTRIES(kZhHansEntries, *count)'));
   });
 });
+
+test('graph input actions and graph-only removal have distinct, non-destructive wording', () => {
+  const entries=parseTs(path.join(__dirname,'../translations/pristine/zh-Hans.ts'));
+  for (const [source,translation] of [
+    ['Mute Input','停用输入连接'],['Unmute Input','恢复输入连接'],['Disconnect Input','断开输入连接'],
+    ['Remove all layers from the Dependency Graph','从依赖图中移除所有图层'],
+    ['Remove selected layers from the Dependency Graph','从依赖图中移除选中的图层'],
+  ]) {
+    const matches=entries.filter(entry=>entry.source===source);
+    assert.ok(matches.length>0, `Missing ${source}`);
+    for (const entry of matches) assert.equal(entry.translation,translation);
+  }
+});
+
+test('platform line-edit translators never write commit values or normalize scene model roles', () => {
+  const mac=fs.readFileSync(path.join(__dirname,'../injector/CavalryTranslatorInjector.mm'),'utf8');
+  const win=fs.readFileSync(path.join(__dirname,'../injector/windows/cavalry_i18n_display.cpp'),'utf8');
+  const macEdit=mac.split('void translateLineEditDisplayText(')[1].split('void translateLabelDisplayText(')[0];
+  const winEdit=win.split('void CavalryDisplayTranslator::translateLineEditDisplay(')[1].split('void CavalryDisplayTranslator::translatePlainTextEditDisplay(')[0];
+  for (const body of [macEdit,winEdit]) {
+    assert.ok(body.includes('Placeholder'));
+    assert.doesNotMatch(body,/->setText\s*\(|->text\s*\(|lineEditText/);
+  }
+  assert.doesNotMatch(mac,/translatedLineEditValue|hookLineEditTextChanges|normalizeTimeEditorModelRows|timeEditorSafeItemText/);
+});
