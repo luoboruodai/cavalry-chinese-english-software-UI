@@ -1,6 +1,6 @@
 /**
- * [INPUT]: 依赖启动期语言选择与 generated_translations.inc 中五条 MenuBarManager exact action 译文
- * [OUTPUT]: 对外提供 macOS TransformTool text-path 的一次性配置入口、只读原子诊断快照、五位 source mask、逐 source 成功/回退计数与稳定 C ABI 快照入口
+ * [INPUT]: 依赖启动期语言选择与 generated_translations.inc 中五条 MenuBarManager exact action 译文；2.8 另含三条同函数前缀译文及五条 Soft Selection action 译文
+ * [OUTPUT]: 对外提供 macOS TransformTool text-path 的配置入口、首个真实 GetPath 前的配置重试钩子、只读原子诊断快照、逐 source 成功/回退计数与稳定 C ABI 快照入口
  * [POS]: injector 的 macOS 私有 ABI 防火墙；把共享翻译数据投影到已验证的 Core→ExtensionLayer→Skia 调用链，不参与普通 Qt 文本翻译
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -11,13 +11,22 @@
 
 namespace cavalry_i18n {
 
+#if defined(CAVALRY_I18N_CAVALRY_280)
+inline constexpr std::size_t kMacToolHelpActionCount = 13;
+#else
 inline constexpr std::size_t kMacToolHelpActionCount = 5;
+#endif
 
 struct MacToolHelpTextPathTranslation {
     const char *source;
     const char *translation;
     std::uint64_t sourceBit;
 };
+
+using MacToolHelpTextPathConfigurationRetry = void (*)() noexcept;
+
+void setMacToolHelpTextPathConfigurationRetry(
+    MacToolHelpTextPathConfigurationRetry retry) noexcept;
 
 void configureMacToolHelpTextPath(
     const char *language,

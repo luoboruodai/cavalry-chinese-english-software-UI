@@ -424,6 +424,14 @@
   </context>
   <context>
     <name>MenuBarManager</name>
+    <message><source>MCP Server Port</source><translation>MCP 服务器端口</translation></message>
+    <message><source>Enable MCP Server</source><translation>启用 MCP 服务器</translation></message>
+    <message><source>MCP Server</source><translation>MCP 服务器</translation></message>
+    <message><source>Video Cache Size (MB)</source><translation>视频缓存大小（MB）</translation></message>
+    <message><source>Retime Composition</source><translation>合成重定时</translation></message>
+    <message><source>AI Studio</source><translation>AI 工作室</translation></message>
+    <message><source>Preferences...</source><translation>偏好设置...</translation></message>
+    <message><source>Share anonymised usage data</source><translation>分享匿名使用数据</translation></message>
     <message><source>Copy Layer</source><translation>复制图层</translation></message>
     <message><source>Copy Layers</source><translation>复制多个图层</translation></message>
     <message><source>Rect Pattern Shape</source><translation>矩形图案形状</translation></message>
@@ -1389,7 +1397,7 @@
     <message><source>IM Used</source><translation>已用插值模式</translation></message>
     <message><source>Image cache is empty</source><translation>图像缓存为空</translation></message>
     <message><source>Image cache is empty.</source><translation>图像缓存为空。</translation></message>
-    <message><source>Image Cache Size (MB)</source><translation>图像缓存大小(兆字节)</translation></message>
+    <message><source>Image Cache Size (MB)</source><translation>图像缓存大小（MB）</translation></message>
     <message><source>Image Folder</source><translation>图像文件夹</translation></message>
     <message><source>Image Sequences must each be placed in separate folders to be detected by the Image Smart Folder</source><translation>图像序列必须分别放在单独的文件夹中，由图像智能文件夹检测</translation></message>
     <message><source>Image Sequences must each be placed in separate folders to be detected by the Image Smart Folder.</source><translation>图像序列必须分别放在单独的文件夹中,由图像智能文件夹检测.</translation></message>
@@ -1427,7 +1435,7 @@
     <message><source>incomplete markup in parameter entity</source><translation>参数实体中的不完全标记</translation></message>
     <message><source>Indicates how many UIs you have loaded out of the maximum set in Preferences (plus any pinned UIs)</source><translation>表示已加载界面数量，相对于偏好设置中的最大值(加上固定界面)</translation></message>
     <message><source>Indicates how many UIs you have loaded out of the maximum set in Preferences (plus any pinned UIs).</source><translation>表示已加载界面数量，相对于偏好设置中的最大值(加上固定界面)。</translation></message>
-    <message><source>Infinite Scrubbing</source><translation>无限的扫荡</translation></message>
+    <message><source>Infinite Scrubbing</source><translation>无限拖动调节</translation></message>
     <message><source>Influence In</source><translation>影响</translation></message>
     <message><source>Influence Out</source><translation>影响</translation></message>
     <message><source>Info</source><translation>信息</translation></message>
@@ -1489,7 +1497,7 @@
     <message><source>KKKK KLMSO</source><translation>内部标识壬</translation></message>
     <message><source>Label Palette Options</source><translation>标签调色板选项</translation></message>
     <message><source>Labels</source><translation>标签</translation></message>
-    <message><source>Large</source><translation>大块</translation></message>
+    <message><source>Large</source><translation>大</translation></message>
     <message><source>Large Previews</source><translation>大预览</translation></message>
     <message><source>Large Previews in the Attribute Editor</source><translation>属性编辑器中的大型预览</translation></message>
     <message><source>Lato</source><translation>拉图</translation></message>
@@ -1570,7 +1578,7 @@
     <message><source>Lyixk</source><translation>莱克斯克</translation></message>
     <message><source>Magic Easing removed</source><translation>解除魔法减肥</translation></message>
     <message><source>Magic Easing removed.</source><translation>解开魔法的解冻。</translation></message>
-    <message><source>Maintain Proportional Easing</source><translation>保持比例化</translation></message>
+    <message><source>Maintain Proportional Easing</source><translation>保持缓动比例</translation></message>
     <message><source>Major Line Color</source><translation>主要线条颜色</translation></message>
     <message><source>Make Dynamic (Pro)</source><translation>设为动态(专业版)</translation></message>
     <message><source>Make Harmonic</source><translation>调谐</translation></message>
@@ -1605,7 +1613,7 @@
     <message><source>Middle Align</source><translation>中间对齐</translation></message>
     <message><source>Midlight</source><translation>中灯</translation></message>
     <message><source>MIME Type</source><translation>媒体类型</translation></message>
-    <message><source>Minimise Cache</source><translation>最小化缓存</translation></message>
+    <message><source>Minimise Cache</source><translation>缩减缓存</translation></message>
     <message><source>Minor Line Color</source><translation>次要线条颜色</translation></message>
     <message><source>Misdirected Request</source><translation>指令错误的请求</translation></message>
     <message><source>mismatched tag</source><translation>标签不匹配</translation></message>
@@ -1739,7 +1747,7 @@
     <message><source>Nothing</source><translation>没什么</translation></message>
     <message><source>Nothing selected to Ungroup</source><translation>未选择要取消分组的内容</translation></message>
     <message><source>Nudge Frame</source><translation>动画框架</translation></message>
-    <message><source>Nudge Step</source><translation>前进</translation></message>
+    <message><source>Nudge Step</source><translation>微调步长</translation></message>
     <message><source>Nudge Value</source><translation>微移值</translation></message>
     <message><source>null literal</source><translation>空字面量</translation></message>
     <message><source>number is too big</source><translation>数字太大了</translation></message>
@@ -1838,7 +1846,7 @@
     <message><source>Pencil Tool: Cleared Path.</source><translation>铅笔工具: 已清除路径。</translation></message>
     <message><source>Pencil Tool: New Shape Requested</source><translation>铅笔工具: 请求新形状</translation></message>
     <message><source>Pencil Tool: New Shape Requested.</source><translation>铅笔工具: 请求新形状。</translation></message>
-    <message><source>Performance</source><translation>业绩</translation></message>
+    <message><source>Performance</source><translation>性能</translation></message>
     <message><source>Permanent Redirect</source><translation>永久定向</translation></message>
     <message><source>Phags-pa</source><translation>八思巴文</translation></message>
     <message><source>Pill</source><translation>药丸</translation></message>
@@ -1962,7 +1970,7 @@
     <message><source>Presets require a name</source><translation>预设需要名称</translation></message>
     <message><source>Presets require a name.</source><translation>预设需要名称。</translation></message>
     <message><source>Pressing Return in an Attribute Field</source><translation>在属性字段中按回车</translation></message>
-    <message><source>Pretty</source><translation>不错</translation></message>
+    <message><source>Pretty</source><translation>格式化</translation></message>
     <message><source>Preview Compositions in the Assets Window</source><translation>在素材窗口中预览合成</translation></message>
     <message><source>Previous</source><translation>上一个</translation></message>
     <message><source>Print all affected attributes</source><translation>打印所有受影响的属性</translation></message>
@@ -2017,7 +2025,7 @@
     <message><source>Reload</source><translation>重新装入</translation></message>
     <message><source>Reload the current Shape</source><translation>重新加载当前形状</translation></message>
     <message><source>Reload the current Shape.</source><translation>重新加载当前形状。</translation></message>
-    <message><source>Remember Graph Editor Curve Framing</source><translation>记住图编辑器曲线线条</translation></message>
+    <message><source>Remember Graph Editor Curve Framing</source><translation>记住曲线编辑器的视图范围</translation></message>
     <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with</source><translation>请记得为要使用此功能的每个形状将运动模糊设为完整</translation></message>
     <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with.</source><translation>请记得将每个要使用此功能的形状的运动模糊设为“完全”。</translation></message>
     <message><source>Reminders</source><translation>提醒</translation></message>
@@ -2056,7 +2064,7 @@
     <message><source>Render Item</source><translation>渲染项目</translation></message>
     <message><source>Render LH</source><translation>渲染左手柄</translation></message>
     <message><source>Render Log</source><translation>渲染日志</translation></message>
-    <message><source>Render Notifications</source><translation>发送通知</translation></message>
+    <message><source>Render Notifications</source><translation>渲染通知</translation></message>
     <message><source>Render Queue closed: Background Renders will continue, but no progress will be reported</source><translation>渲染队列已关闭: 后台渲染会继续，但不会报告进度</translation></message>
     <message><source>Render Queue closed: Background Renders will continue, but no progress will be reported.</source><translation>渲染队列已关闭: 后台渲染会继续，但不会报告进度。</translation></message>
     <message><source>Render Queue Items cannot be grouped</source><translation>渲染队列条目不能分组</translation></message>
@@ -2327,7 +2335,7 @@
     <message><source>Show Drawables</source><translation>显示可绘制对象</translation></message>
     <message><source>Show Experimental Features</source><translation>显示实验特性</translation></message>
     <message><source>Show Experimental Features (Pro)</source><translation>显示实验功能(专业版)</translation></message>
-    <message><source>Show Feedback button in Message Bar</source><translation>在信件栏中显示反馈按钮</translation></message>
+    <message><source>Show Feedback button in Message Bar</source><translation>在消息栏中显示反馈按钮</translation></message>
     <message><source>Show FPS in Playback</source><translation>播放时显示帧率</translation></message>
     <message><source>Show Frames</source><translation>显示框架</translation></message>
     <message><source>Show Grid</source><translation>显示网格</translation></message>
@@ -2338,7 +2346,7 @@
     <message><source>Show Path</source><translation>显示路径</translation></message>
     <message><source>Show Seconds</source><translation>显示秒</translation></message>
     <message><source>Show Selected</source><translation>显示选中的</translation></message>
-    <message><source>Show Tips button in Message Bar</source><translation>在信件栏中显示提示按钮</translation></message>
+    <message><source>Show Tips button in Message Bar</source><translation>在消息栏中显示提示按钮</translation></message>
     <message><source>Show Viewport Timecode</source><translation>显示视口时间码</translation></message>
     <message><source>Showing All Snapshots</source><translation>显示全部快照</translation></message>
     <message><source>Showing Snapshot</source><translation>显示快照</translation></message>
@@ -2768,6 +2776,7 @@
     <message><source>View File Paths...</source><translation>查看文件路径...</translation></message>
     <message><source>Viewport</source><translation>视口</translation></message>
     <message><source>Viewport Canvas Color</source><translation>视口画布颜色</translation></message>
+    <message><source>Viewport Quality: Full</source><translation>视口质量：完整</translation></message>
     <message><source>Viewport Quality: Balanced</source><translation>视口质量：平衡</translation></message>
     <message><source>Viewport Quality: High</source><translation>视口质量：高</translation></message>
     <message><source>Viewport Quality: Low</source><translation>视口质量：低</translation></message>
@@ -3191,6 +3200,7 @@
     <message><source>Show Layer Tools</source><translation>显示图层工具</translation></message>
     <message><source>Viewport Quality</source><translation>视口质量</translation></message>
     <message><source>Viewport/Rendering</source><translation>视口/渲染</translation></message>
+    <message><source>Viewport/ Rendering</source><translation>视口/渲染</translation></message>
     <message><source>Use Absolute Bézier Positions</source><translation>使用绝对 Bézier 位置</translation></message>
     <message><source>High</source><translation>高</translation></message>
     <message><source>Balanced</source><translation>平衡</translation></message>
@@ -3716,7 +3726,7 @@
     <message><source>Availability</source><translation>可用性</translation></message>
     <message><source>Backdrop Settings</source><translation>背景设置</translation></message>
     <message><source>Background Render.</source><translation>背景渲染。</translation></message>
-    <message><source>Bake Accuracy</source><translation>烘烤精度</translation></message>
+    <message><source>Bake Accuracy</source><translation>烘焙精度</translation></message>
     <message><source>Bake Animation: Baking Path Animation is not currently supported</source><translation>烘烤动画：目前不支持烘烤路径动画</translation></message>
     <message><source>Bake Animation: Baking Path Animation is not currently supported.</source><translation>烘烤动画：目前不支持烘烤路径动画。</translation></message>
     <message><source>Bake Animation: Unable to further simplify this animation</source><translation>烘烤动画：无法进一步简化此动画</translation></message>
@@ -6426,6 +6436,10 @@
       <translation>跟踪工具</translation>
     </message>
     <message>
+      <source>S + click Motion Path</source>
+      <translation>S + 单击运动路径</translation>
+    </message>
+    <message>
       <source>Play/ Stop</source>
       <translation>播放/停止</translation>
     </message>
@@ -7228,4 +7242,9 @@
     <message><source>Warp</source><translation>变形扭曲</translation></message>
     <message><source>Water</source><translation>水波</translation></message>
   </context>
+
+<context>
+  <name>BilingualPreferences</name>
+  <message><source>Off</source><translation>关闭</translation></message>
+</context>
 </TS>

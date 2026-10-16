@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Qt 6.6.3 runtime ABI、AppKit、generated_translations.inc、共享 exact-context/选择输入值/Fast 与 Classic 搜索策略、Classic 评分 ABI 适配器及独立说明索引、macOS TransformTool text-path ABI 防火墙与显式 capture/session 环境
- * [OUTPUT]: Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；所有 QLineEdit 仅翻译 placeholder，输入值不读取/改写；Time Editor 模型不再做反向翻译写回；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action
+ * [OUTPUT]: 经精确 Preferences/Viewport popup owner 收敛的设置布局与经 vendor 合同与四项索引 schema 确认的 Autosave Folders Off 展示投影；Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；所有 QLineEdit 仅翻译 placeholder，输入值不读取/改写；Time Editor 模型不再做反向翻译写回；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action，2.8 另配置三条 prefix 与五条 Soft Selection action，并在首个真实 GetPath 前重试未完成的配置；font-only 实验模式只保留受审计字体/Path 能力并禁用 Qt 翻译与菜单刷新
  * [POS]: macOS injector 核心；普通文本只在已证 Qt owner 内补译，AttrControlRow 只读取精确 2.7.2 双架构合同的标签副本，不修改数值控件或用户内容；parentless Assets 菜单只承接一个事件循环的 owner，Transform 自绘交给独立 ABI 适配器，可编辑/字体 Combo 的值及弹出列表、Time Editor 模型 identity、快捷键 prefix 与无关同文保持原值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -23,6 +23,7 @@
 
 #include <dispatch/dispatch.h>
 #include <dlfcn.h>
+#include <atomic>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,6 +87,7 @@
 
 #include "cavalry_i18n_macos_tool_help_text_path.h"
 #include "cavalry_i18n_translation_policy.h"
+#include "cavalry_bilingual_settings_ui.h"
 
 namespace {
 
@@ -204,6 +206,32 @@ void configureMacToolHelpTextPathFromEnvironment()
         {"Enable Snapping",
          embeddedTranslationForContext(language, kContext, "Enable Snapping"),
          1ull << 4},
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        {"S + click Motion Path",
+         embeddedTranslationForContext(language, kContext, "S + click Motion Path"),
+         1ull << 5},
+        {"Hold S",
+         embeddedTranslationForContext(language, kContext, "Hold S"),
+         1ull << 6},
+        {"Space + click + drag",
+         embeddedTranslationForContext(language, kContext, "Space + click + drag"),
+         1ull << 7},
+        {"Click drag a line between two vertices to create an edge",
+         embeddedTranslationForContext(language, kContext, "Click drag a line between two vertices to create an edge"),
+         1ull << 8},
+        {"Click drag a line between two vertices to create an edge.",
+         embeddedTranslationForContext(language, kContext, "Click drag a line between two vertices to create an edge."),
+         1ull << 9},
+        {"Disable Soft Selection",
+         embeddedTranslationForContext(language, kContext, "Disable Soft Selection"),
+         1ull << 10},
+        {"Click drag to edit Soft Selection size",
+         embeddedTranslationForContext(language, kContext, "Click drag to edit Soft Selection size"),
+         1ull << 11},
+        {"Add or edit Bind positions",
+         embeddedTranslationForContext(language, kContext, "Add or edit Bind positions"),
+         1ull << 12},
+#endif
     };
     const auto fontFamily = cavalry_bilingual::settings().zhFont.toUtf8();
     const auto englishFamily = cavalry_bilingual::settings().enFont.toUtf8();
@@ -211,6 +239,9 @@ void configureMacToolHelpTextPathFromEnvironment()
         language, translations, sizeof(translations) / sizeof(translations[0]), fontFamily.constData(), englishFamily.constData());
     constexpr const char *kViewportSources[] = {
         "Active Camera: Layer Tools Disabled.",
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        "Viewport Quality: Full",
+#endif
         "Viewport Quality: High", "Viewport Quality: Balanced",
         "Viewport Quality: Low", "Viewport Quality: Lowest",
         "Insert Keyframe", "Direct Layer Selection", "Play/ Stop", "Pan", "Enable Snapping",
@@ -220,6 +251,18 @@ void configureMacToolHelpTextPathFromEnvironment()
         hints[index] = {kViewportSources[index], embeddedTranslationForContext(language, "MenuBarManager", kViewportSources[index])};
     }
     cavalry_i18n::configureMacViewportHints(hints, sizeof(hints) / sizeof(hints[0]));
+}
+
+void retryMacToolHelpTextPathConfiguration() noexcept
+{
+    static std::atomic<bool> inProgress{false};
+    bool expected = false;
+    if (!inProgress.compare_exchange_strong(
+            expected, true, std::memory_order_acq_rel, std::memory_order_acquire)) {
+        return;
+    }
+    configureMacToolHelpTextPathFromEnvironment();
+    inProgress.store(false, std::memory_order_release);
 }
 
 QString normalizeMenuText(const QString &text);
@@ -1802,6 +1845,32 @@ id serializeWidget(QWidget *widget)
     payload[@"className"] = [NSString stringWithUTF8String:widget->metaObject()->className()];
     payload[@"geometry"] = widgetGlobalGeometry(widget);
     payload[@"parentChain"] = widgetParentChain(widget);
+    if (hasObjectOrAncestorClass(widget, "PreferencesWindow") ||
+        hasObjectOrAncestorClass(widget, "PopOverView")) {
+        const auto hint = widget->sizeHint();
+        payload[@"layoutBounds"] = @{
+            @"minimumWidth": @(widget->minimumWidth()), @"maximumWidth": @(widget->maximumWidth()),
+            @"hintWidth": @(hint.width()), @"hintHeight": @(hint.height()),
+        };
+        if (auto *combo = qobject_cast<QComboBox *>(widget);
+            combo && hasObjectOrAncestorClass(widget, "PreferencesWindow") && !combo->isEditable()) {
+            NSMutableArray *items = [NSMutableArray array];
+            for (int index = 0; index < combo->count(); ++index) {
+                const QVariant identity = combo->itemData(index, Qt::UserRole);
+                [items addObject:@{ @"text": toNSString(combo->itemText(index)),
+                                    @"integerIdentity": identity.metaType().id() == QMetaType::Int ? @(identity.toInt()) : [NSNull null] }];
+            }
+            payload[@"settingsItems"] = items;
+            NSMutableArray *rowLabels = [NSMutableArray array];
+            if (combo->parentWidget()) for (auto *label : combo->parentWidget()->findChildren<QLabel *>(QString(), Qt::FindDirectChildrenOnly))
+                [rowLabels addObject:toNSString(label->text())];
+            payload[@"settingsMatch"] = @{ @"vendorVerified": @(cavalry_i18n::macVendorContractVerified()),
+                @"rowLabels": rowLabels, @"firstRoleValid": @(combo->itemData(0, Qt::UserRole).isValid()),
+                @"firstRoleType": @(combo->itemData(0, Qt::UserRole).metaType().id()),
+                @"offTranslation": toNSString(exactInstalledTranslation("BilingualPreferences", "Off")) };
+            payload[@"currentIndex"] = @(combo->currentIndex());
+        }
+    }
     if (!widget->objectName().isEmpty()) {
         payload[@"objectName"] = toNSString(widget->objectName());
     }
@@ -3158,7 +3227,13 @@ void translateQtWidgetTexts(QWidget *widget, const QString &lang, QSet<QAction *
     }
 
     translateQtWidgetActions(widget, lang, seenActions);
+    const auto settingsTranslation = [](const char *context, const char *source) {
+        return exactInstalledTranslation(context, source);
+    };
+    cavalry_bilingual::translateAutosaveFolderOff(qobject_cast<QComboBox *>(widget), settingsTranslation,
+        cavalry_i18n::macVendorContractVerified());
     cavalry_bilingual::polishWidget(widget);
+    cavalry_bilingual::scheduleSettingsLayout(widget, settingsTranslation);
 }
 
 void translateQtWidgets(const QString &lang)
@@ -3543,7 +3618,13 @@ bool installTranslator()
         gui->setFont(cavalry_bilingual::displayFont(gui->font()));
         for (auto widget : gui->allWidgets()) cavalry_bilingual::polishWidget(widget);
     }
-    configureMacToolHelpTextPathFromEnvironment();
+    retryMacToolHelpTextPathConfiguration();
+
+    if (envFlagEnabled("CAVALRY_I18N_FONT_ONLY")) {
+        fprintf(stderr, "[cavalry-i18n] font-only mode active; Qt translation disabled\n");
+        gInstallAttempted = true;
+        return true;
+    }
 
     if (gTranslator == nullptr) {
         if (!dumpOnlyEnglish) {
@@ -3654,8 +3735,10 @@ void bootstrapInjector()
                             fprintf(stderr, "[cavalry-i18n] NSApplicationDidFinishLaunching lang=%s\n",
                                     lang.toUtf8().constData());
                             scheduleInstallAttempt(0);
-                            refreshNativeMenuBar(lang);
-                            scheduleRefreshAttempts(lang);
+                            if (!envFlagEnabled("CAVALRY_I18N_FONT_ONLY")) {
+                                refreshNativeMenuBar(lang);
+                                scheduleRefreshAttempts(lang);
+                            }
                         }];
         }
     });
@@ -3667,8 +3750,10 @@ __attribute__((constructor)) static void cavalryTranslatorInjectorLoad()
 {
     // Configure exact vendor-owned UI text-path projection before the host's
     // GraphicsViewportBase::setupToolHelp caches English Skia paths. When a
-    // library/renderer is not ready yet, the configuration remains retryable
-    // from installTranslator() after QApplication is constructed.
-    configureMacToolHelpTextPathFromEnvironment();
+    // library/renderer is not ready yet, configuration is retried by
+    // installTranslator() and before the first real GetPath falls back.
+    cavalry_i18n::setMacToolHelpTextPathConfigurationRetry(
+        retryMacToolHelpTextPathConfiguration);
+    retryMacToolHelpTextPathConfiguration();
     bootstrapInjector();
 }

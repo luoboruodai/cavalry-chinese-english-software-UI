@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # [INPUT]: 依赖 Qt SDK、可选 Cavalry.app Frameworks、macOS injector 主源/Quick Add 类别、Classic 空结果与排序与 TransformTool text-path ABI 适配器及 generated_translations.inc/JSON 说明反向索引
-# [OUTPUT]: 对外构建启用 -O2/-fno-omit-frame-pointer、以 @loader_path 绑定目标 app Qt/libskia 的 universal injector dylib；干净 CI 无 vendor app 时只生成同 install-name 的临时 Skia 链接桩（包含 UI-only measureText 入口）
+# [OUTPUT]: 对外构建启用 -O2/-fno-omit-frame-pointer、以 @loader_path 绑定目标 app Qt/libskia 的 universal injector dylib；可选 2.8 arm64/x86_64 合同时链接 CoreText；干净 CI 无 vendor app 时只生成同 install-name 的临时 Skia 链接桩（包含 UI-only measureText 入口）
 # [POS]: tools 的 injector 发布构建入口，以 Qt minor、双 slice caller-frame 保留、可搬移运行时链接和稳定优化级别连接源码与 Tauri bundle resource，同时把 vendor 二进制依赖留在用户运行时
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 set -euo pipefail
@@ -217,6 +217,13 @@ if [ ! -f "$SKIA_LINK" ]; then
   create_skia_link_stub
 fi
 
+# The installed injector lives beside the host frameworks. Do not bake the
+# build/inspection app path into the artifact (especially private 2.8 probes).
+DEFINES=(-DQT_NO_VERSION_TAGGING)
+if [ "${CAVALRY_I18N_CAVALRY_280:-0}" = "1" ]; then
+  DEFINES+=(-DCAVALRY_I18N_CAVALRY_280=1)
+fi
+
 clang++ \
   -std=c++17 \
   -O2 \
@@ -224,14 +231,14 @@ clang++ \
   -ffile-prefix-map="$QT_PREFIX"=/qt-sdk \
   -ffile-prefix-map="$HOME"=/build-home \
   -fno-omit-frame-pointer \
+  -include "$REPO_ROOT/injector/cavalry_bilingual_qt_compat.h" \
   -fobjc-arc \
-  -DQT_NO_VERSION_TAGGING \
+  "${DEFINES[@]}" \
   -dynamiclib \
   -arch arm64 \
   -arch x86_64 \
   -install_name "@rpath/$(basename "$OUTPUT")" \
   -Wl,-rpath,@loader_path \
-  -Wl,-rpath,"$LINK_FRAMEWORKS" \
   "$SOURCE" \
   "$CLASSIC_RANK_SOURCE" \
   "$PLACEHOLDER_SOURCE" \
@@ -247,7 +254,8 @@ clang++ \
   -framework QtGui \
   -framework QtWidgets \
   -framework Foundation \
-  -framework AppKit
+  -framework AppKit \
+  -framework CoreText
 
 if ! /usr/bin/otool -L "$OUTPUT" | grep -Fq $'@rpath/libskia.dylib'; then
   echo "FATAL: injector is not linked against the runtime @rpath/libskia.dylib identity." >&2

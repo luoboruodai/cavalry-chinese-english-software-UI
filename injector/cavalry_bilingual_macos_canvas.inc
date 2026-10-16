@@ -1,5 +1,5 @@
-// Included by the macOS private-ABI firewall. Seven UI drawing callsites only.
-// Shared run planning also keeps the separately guarded Lina elision metrics in sync.
+// Included by the macOS private-ABI firewall. Approved UI drawing callsites only.
+// Shared run planning also keeps separately guarded measurement and elision in sync.
 #include <algorithm>
 namespace {
 using DrawSimpleTextFunction = void (*)(void *, const void *, std::size_t, int, float, float, const void *, const void *);
@@ -12,11 +12,44 @@ struct CanvasTextState {
     FontGlyphFunction glyph = nullptr;
     SkFontAbi *chinese = nullptr, *english = nullptr, *fallback = nullptr;
     std::atomic<std::uint64_t> matched{0}, rendered{0}, fallbackCalls{0};
+    std::atomic<std::uint64_t> measureMatched{0}, measured{0}, measureFallbackCalls{0};
 };
 CanvasTextState gCanvasText;
 thread_local bool canvasTextRecursion = false;
 struct CanvasCallsite { std::uintptr_t offset; std::array<std::uint8_t, 5> bytes; };
-#if defined(__arm64__)
+#if defined(__arm64__) && defined(CAVALRY_I18N_CAVALRY_280)
+constexpr std::size_t kCanvasCallBytes = 4;
+constexpr CanvasCallsite kCanvasCallsites[] = {
+    {0x4827e8, {0x99,0xfb,0x24,0x94}}, // lina::Drawable UI text
+    {0x482828, {0x89,0xfb,0x24,0x94}},
+    {0x5781d0, {0x1f,0x25,0x21,0x94}}, // connection-view label
+    {0x5dcda8, {0x29,0x92,0x1f,0x94}}, // time-editor user names
+    {0x5dda44, {0x02,0x8f,0x1f,0x94}},
+    {0x5de958, {0x3d,0x8b,0x1f,0x94}},
+    {0x5deb30, {0xc7,0x8a,0x1f,0x94}},
+    {0xbfb598, {0x2d,0x18,0x07,0x94}}, // tracking hint; paired with exact measure caller
+};
+constexpr std::size_t kCanvasMeasureCallsiteCount = 1;
+constexpr CanvasCallsite kCanvasMeasureCallsites[] = {
+    {0xbfb53c, {0x98,0x21,0x07,0x94}},
+};
+#elif defined(__x86_64__) && defined(CAVALRY_I18N_CAVALRY_280)
+constexpr std::size_t kCanvasCallBytes = 5;
+constexpr CanvasCallsite kCanvasCallsites[] = {
+    {0x502003, {0xe8,0x31,0x15,0xa4,0x00}}, // lina::Drawable UI text
+    {0x50204f, {0xe8,0xe5,0x14,0xa4,0x00}},
+    {0x6134c0, {0xe8,0x74,0x00,0x93,0x00}}, // connection-view label
+    {0x6892d2, {0xe8,0x62,0xa2,0x8b,0x00}}, // time-editor user names
+    {0x68a25b, {0xe8,0xd9,0x92,0x8b,0x00}},
+    {0x68b652, {0xe8,0xe2,0x7e,0x8b,0x00}},
+    {0x68b8f1, {0xe8,0x43,0x7c,0x8b,0x00}},
+    {0xd5c9b6, {0xe8,0x7e,0x6b,0x1e,0x00}}, // tracking hint; paired with exact measure caller
+};
+constexpr std::size_t kCanvasMeasureCallsiteCount = 1;
+constexpr CanvasCallsite kCanvasMeasureCallsites[] = {
+    {0xd5c919, {0xe8,0xc3,0x7e,0x1e,0x00}},
+};
+#elif defined(__arm64__)
 constexpr std::size_t kCanvasCallBytes = 4;
 constexpr CanvasCallsite kCanvasCallsites[] = {
     {0x368ca0, {0x45,0xf8,0x20,0x94}}, // lina::Drawable UI text
@@ -27,6 +60,8 @@ constexpr CanvasCallsite kCanvasCallsites[] = {
     {0x49be88, {0xcb,0x2b,0x1c,0x94}},
     {0x49c078, {0x4f,0x2b,0x1c,0x94}},
 };
+constexpr std::size_t kCanvasMeasureCallsiteCount = 0;
+constexpr CanvasCallsite kCanvasMeasureCallsites[] = {{0, {0x00,0x00,0x00,0x00,0x00}}};
 #elif defined(__x86_64__)
 constexpr std::size_t kCanvasCallBytes = 5;
 constexpr CanvasCallsite kCanvasCallsites[] = {
@@ -38,6 +73,8 @@ constexpr CanvasCallsite kCanvasCallsites[] = {
     {0x527243, {0xe8,0x73,0x96,0x80,0x00}},
     {0x5274f4, {0xe8,0xc2,0x93,0x80,0x00}},
 };
+constexpr std::size_t kCanvasMeasureCallsiteCount = 0;
+constexpr CanvasCallsite kCanvasMeasureCallsites[] = {{0, {0x00,0x00,0x00,0x00,0x00}}};
 #endif
 DrawSimpleTextFunction originalCanvasText() noexcept {
     auto original = gCanvasText.original.load(std::memory_order_acquire);
@@ -52,9 +89,23 @@ DrawSimpleTextFunction originalCanvasText() noexcept {
 }
 SkFontAbi *makeCanvasFont(const char *family) noexcept {
     if (!family || !family[0]) return nullptr;
-    auto makeTypeface = reinterpret_cast<MakeTypefaceFunction>(imageAddress(gState.skiaImage, kMakeTypefaceOffset));
     auto makeFont = reinterpret_cast<MakeScalableFontFunction>(imageAddress(gState.coreImage, kMakeScalableFontOffset));
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    auto makeTypeface = reinterpret_cast<MakeTypefaceFromCTFontFunction>(
+        imageAddress(gState.skiaImage, kMakeTypefaceFromCTFontOffset));
+    CFStringRef familyRef = CFStringCreateWithCString(
+        kCFAllocatorDefault, family, kCFStringEncodingUTF8);
+    CTFontRef ctFont = familyRef != nullptr
+        ? CTFontCreateWithName(familyRef, 1.0, nullptr)
+        : nullptr;
+    if (familyRef != nullptr) CFRelease(familyRef);
+    if (ctFont == nullptr) return nullptr;
+    auto typeface = makeTypeface(ctFont);
+    CFRelease(ctFont);
+#else
+    auto makeTypeface = reinterpret_cast<MakeTypefaceFunction>(imageAddress(gState.skiaImage, kMakeTypefaceOffset));
     auto typeface = makeTypeface(family, kNormalSkFontStyle);
+#endif
     if (!typeface.pointer) return nullptr;
     auto font = makeFont(std::move(typeface), 1.0f);
     return new (std::nothrow) SkFontAbi(std::move(font)); // process-lifetime fonts, not per-frame allocations
@@ -62,6 +113,11 @@ SkFontAbi *makeCanvasFont(const char *family) noexcept {
 void configureCanvasText(const char *zh, const char *en) noexcept {
     if (!gState.vendorContractVerified.load(std::memory_order_acquire) || gCanvasText.ready.load()) return;
     for (const auto &site : kCanvasCallsites) {
+        const auto *bytes = static_cast<const std::uint8_t *>(imageAddress(gState.extensionImage, site.offset));
+        if (std::memcmp(bytes, site.bytes.data(), kCanvasCallBytes) != 0) return;
+    }
+    for (std::size_t i = 0; i < kCanvasMeasureCallsiteCount; ++i) {
+        const auto &site = kCanvasMeasureCallsites[i];
         const auto *bytes = static_cast<const std::uint8_t *>(imageAddress(gState.extensionImage, site.offset));
         if (std::memcmp(bytes, site.bytes.data(), kCanvasCallBytes) != 0) return;
     }
@@ -80,6 +136,11 @@ void configureCanvasText(const char *zh, const char *en) noexcept {
 bool approvedCanvasCaller(void *caller) noexcept {
     for (const auto &site : kCanvasCallsites)
         if (caller == imageAddress(gState.extensionImage, site.offset + kCanvasCallBytes)) return true;
+    return false;
+}
+bool approvedCanvasMeasureCaller(void *caller) noexcept {
+    for (std::size_t i = 0; i < kCanvasMeasureCallsiteCount; ++i)
+        if (caller == imageAddress(gState.extensionImage, kCanvasMeasureCallsites[i].offset + kCanvasCallBytes)) return true;
     return false;
 }
 void copyCanvasFont(SkFontAbi &out, const void *original, const SkFontAbi *family) noexcept {
@@ -158,6 +219,21 @@ bool measureCanvasRuns(const char *text, std::size_t size, const void *font, con
     advance=cursor; bounds=combined;
     return true;
 }
+bool measureCanvasTextForCaller(void *caller, const void *font, const char *text, std::size_t size,
+                                int encoding, const void *paint, float &advance, CanvasInkBounds &bounds) {
+    if (!approvedCanvasMeasureCaller(caller)) return false;
+    gCanvasText.measureMatched.fetch_add(1,std::memory_order_relaxed);
+    if (encoding!=0 || !font || !text || size==0 || size>8192) {
+        gCanvasText.measureFallbackCalls.fetch_add(1,std::memory_order_relaxed);
+        return false;
+    }
+    if (!measureCanvasRuns(text,size,font,paint,advance,bounds)) {
+        gCanvasText.measureFallbackCalls.fetch_add(1,std::memory_order_relaxed);
+        return false;
+    }
+    gCanvasText.measured.fetch_add(1,std::memory_order_relaxed);
+    return true;
+}
 bool paintCanvasRuns(DrawSimpleTextFunction original, void *canvas, const char *text, std::size_t size,
                      float x, float y, const void *font, const void *paint) {
     if (!std::isfinite(x) || !std::isfinite(y)) return false;
@@ -198,4 +274,8 @@ kBilingualCanvasInterpose __attribute__((section("__DATA,__interpose"))) = {
 extern "C" bool cavalry_bilingual_canvas_diagnostics_v1(std::uint64_t *out, std::size_t count) noexcept {
     if (!out || count!=4) return false;
     out[0]=gCanvasText.ready.load(); out[1]=gCanvasText.matched.load(); out[2]=gCanvasText.rendered.load(); out[3]=gCanvasText.fallbackCalls.load(); return true;
+}
+extern "C" bool cavalry_bilingual_canvas_measure_diagnostics_v1(std::uint64_t *out, std::size_t count) noexcept {
+    if (!out || count!=4) return false;
+    out[0]=gCanvasText.ready.load(); out[1]=gCanvasText.measureMatched.load(); out[2]=gCanvasText.measured.load(); out[3]=gCanvasText.measureFallbackCalls.load(); return true;
 }

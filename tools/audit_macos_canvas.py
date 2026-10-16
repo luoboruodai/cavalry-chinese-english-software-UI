@@ -67,12 +67,30 @@ def verify_viewport_names(image, branch, arch):
     if hashlib.sha256(tampered).hexdigest()==digest:raise ValueError('unexpected tamper match')
     return {**counts,'viewportNameProducerDigestVerified':True,'viewportNameTamperRejected':True}
 
+def legacy_branches(text):
+    marker='#elif defined(__arm64__)'
+    if marker in text:
+        text=text.split(marker,1)[1]
+    else:
+        text=text.split('#if defined(__arm64__)',1)[1]
+    branches=text.split('#endif',1)[0].split('#elif defined(__x86_64__)')
+    if len(branches)!=2:raise ValueError('expected two legacy architecture branches')
+    return branches
+
+def legacy_extension_uuids(contract):
+    values=[]
+    for branch in legacy_branches(contract):
+        match=re.search(r'constexpr char kExtensionUuid\[\] = "([A-F0-9-]+)"',branch)
+        if not match:raise ValueError('missing legacy ExtensionLayer UUID')
+        values.append(match.group(1))
+    return values
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--app',required=True);args=parser.parse_args()
     code=(ROOT/'injector/cavalry_bilingual_macos_canvas.inc').read_text()
     contract=(ROOT/'injector/cavalry_i18n_macos_tool_help_text_path.cpp').read_text()
-    expected=re.findall(r'constexpr char kExtensionUuid\[\] = "([A-F0-9-]+)"',contract)
-    branch=code.split('#if defined(__arm64__)')[1].split('#endif')[0].split('#elif defined(__x86_64__)')
+    expected=legacy_extension_uuids(contract)
+    branch=legacy_branches(code)
     data=slices((pathlib.Path(args.app)/'Contents/Frameworks/libExtensionLayer.dylib').read_bytes())
     report=[]
     for i,(arch,cpu) in enumerate(CPUS.items()):
@@ -84,7 +102,7 @@ def main():
             assert got==want, f'{arch}: callsite mismatch at {offset}'
             tampered=bytes([got[0]^1])+got[1:];assert tampered!=want
         report.append({'arch':arch,'uuidMatched':True,'uiCallsitesVerified':len(sites),'tamperRejected':True})
-    viewport=(ROOT/'injector/cavalry_bilingual_macos_viewport.inc').read_text().split('#if defined(__arm64__)')[1].split('#endif')[0].split('#elif defined(__x86_64__)')
+    viewport=legacy_branches((ROOT/'injector/cavalry_bilingual_macos_viewport.inc').read_text())
     for i,(arch,cpu) in enumerate(CPUS.items()):
         image=data[cpu]
         sites=re.findall(r'\{(0x[0-9a-f]+),\s*\{([^}]+)\}\}',viewport[i])
@@ -92,10 +110,10 @@ def main():
         for offset,encoded in sites:
             at=int(offset,16);want=bytes(int(x.strip(),16) for x in encoded.split(','));assert image[at:at+len(want)]==want, f'{arch} viewport callsite drift at {offset}'
         report[i]['viewportPathCallsitesVerified']=len(sites)
-    graph=(ROOT/'injector/cavalry_bilingual_macos_graph_measure.inc').read_text().split('#if defined(__arm64__)')[1].split('#endif')[0].split('#elif defined(__x86_64__)')
+    graph=legacy_branches((ROOT/'injector/cavalry_bilingual_macos_graph_measure.inc').read_text())
     for i,(arch,cpu) in enumerate(CPUS.items()):
         report[i].update(verify_graph_elision(data[cpu], graph[i], arch))
-    names=(ROOT/'injector/cavalry_bilingual_macos_viewport_names.inc').read_text().split('#if defined(__arm64__)')[1].split('#endif')[0].split('#elif defined(__x86_64__)')
+    names=legacy_branches((ROOT/'injector/cavalry_bilingual_macos_viewport_names.inc').read_text())
     for i,(arch,cpu) in enumerate(CPUS.items()):
         report[i].update(verify_viewport_names(data[cpu],names[i],arch))
     print(json.dumps({'scope':'static binary contract, not a host rendering test','results':report},indent=2))

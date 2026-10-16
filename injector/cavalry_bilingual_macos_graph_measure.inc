@@ -12,7 +12,25 @@ struct GraphMeasureState {
 };
 GraphMeasureState gGraphMeasure;
 thread_local bool graphMeasureRecursion=false;
-#if defined(__arm64__)
+#if defined(__arm64__) && defined(CAVALRY_I18N_CAVALRY_280)
+constexpr std::uintptr_t kGraphElideOffset=0x567054;
+constexpr std::size_t kGraphElideSize=0x598;
+constexpr char kGraphElideSha256[]="10c6c15586bb43e1f0a1a52d4216af08c87dd9959e31095753ace67bc0487d89";
+constexpr CanvasCallsite kGraphMeasureCallsites[] = {
+    {0x5670ec, {0xac,0x72,0x21,0x94}}, // full text; bounds.right-left is consumed
+    {0x567134, {0x9a,0x72,0x21,0x94}}, // ASCII ellipsis
+    {0x5673c0, {0xf7,0x71,0x21,0x94}}, // byte-pop candidate + ellipsis
+};
+#elif defined(__x86_64__) && defined(CAVALRY_I18N_CAVALRY_280)
+constexpr std::uintptr_t kGraphElideOffset=0x5ffda0;
+constexpr std::size_t kGraphElideSize=0x640;
+constexpr char kGraphElideSha256[]="e579f62451d9dac915aed7843b64923eda412c2eb5d4e1878dcec3186c802be4";
+constexpr CanvasCallsite kGraphMeasureCallsites[] = {
+    {0x5ffe60, {0xe8,0x7c,0x49,0x94,0x00}},
+    {0x5ffeb1, {0xe8,0x2b,0x49,0x94,0x00}},
+    {0x6001e5, {0xe8,0xf7,0x45,0x94,0x00}},
+};
+#elif defined(__arm64__)
 constexpr std::uintptr_t kGraphElideOffset=0x433e04;
 constexpr std::size_t kGraphElideSize=0x598;
 constexpr char kGraphElideSha256[]="c4ac15fc0bfa9ae71cefd0e4b65fd6683e47b57c6e91543b2a24573058913e64";
@@ -91,18 +109,21 @@ extern "C" __attribute__((noinline)) float cavalryBilingualMeasureGraphText(cons
     const void *text, std::size_t size, int encoding, void *bounds, const void *paint) noexcept {
     const auto original=originalGraphMeasure();
     if (!original) { if (bounds) std::memset(bounds,0,sizeof(CanvasInkBounds)); return 0; }
-    if (!graphMeasureRecursion && (gGraphMeasure.ready.load(std::memory_order_acquire) || gViewportName.ready.load(std::memory_order_acquire)) && bounds) {
+    if (!graphMeasureRecursion && (gGraphMeasure.ready.load(std::memory_order_acquire) ||
+        gViewportName.ready.load(std::memory_order_acquire) || gCanvasText.ready.load(std::memory_order_acquire))) {
         graphMeasureRecursion=true;
         float advance=0; CanvasInkBounds ink{}; bool handled=false;
         void *caller=__builtin_extract_return_addr(__builtin_return_address(0));
         try {
             if (gGraphMeasure.ready.load(std::memory_order_acquire))
                 handled=measureGraphTextForCaller(caller,font,static_cast<const char *>(text),size,encoding,paint,advance,ink);
+            if (!handled && gCanvasText.ready.load(std::memory_order_acquire))
+                handled=measureCanvasTextForCaller(caller,font,static_cast<const char *>(text),size,encoding,paint,advance,ink);
             if (!handled)
                 handled=measureViewportNameForCaller(caller,font,static_cast<const char *>(text),size,encoding,paint,advance,ink);
         } catch (...) { handled=false; }
         graphMeasureRecursion=false;
-        if (handled) { std::memcpy(bounds,&ink,sizeof(ink)); return advance; }
+        if (handled) { if (bounds) std::memcpy(bounds,&ink,sizeof(ink)); return advance; }
         // Only count a reviewed caller's fallback, not unrelated scene rendering.
         if (graphMeasureCallerIndex(__builtin_extract_return_addr(__builtin_return_address(0)))>=0)
             gGraphMeasure.fallbackCalls.fetch_add(1,std::memory_order_relaxed);

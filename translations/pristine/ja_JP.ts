@@ -424,6 +424,14 @@
   </context>
   <context>
     <name>MenuBarManager</name>
+    <message><source>MCP Server Port</source><translation>MCPサーバーのポート</translation></message>
+    <message><source>Enable MCP Server</source><translation>MCPサーバーを有効化</translation></message>
+    <message><source>MCP Server</source><translation>MCPサーバー</translation></message>
+    <message><source>Video Cache Size (MB)</source><translation>動画キャッシュサイズ（MB）</translation></message>
+    <message><source>Retime Composition</source><translation>コンポジションのリタイム</translation></message>
+    <message><source>AI Studio</source><translation>AIスタジオ</translation></message>
+    <message><source>Preferences...</source><translation>環境設定...</translation></message>
+    <message><source>Share anonymised usage data</source><translation>匿名の使用状況データを共有</translation></message>
     <message>
       <source>File</source>
       <translation>ファイル</translation>
@@ -849,6 +857,7 @@
       <translation>ビューポート品質</translation>
     </message>
     <message><source>Viewport/Rendering</source><translation>ビューポート／レンダリング</translation></message>
+    <message><source>Viewport/ Rendering</source><translation>ビューポート／レンダリング</translation></message>
     <message><source>Use Absolute Bézier Positions</source><translation>絶対 Bézier 位置を使用</translation></message>
     <message>
       <source>High</source>
@@ -2468,7 +2477,7 @@
     <message><source>IM Used</source><translation>補間モード使用済み</translation></message>
     <message><source>Image cache is empty</source><translation>画像キャッシュは空です</translation></message>
     <message><source>Image cache is empty.</source><translation>画像キャッシュは空です。</translation></message>
-    <message><source>Image Cache Size (MB)</source><translation>画像キャッシュサイズ(メガバイト)</translation></message>
+    <message><source>Image Cache Size (MB)</source><translation>画像キャッシュサイズ（MB）</translation></message>
     <message><source>Image Folder</source><translation>画像フォルダ</translation></message>
     <message><source>Image Sequences must each be placed in separate folders to be detected by the Image Smart Folder</source><translation>画像シーケンスは、それぞれ別のフォルダに配置され、画像スマートフォルダによって検出される必要があります</translation></message>
     <message><source>Image Sequences must each be placed in separate folders to be detected by the Image Smart Folder.</source><translation>画像シーケンスは、それぞれ別のフォルダに配置され、画像スマートフォルダによって検出される必要があります。</translation></message>
@@ -2568,7 +2577,7 @@
     <message><source>KKKK KLMSO</source><translation>内部識別壬</translation></message>
     <message><source>Label Palette Options</source><translation>ラベルパレットオプション</translation></message>
     <message><source>Labels</source><translation>ラベル</translation></message>
-    <message><source>Large</source><translation>大きいサイズ</translation></message>
+    <message><source>Large</source><translation>大</translation></message>
     <message><source>Large Previews</source><translation>大型プレビュー</translation></message>
     <message><source>Large Previews in the Attribute Editor</source><translation>属性エディターで大きなプレビューを表示</translation></message>
     <message><source>Lato</source><translation>ラト</translation></message>
@@ -2649,7 +2658,7 @@
     <message><source>Lyixk</source><translation>ログイン</translation></message>
     <message><source>Magic Easing removed</source><translation>削除されたマジックイーシング</translation></message>
     <message><source>Magic Easing removed.</source><translation>マジック・エイジングが削除されました。</translation></message>
-    <message><source>Maintain Proportional Easing</source><translation>比例したイーシングを維持</translation></message>
+    <message><source>Maintain Proportional Easing</source><translation>イージングの比率を維持</translation></message>
     <message><source>Major Line Color</source><translation>主要なライン色</translation></message>
     <message><source>Make Dynamic (Pro)</source><translation>動的にする(プロ版)</translation></message>
     <message><source>Make Harmonic</source><translation>ハーモニックを作る</translation></message>
@@ -2684,7 +2693,7 @@
     <message><source>Middle Align</source><translation>ミドルアライナー</translation></message>
     <message><source>Midlight</source><translation>ミッドライト</translation></message>
     <message><source>MIME Type</source><translation>メディア種別</translation></message>
-    <message><source>Minimise Cache</source><translation>ミニミスキャッシュ</translation></message>
+    <message><source>Minimise Cache</source><translation>キャッシュを縮小</translation></message>
     <message><source>Minor Line Color</source><translation>マイナーライン色</translation></message>
     <message><source>Misdirected Request</source><translation>指示された要求</translation></message>
     <message><source>mismatched tag</source><translation>ミスマッチタグ</translation></message>
@@ -2818,7 +2827,7 @@
     <message><source>Nothing</source><translation>コメントはありません。</translation></message>
     <message><source>Nothing selected to Ungroup</source><translation>グループ解除する対象が選択されていません</translation></message>
     <message><source>Nudge Frame</source><translation>ナッジフレーム</translation></message>
-    <message><source>Nudge Step</source><translation>ナッジステップ</translation></message>
+    <message><source>Nudge Step</source><translation>ナッジ移動量</translation></message>
     <message><source>Nudge Value</source><translation>ナッジ値</translation></message>
     <message><source>null literal</source><translation>空字面量</translation></message>
     <message><source>number is too big</source><translation>数が大きい</translation></message>
@@ -3028,7 +3037,7 @@
     <message><source>Presets require a name</source><translation>プリセットには名前が必要です</translation></message>
     <message><source>Presets require a name.</source><translation>プリセットには名前が必要です。</translation></message>
     <message><source>Pressing Return in an Attribute Field</source><translation>属性フィールドでリターンキーを押す</translation></message>
-    <message><source>Pretty</source><translation>プリティ</translation></message>
+    <message><source>Pretty</source><translation>整形</translation></message>
     <message><source>Preview Compositions in the Assets Window</source><translation>アセットウィンドウでコンポジションをプレビュー</translation></message>
     <message><source>Previous</source><translation>前へ</translation></message>
     <message><source>Print all affected attributes</source><translation>すべての影響を受ける属性を印刷する</translation></message>
@@ -3082,7 +3091,7 @@
     <message><source>Reload</source><translation>リロード</translation></message>
     <message><source>Reload the current Shape</source><translation>現在のシェイプを再読み込み</translation></message>
     <message><source>Reload the current Shape.</source><translation>現在のシェイプを再読み込みします。</translation></message>
-    <message><source>Remember Graph Editor Curve Framing</source><translation>グラフエディタカーブフラミングを忘れないでください</translation></message>
+    <message><source>Remember Graph Editor Curve Framing</source><translation>グラフエディタの表示範囲を記憶</translation></message>
     <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with</source><translation>これを使用する各シェイプのモーションブラーを「フル」に設定してください</translation></message>
     <message><source>Remember to set motion blur to &apos;Full&apos; for each shape you wish to use this with.</source><translation>これを使用する各シェイプのモーションブラーを「フル」に設定してください。</translation></message>
     <message><source>Reminders</source><translation>リマインダー</translation></message>
@@ -3125,7 +3134,7 @@
     <message><source>Render Item</source><translation>レンダリング項目</translation></message>
     <message><source>Render LH</source><translation>左ハンドルをレンダー</translation></message>
     <message><source>Render Log</source><translation>レンダーログ</translation></message>
-    <message><source>Render Notifications</source><translation>レンダー通知</translation></message>
+    <message><source>Render Notifications</source><translation>レンダリング通知</translation></message>
     <message><source>Render Queue closed: Background Renders will continue, but no progress will be reported</source><translation>レンダーキューが閉じられました: バックグラウンドレンダーは続行されますが、進行状況は報告されません</translation></message>
     <message><source>Render Queue closed: Background Renders will continue, but no progress will be reported.</source><translation>レンダーキューが閉じられました: バックグラウンドレンダーは続行されますが、進行状況は報告されません。</translation></message>
     <message><source>Render Queue Items cannot be grouped</source><translation>レンダーキュー項目はグループ化できません</translation></message>
@@ -3399,7 +3408,7 @@
     <message><source>Show Drawables</source><translation>描画対象を表示</translation></message>
     <message><source>Show Experimental Features</source><translation>実験的な機能を表示する</translation></message>
     <message><source>Show Experimental Features (Pro)</source><translation>実験的機能を表示(プロ版)</translation></message>
-    <message><source>Show Feedback button in Message Bar</source><translation>メッセージバーのフィードバックボタンを表示する</translation></message>
+    <message><source>Show Feedback button in Message Bar</source><translation>メッセージバーにフィードバックボタンを表示</translation></message>
     <message><source>Show FPS in Playback</source><translation>再生時にフレームレートを表示</translation></message>
     <message><source>Show Frames</source><translation>ショーフレーム</translation></message>
     <message><source>Show Grid</source><translation>ディスプレイグリッド</translation></message>
@@ -3410,7 +3419,7 @@
     <message><source>Show Path</source><translation>パスを表示</translation></message>
     <message><source>Show Seconds</source><translation>ショーセカンド</translation></message>
     <message><source>Show Selected</source><translation>選択されたショー</translation></message>
-    <message><source>Show Tips button in Message Bar</source><translation>メッセージバーにヒントボタンを表示する</translation></message>
+    <message><source>Show Tips button in Message Bar</source><translation>メッセージバーにヒントボタンを表示</translation></message>
     <message><source>Show Viewport Timecode</source><translation>ビューポートタイムコードを表示</translation></message>
     <message><source>Showing All Snapshots</source><translation>すべてのスナップショットを表示</translation></message>
     <message><source>Showing Snapshot</source><translation>スナップショットを表示する</translation></message>
@@ -8663,7 +8672,22 @@
     <message><source xml:space="preserve">Pitch Radius: </source><translation xml:space="preserve">ピッチ半径： </translation></message>
   </context>
   <context>
-    <name>MessageBar</name>
+    <name>MenuBarManager</name>
     <message><source>Pencil Tool: You're drawing too far away from the camera, try drawing in 2d.</source><translation>鉛筆ツール：カメラから離れすぎのため2Dで描画してください</translation></message>
+    <message><source>Use the Create menu to add a Layer to the active Composition.</source><translation>コンポジションにレイヤーを追加します。</translation></message>
+    <message><source>Enter a Layer name</source><translation>レイヤー名を入力</translation></message>
+    <message><source>Manipulator: </source><translation>マニピュレータ:</translation></message>
+    <message><source>Snap Angle </source><translation>スナップ角度</translation></message>
+    <message><source>Snap Angle: </source><translation>スナップ角度:</translation></message>
+    <message><source>Pivot</source><translation>ピボット</translation></message>
+    <message><source>S + click Motion Path</source><translation>S + モーションパスをクリック</translation></message>
+    <message><source>Viewport Quality: Full</source><translation>ビューポート品質：フル</translation></message>
+    <message><source>Viewport Quality: No Anti-aliasing</source><translation>ビューポート品質：アンチエイリアスなし</translation></message>
+    <message><source>Viewport Quality: No Anti-aliasing, Shaders or Filters</source><translation>ビューポート品質：アンチエイリアス、シェーダー、フィルターなし</translation></message>
   </context>
+
+<context>
+  <name>BilingualPreferences</name>
+  <message><source>Off</source><translation>オフ</translation></message>
+</context>
 </TS>

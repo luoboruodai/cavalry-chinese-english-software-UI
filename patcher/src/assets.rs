@@ -1,4 +1,5 @@
-//! Display-only node strings. Match by immutable nodeType; never replace node IDs, attribute keys or definitions.
+//! Project display-only titles from pristine/model_display_translations.json onto matched vendor nodeStrings.
+//! Raw catalog niceName stays English; match immutable nodeType + schema, never scene names, IDs or keys.
 use crate::{config::Settings, error::msg, Result};
 use serde_json::Value;
 use std::{
@@ -8,6 +9,7 @@ use std::{
 };
 const EN: &str = include_str!("../../languages/en/nodeStrings.json");
 const ZH: &str = include_str!("../../languages/zh-Hans/nodeStrings.json");
+const DISPLAY_TITLES: &str = include_str!("../../translations/pristine/model_display_translations.json");
 const FIELDS: &[&str] = &[
     "niceName",
     "nodeInfo",
@@ -71,6 +73,50 @@ fn index(value: &Value) -> Result<HashMap<String, Value>> {
     }
     Ok(out)
 }
+// The vendor nodeStrings file is a UI catalog, not a user scene. Keep this
+// projection separate from raw language identities and from arbitrary niceName fields.
+fn project_display_titles(
+    english: &HashMap<String, Value>,
+    chinese: &mut HashMap<String, Value>,
+    raw_titles: &str,
+) -> Result<()> {
+    let data: Value = serde_json::from_str(raw_titles).map_err(|e| msg(e.to_string()))?;
+    let entries = data["entries"]
+        .as_array()
+        .ok_or_else(|| msg("模型展示词典缺少 entries"))?;
+    let mut titles = HashMap::new();
+    for entry in entries {
+        let source = entry["source"]
+            .as_str()
+            .filter(|s| !s.is_empty())
+            .ok_or_else(|| msg("模型展示词典缺少 source"))?;
+        let title = entry["zh-Hans"]
+            .as_str()
+            .filter(|s| has_cjk(s))
+            .ok_or_else(|| msg("模型展示词典缺少中文标题"))?;
+        if titles.insert(source, title).is_some() {
+            return Err(msg("模型展示词典的 source 重复，不猜测覆盖顺序"));
+        }
+    }
+    for (key, en) in english {
+        let Some(source) = en.get("niceName").and_then(Value::as_str) else {
+            continue;
+        };
+        let Some(zh) = chinese.get_mut(key) else {
+            continue;
+        };
+        if zh.get("niceName").and_then(Value::as_str) != Some(source) {
+            return Err(msg(
+                "原始语言包 niceName 必须保留英文；译名应放入模型展示词典",
+            ));
+        }
+        if let Some(title) = titles.get(source) {
+            zh["niceName"] = Value::String((*title).to_owned());
+        }
+    }
+    Ok(())
+}
+
 fn format(pattern: &str, en: &str, zh: &str) -> String {
     let mut out = String::new();
     let mut at = 0;
@@ -192,7 +238,8 @@ pub fn compose(input: &[u8], settings: &Settings, previous: &Settings) -> Result
     let english: Value = serde_json::from_str(EN).map_err(|e| msg(e.to_string()))?;
     let chinese: Value = serde_json::from_str(ZH).map_err(|e| msg(e.to_string()))?;
     let english = index(&english)?;
-    let chinese = index(&chinese)?;
+    let mut chinese = index(&chinese)?;
+    project_display_titles(&english, &mut chinese, DISPLAY_TITLES)?;
     let mut current: Value =
         serde_json::from_slice(input).map_err(|_| msg("宿主 nodeStrings 不是合法 JSON"))?;
     index(&current)?; // validate ownership and duplicate identities before mutation
@@ -276,6 +323,67 @@ pub fn prepare(app: &Path, settings: &Settings) -> Result<(Vec<u8>, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn raw_catalog_names_are_identities_but_all_display_titles_remain_bilingual() {
+        let english = index(&serde_json::from_str(EN).unwrap()).unwrap();
+        let chinese = index(&serde_json::from_str(ZH).unwrap()).unwrap();
+        for (key, en) in &english {
+            assert_eq!(en.get("niceName"), chinese[key].get("niceName"));
+        }
+        let (result, _) =
+            compose(EN.as_bytes(), &Settings::default(), &Settings::default()).unwrap();
+        let displayed = index(&serde_json::from_slice(&result).unwrap()).unwrap();
+        let titles: Value = serde_json::from_str(DISPLAY_TITLES).unwrap();
+        let entries = titles["entries"].as_array().unwrap();
+        let mut projected = 0;
+        for (key, en) in &english {
+            let Some(source) = en.get("niceName").and_then(Value::as_str) else {
+                continue;
+            };
+            if let Some(entry) = entries.iter().find(|entry| entry["source"] == source) {
+                let title = entry["zh-Hans"].as_str().unwrap();
+                assert_eq!(
+                    displayed[key]["niceName"],
+                    format("{zh}（{en}）", source, title)
+                );
+                projected += 1;
+            } else {
+                // Technical format names (e.g. SVG/MP4) deliberately have no translation.
+                assert_eq!(displayed[key]["niceName"], source);
+            }
+        }
+        assert_eq!(projected, 299); // all formerly translated core catalog titles
+    }
+
+    #[test]
+    fn display_projection_rejects_ambiguous_sources_and_catalog_identity_drift() {
+        let english = index(&serde_json::from_str(EN).unwrap()).unwrap();
+        let original = index(&serde_json::from_str(ZH).unwrap()).unwrap();
+        for titles in [
+            r#"{"entries":[{"source":"Element","zh-Hans":"元素"},{"source":"Element","zh-Hans":"组件"}]}"#,
+            r#"{"entries":[{"source":"Element"}]}"#,
+            r#"{"entries":[{"source":"","zh-Hans":"元素"}]}"#,
+        ] {
+            assert!(project_display_titles(&english, &mut original.clone(), titles).is_err());
+        }
+        let mut drifted = original.clone();
+        let row = drifted
+            .values_mut()
+            .find(|v| v["niceName"] == "Element")
+            .unwrap();
+        row["niceName"] = Value::String("元素".into());
+        assert!(project_display_titles(&english, &mut drifted, DISPLAY_TITLES).is_err());
+    }
+
+    #[test]
+    fn scene_names_and_unknown_node_titles_are_never_projected() {
+        let input = r#"[{"type":"scene","value":{"nodeType":"basicShape","niceName":"Basic Shape"}},
+            {"type":"nodeStrings","value":{"nodeType":"userFixture","niceName":"Element"}}]"#;
+        let (result, count) =
+            compose(input.as_bytes(), &Settings::default(), &Settings::default()).unwrap();
+        assert_eq!(count, 0);
+        assert_eq!(result, input.as_bytes());
+    }
     #[test]
     fn keyed_labels_are_bilingual_without_changing_identities() {
         let (result, count) =

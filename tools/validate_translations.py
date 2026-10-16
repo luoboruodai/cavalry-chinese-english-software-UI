@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-[INPUT]: 依赖 languages/* JSON（含 Learn/Guides 固定 `en` 加载槽位）、tools/*.ts、generated_translations.inc、translation-whitelist.json 与 forbidden_translation_patterns.py
-[OUTPUT]: 对外提供 JSON/TS/injector 翻译质量报告，硬拒绝 Guide catalog 槽位漂移、占位符（含裸 {}）漂移、FP-1/2/3/4/5/7/8/9/10/11/12 与弱覆盖率，并只对显式 source variant 集合豁免同义复用
+[INPUT]: 依赖 languages/* JSON（含 Learn/Guides 固定 `en` 加载槽位）、tools/*.ts、generated_translations.inc、translation-whitelist.json 与仓库内自足的 forbidden_translation_patterns.py / JSON 配置
+[OUTPUT]: 对外提供 JSON/TS/injector 翻译质量报告，硬拒绝 Guide catalog 槽位漂移、占位符（含裸 {}）漂移、FP-1/2/3/4/5/7/8/9/10/11/12 与弱覆盖率，拒绝缺失/空白/畸形运行时输入，完整读取转义字符串，并只对显式 source variant 集合豁免同义复用
 [POS]: tools 的 G1 / §P5 validator，被 full-ui gate 用来审判翻译资产与生成表
 [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 """
@@ -13,6 +13,7 @@ import html
 import json
 import re
 import sys
+import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -48,13 +49,10 @@ JSON_SURFACE_KEYS = {
     "tips": "languages/en/tips.json",
 }
 
-PLACEHOLDER_RE = re.compile(r"\{\}|\{[0-9]+\}|%[0-9]+|\{\{[^{}]+\}\}")
+PLACEHOLDER_RE = re.compile(r"\{\}|\{[0-9]+\}|%(?:L?\d+|L?n)|\{\{[^{}]+\}\}")
 HTML_TAG_RE = re.compile(r"<[^>]+>")
-TS_MESSAGE_RE = re.compile(
-    r"<message\b[\s\S]*?<source>([\s\S]*?)</source>[\s\S]*?<translation(?:\s+[^>]*)?>([\s\S]*?)</translation>[\s\S]*?</message>"
-)
-TS_CONTEXT_RE = re.compile(r"<context\b[\s\S]*?<name>([\s\S]*?)</name>([\s\S]*?)</context>")
-INC_ENTRY_RE = re.compile(r'\{"([^"]*)", "([^"]*)", "([^"]*)"\}')
+# Matches the generator's C++ string escapes, including quotes and backslashes.
+INC_ENTRY_RE = re.compile(r'\{\s*"((?:\\.|[^"\\])*)",\s*"((?:\\.|[^"\\])*)",\s*"((?:\\.|[^"\\])*)"\s*\}')
 ENGLISH_TOKEN_RE = re.compile(
     r"(?<![A-Za-z0-9])[A-Za-z0-9.+/-]*[A-Za-z][A-Za-z0-9.+/-]*(?![A-Za-z0-9])"
 )
@@ -389,28 +387,30 @@ def decode_xml_entities(value: str) -> str:
 
 
 def parse_ts_message_records(file_path: Path) -> list[dict[str, str]]:
-    xml = file_path.read_text(encoding="utf-8")
+    root = ET.parse(file_path).getroot()
+    if root.tag != "TS":
+        raise ValueError(f"{file_path.name}: expected TS root")
+    contexts = root.findall("context")
+    if len(root.findall(".//message")) != sum(len(c.findall("message")) for c in contexts):
+        raise ValueError(f"{file_path.name}: message outside context")
     records: list[dict[str, str]] = []
-    for context, block in TS_CONTEXT_RE.findall(xml):
-        normalized_context = normalize_string(decode_xml_entities(context))
-        for source, translation in TS_MESSAGE_RE.findall(block):
-            records.append(
-                {
-                    "context": normalized_context,
-                    "source": normalize_string(decode_xml_entities(source)),
-                    "translation": normalize_string(decode_xml_entities(translation)),
-                }
-            )
-    if records:
-        return records
-    return [
-        {
-            "context": "",
-            "source": normalize_string(decode_xml_entities(source)),
-            "translation": normalize_string(decode_xml_entities(translation)),
-        }
-        for source, translation in TS_MESSAGE_RE.findall(xml)
-    ]
+    for context in contexts:
+        owner = normalize_string(context.findtext("name", ""))
+        if not owner:
+            raise ValueError(f"{file_path.name}: missing context name")
+        for message in context.findall("message"):
+            translation = message.find("translation")
+            if translation is not None and translation.get("type") in ("obsolete", "vanished", "unfinished"):
+                continue
+            if message.find(".//numerusform") is not None:
+                raise ValueError(f"{file_path.name}: plural translation requires an explicit runtime adapter")
+            source_text = message.findtext("source", "")
+            translated_text = message.findtext("translation", "")
+            if not source_text or not translated_text:
+                raise ValueError(f"{file_path.name}: empty source or translation")
+            records.append({"context": owner, "source": normalize_string(source_text),
+                            "translation": normalize_string(translated_text)})
+    return records
 
 
 def parse_ts_messages(file_path: Path) -> list[tuple[str, str]]:
@@ -425,21 +425,23 @@ def parse_generated_translation_entry_records(file_path: Path, repo_code: str) -
     }
     array_name = array_names[repo_code]
     text = file_path.read_text(encoding="utf-8")
-    start = text.find(f"const TranslationEntry {array_name}[]")
-    if start < 0:
-        return []
-    end = text.find("};", start)
-    if end < 0:
-        return []
-    block = text[start:end]
-    return [
-        {
-            "context": normalize_string(context),
-            "source": normalize_string(source),
-            "translation": normalize_string(translation),
-        }
-        for context, source, translation in INC_ENTRY_RE.findall(block)
-    ]
+    match = re.search(rf"^const TranslationEntry {array_name}\[\] = \{{\n(.*?)^\}};", text, re.M | re.S)
+    if match is None:
+        raise ValueError(f"{file_path.name}: missing or malformed {array_name}")
+    records: list[dict[str, str]] = []
+    for line in match.group(1).splitlines():
+        if not line.strip():
+            continue
+        entry = INC_ENTRY_RE.fullmatch(line.strip().removesuffix(","))
+        if entry is None:
+            raise ValueError(f"{file_path.name}: malformed entry in {array_name}")
+        # escapeCpp emits the same quote/backslash/newline/tab escapes as JSON.
+        context, source, translation = [normalize_string(json.loads('"' + value + '"'))
+                                        for value in entry.groups()]
+        if not context or not source or not translation:
+            raise ValueError(f"{file_path.name}: empty entry in {array_name}")
+        records.append({"context": context, "source": source, "translation": translation})
+    return records
 
 
 def parse_generated_translation_entries(file_path: Path, repo_code: str) -> list[tuple[str, str]]:
@@ -967,62 +969,36 @@ def evaluate_language(
         )
 
     ts_path = root / "tools" / f"{repo_code}.ts"
-    if ts_path.exists():
-        for index, record in enumerate(parse_ts_message_records(ts_path), start=1):
-            source_value = record["source"]
-            target_value = record["translation"]
-            add_reuse_candidate(
-                reuse_records,
-                ts_path,
-                f"ts-message[{index}]",
-                source_value,
-                target_value,
-            )
-            forbidden_hits = detect_forbidden_translation_patterns(
-                repo_code, visible_text(target_value), source_value, record["context"]
-            )
-            if not forbidden_hits:
-                continue
-            record_forbidden_pattern_issue(
-                result,
-                language_alias,
-                repo_code,
-                ts_path,
-                f"ts-message[{index}]",
-                source_value,
-                target_value,
-                forbidden_hits,
-            )
-
     generated_path = root / "injector" / "generated_translations.inc"
-    if generated_path.exists():
-        for index, record in enumerate(
-            parse_generated_translation_entry_records(generated_path, repo_code), start=1
-        ):
-            source_value = record["source"]
-            target_value = record["translation"]
-            add_reuse_candidate(
-                reuse_records,
-                generated_path,
-                f"generated-entry[{index}]",
-                source_value,
-                target_value,
-            )
+    result["runtime_records"] = {}
+    for path, surface, parser in [
+        (ts_path, "ts-message", parse_ts_message_records),
+        (generated_path, "generated-entry", lambda p: parse_generated_translation_entry_records(p, repo_code)),
+    ]:
+        records = parser(path) if path.is_file() else []
+        result["runtime_records"][surface] = len(records)
+        if not records:
+            result["structure_issue_count"] += 1
+            limited_append(result["issues"]["structure"], {
+                "language": language_alias, "repo_code": repo_code, "file": path.as_posix(),
+                "detail": "Missing or empty required runtime catalog; run npm run prepare:runtime.",
+            })
+        for index, record in enumerate(records, start=1):
+            source_value, target_value = record["source"], record["translation"]
+            item_path = f"{surface}[{index}]"
+            add_reuse_candidate(reuse_records, path, item_path, source_value, target_value)
+            if Counter(placeholder_tokens(source_value)) != Counter(placeholder_tokens(target_value)):
+                result["placeholder_issue_count"] += 1
+                limited_append(result["issues"]["placeholder"], sample_issue(
+                    language_alias, repo_code, path, item_path, source_value, target_value,
+                    "Runtime catalog placeholder tokens differ from source.",
+                ))
             forbidden_hits = detect_forbidden_translation_patterns(
                 repo_code, visible_text(target_value), source_value, record["context"]
             )
-            if not forbidden_hits:
-                continue
-            record_forbidden_pattern_issue(
-                result,
-                language_alias,
-                repo_code,
-                generated_path,
-                f"generated-entry[{index}]",
-                source_value,
-                target_value,
-                forbidden_hits,
-            )
+            if forbidden_hits:
+                record_forbidden_pattern_issue(result, language_alias, repo_code, path,
+                                               item_path, source_value, target_value, forbidden_hits)
 
     record_translation_reuse_issues(result, language_alias, repo_code, whitelist, reuse_records)
 
@@ -1057,7 +1033,7 @@ def build_report(root: Path, extraction_inventory_path: Path | None = None) -> d
         "B2": {
             "name": "Structure parity",
             "status": gate_status(b2_ok),
-            "detail": "Target translate/no_translate/locale_sync leaves must match English structure.",
+            "detail": "Target leaves must match English structure; required TS/generated runtime catalogs must be present and nonempty.",
         },
         "B3": {
             "name": "no_translate parity",
@@ -1067,7 +1043,7 @@ def build_report(root: Path, extraction_inventory_path: Path | None = None) -> d
         "B4": {
             "name": "Placeholder parity",
             "status": gate_status(b4_ok),
-            "detail": "Placeholder tokens like {}, {0}, %1, {{...}} must be preserved.",
+            "detail": "Placeholder tokens like {}, {0}, %1, %L1, %n, %Ln and {{...}} must be preserved in JSON, TS and generated entries.",
         },
         "B9": {
             "name": "English residue",
@@ -1092,13 +1068,14 @@ def build_report(root: Path, extraction_inventory_path: Path | None = None) -> d
         "B13": {
             "name": "Forbidden patterns",
             "status": gate_status(b13_ok),
-            "detail": "FP-1/2/3/4/5/7/8/9/10/11/12 must hard-fail across JSON, TS, and generated injector outputs.",
+            "detail": "FP-1/2/3/4/5/7/8/9/10/11/12/13/14 must hard-fail across JSON, TS, and generated injector outputs.",
         },
     }
 
     overall_ok = all(gate["status"] == "PASS" for gate in gates.values())
     return {
         "overall_status": gate_status(overall_ok),
+        "scope": "JSON catalog leaf coverage and runtime catalog integrity; NOT live-UI coverage.",
         "aliases": REPORT_LANGUAGE_ALIASES,
         "coverage_threshold": 1.00,
         "gates": gates,
@@ -1156,7 +1133,7 @@ def render_summary(report: dict[str, Any]) -> str:
         "## Gate summary",
         markdown_table(gate_rows),
         "",
-        "## Leaf metrics",
+        "## Leaf metrics (JSON catalogs only, NOT live-UI coverage)",
         markdown_table(language_rows),
     ]
 

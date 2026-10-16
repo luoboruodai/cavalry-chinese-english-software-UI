@@ -1,0 +1,521 @@
+{
+  "schemaVersion": 1,
+  "scope": "Cavalry 2.8 exact-file/field/source UI candidates. Simplified Chinese, Traditional Chinese and Japanese; review-only drafts, not native UI acceptance or installation approval.",
+  "entries": [
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.attributeEditor.connectionList.add",
+      "source": "Add",
+      "zh-Hans": "添加",
+      "reason": "List-entry action, not arithmetic."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.attributeEditor.row.menu.addEntry",
+      "source": "Add",
+      "zh-Hans": "添加",
+      "reason": "List-entry action, not arithmetic."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.connectionList.metaballs.tooltip.add",
+      "source": "Add",
+      "zh-Hans": "加法",
+      "reason": "Arithmetic/additive blend operation, not a list-entry action."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.assets.importCanvaSheet",
+      "source": "Import Canva Sheet...",
+      "zh-Hans": "导入 Canva 表格...",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.assets.importCanvaSheetPro",
+      "source": "Import Canva Sheet... (Pro)",
+      "zh-Hans": "导入 Canva 表格... (Pro)",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.assets.openCanvaSheetInBrowser",
+      "source": "Open Canva Sheet in Browser",
+      "zh-Hans": "在浏览器中打开 Canva 表格",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.assets.replaceCanvaSheet",
+      "source": "Replace Canva Sheet...",
+      "zh-Hans": "替换 Canva 表格...",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.file.exportArchive",
+      "source": "Export for Canva (Beta)...",
+      "zh-Hans": "导出到 Canva (Beta)...",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.file.importCanvaSheet",
+      "source": "Import Canva Sheet...",
+      "zh-Hans": "导入 Canva 表格...",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.file.projectSettings",
+      "source": "Project Settings...",
+      "zh-Hans": "项目设置...",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.view.antiAliasing",
+      "source": "Viewport Anti-aliasing",
+      "zh-Hans": "视口抗锯齿",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.view.qualityLow",
+      "source": "No Anti-aliasing",
+      "zh-Hans": "关闭抗锯齿",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.view.qualityLowest",
+      "source": "No Anti-aliasing, Shaders or Filters",
+      "zh-Hans": "关闭抗锯齿、着色器和滤镜",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.window.javaScriptEditorPro",
+      "source": "JavaScript Editor (Pro)",
+      "zh-Hans": "JavaScript 编辑器 (Pro)",
+      "reason": "New main-menu label candidate; product names and options unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.window.shelf",
+      "source": "Shelf",
+      "zh-Hans": "工具架",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.onboarding.guide.button.back",
+      "source": "Back",
+      "zh-Hans": "上一步",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.cache.button",
+      "source": "Minimise Caches",
+      "zh-Hans": "缩减缓存",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.cache.log.cleared",
+      "source": "Cache cleared {0}mb freed.",
+      "zh-Hans": "缓存已清理，释放了 {0} MB。",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.combo.autoSaveSubFolders.wDMY",
+      "source": "Weekday-Day-Month-Year",
+      "zh-Hans": "周几-日-月-年",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.combo.autoSaveSubFolders.wMDY",
+      "source": "Weekday-Month-Day-Year",
+      "zh-Hans": "周几-月-日-年",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.combo.autoSaveSubFolders.yMDW",
+      "source": "Year-Month-Day-Weekday",
+      "zh-Hans": "年-月-日-周几",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.combo.gamma.linear",
+      "source": "Linear (1.0)",
+      "zh-Hans": "线性 (1.0)",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.option.enableColourManagement",
+      "source": "Enable Colour Management",
+      "zh-Hans": "启用色彩管理",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.option.viewportBackground",
+      "source": "Viewport Canvas Colour",
+      "zh-Hans": "视口画布颜色",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.option.workingColourSpace",
+      "source": "Working Colour Space",
+      "zh-Hans": "工作色彩空间",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.section.colourManagement",
+      "source": "Colour Management",
+      "zh-Hans": "色彩管理",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.section.ui",
+      "source": "UI",
+      "zh-Hans": "界面",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.preferences.unit.seconds",
+      "source": "S",
+      "zh-Hans": "秒",
+      "reason": "New Preferences label/log candidate; numeric tokens and vendor fields unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.align.title",
+      "source": "Align",
+      "zh-Hans": "对齐",
+      "zh-Hant": "對齊",
+      "ja_JP": "整列",
+      "reason": "Panel/dialog title used as a verb to align objects; bound to this exact vendor field, not other Align menu or node labels."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.dgView.popover.addLayers",
+      "source": "Add Layers",
+      "zh-Hans": "添加图层",
+      "zh-Hant": "加入圖層",
+      "ja_JP": "レイヤーを追加",
+      "reason": "Observed Add Layers label in the default main workspace; bound to this exact vendor popover field, not a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.menu.window.addLayers",
+      "source": "Add Layers",
+      "zh-Hans": "添加图层",
+      "zh-Hant": "加入圖層",
+      "ja_JP": "レイヤーを追加",
+      "reason": "Companion Add Layers menu item; bound to this exact vendor field, not a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.quickAdd.window.titleMulti",
+      "source": "Add Layers",
+      "zh-Hans": "添加图层",
+      "zh-Hant": "加入圖層",
+      "ja_JP": "レイヤーを追加",
+      "reason": "Multi-layer picker title; bound to this exact vendor field, not a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.sceneWindow.header.popover.addLayers",
+      "source": "Add Layers",
+      "zh-Hans": "添加图层",
+      "zh-Hant": "加入圖層",
+      "ja_JP": "レイヤーを追加",
+      "reason": "Scene Window Add Layers popover title; bound to this exact vendor field, not a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.sceneTree.placeholder.empty",
+      "source": "Use the Create menu to add a Layer to the active Composition.",
+      "zh-Hans": "使用“创建”菜单在活动合成中添加图层。",
+      "zh-Hant": "使用「建立」選單在作用中的合成新增圖層。",
+      "ja_JP": "コンポジションにレイヤーを追加します。",
+      "reason": "Observed in the 2.8 Scene Window empty state; bound to this exact vendor field."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.sceneWindow.header.search.placeholder",
+      "source": "Enter a Layer name",
+      "zh-Hans": "输入图层名称",
+      "zh-Hant": "輸入圖層名稱",
+      "ja_JP": "レイヤー名を入力",
+      "reason": "Observed in the 2.8 Scene Window search placeholder; user-entered values remain unchanged."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.tool.field.manipulator",
+      "source": "Manipulator: ",
+      "zh-Hans": "操纵器:",
+      "zh-Hant": "操控器:",
+      "ja_JP": "マニピュレータ:",
+      "reason": "Observed in the 2.8 tool settings bar; reuse the established terminology only for this exact trailing-space field."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.tool.field.snapAngle",
+      "source": "Snap Angle ",
+      "zh-Hans": "吸附角度",
+      "zh-Hant": "吸附角度",
+      "ja_JP": "スナップ角度",
+      "reason": "Observed in the 2.8 tool settings bar; snapping terminology follows the vendor field notes."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.tool.field.snapAngleColon",
+      "source": "Snap Angle: ",
+      "zh-Hans": "吸附角度:",
+      "zh-Hant": "吸附角度:",
+      "ja_JP": "スナップ角度:",
+      "reason": "Observed in the 2.8 tool settings bar; the colon and trailing source space are part of the identity check."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.tool.pivot.name",
+      "source": "Pivot",
+      "zh-Hans": "轴心",
+      "zh-Hant": "軸心",
+      "ja_JP": "ピボット",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.tool.transform.shortcut.sClickPath",
+      "source": "S + click Motion Path",
+      "zh-Hans": "S + 单击运动路径",
+      "zh-Hant": "S + 單擊運動路徑",
+      "ja_JP": "S + モーションパスをクリック",
+      "reason": "Observed in the 2.8 on-canvas Transform help; native CJK drawing remains a separate acceptance gate."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.viewport.qualityHigh",
+      "source": "Viewport Quality: Full",
+      "zh-Hans": "视口质量：完整",
+      "zh-Hant": "視口品質：完整",
+      "ja_JP": "ビューポート品質：フル",
+      "reason": "Observed in the 2.8 viewport status; bound separately from menu quality labels."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.viewport.qualityLow",
+      "source": "Viewport Quality: No Anti-aliasing",
+      "zh-Hans": "视口质量：无抗锯齿",
+      "zh-Hant": "視口品質：無抗鋸齒",
+      "ja_JP": "ビューポート品質：アンチエイリアスなし",
+      "reason": "Companion viewport status variant for the observed quality field; not a global menu override."
+    },
+    {
+      "file": "Definitions/Translation/appStrings_en-GB.source.json",
+      "path": "$[0].value.viewport.qualityLowest",
+      "source": "Viewport Quality: No Anti-aliasing, Shaders or Filters",
+      "zh-Hans": "视口质量：无抗锯齿、着色器或滤镜",
+      "zh-Hant": "視口品質：無抗鋸齒、著色器或濾鏡",
+      "ja_JP": "ビューポート品質：アンチエイリアス、シェーダー、フィルターなし",
+      "reason": "Companion viewport status variant for the observed quality field; not a global menu override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[4].value.attributes.pivot.name",
+      "source": "Pivot",
+      "zh-Hans": "轴心",
+      "zh-Hant": "軸心",
+      "ja_JP": "ピボット",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[32].value.attributes.overrides.notes",
+      "source": "Notes",
+      "zh-Hans": "注释",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[38].values[4].attributes.octaves.name",
+      "source": "Octaves",
+      "zh-Hans": "倍频程",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[38].values[4].attributes.lacunarity.name",
+      "source": "Lacunarity",
+      "zh-Hans": "间隙度",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[38].values[17].enums.operation.0",
+      "source": "Add",
+      "zh-Hans": "加法",
+      "reason": "Arithmetic/additive blend operation, not a list-entry action."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[38].values[18].enums.operation.0",
+      "source": "Add",
+      "zh-Hans": "加法",
+      "reason": "Arithmetic/additive blend operation, not a list-entry action."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[38].values[19].enums.operation.0",
+      "source": "Add",
+      "zh-Hans": "加法",
+      "reason": "Arithmetic/additive blend operation, not a list-entry action."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[38].values[80].attributes.pivot",
+      "source": "Pivot",
+      "zh-Hans": "轴心",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[39].values[17].enums.blendMode.0",
+      "source": "Add",
+      "zh-Hans": "加法",
+      "reason": "Arithmetic/additive blend operation, not a list-entry action."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[39].values[37].attributes.octaves",
+      "source": "Octaves",
+      "zh-Hans": "倍频程",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[39].values[37].attributes.lacunarity",
+      "source": "Lacunarity",
+      "zh-Hans": "间隙度",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[6].enums.mode.0",
+      "source": "Pivot",
+      "zh-Hans": "轴心",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[22].attributes.promotedAttributes.notes",
+      "source": "Notes",
+      "zh-Hans": "注释",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[94].attributes.octaves.name",
+      "source": "Octaves",
+      "zh-Hans": "倍频程",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[106].enums.directionMode.2",
+      "source": "Warp",
+      "zh-Hans": "扭曲",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[114].attributes.shapes.friction",
+      "source": "Friction",
+      "zh-Hans": "摩擦",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[115].attributes.fadeChanges",
+      "source": "Fade Changes",
+      "zh-Hans": "淡化变化",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[115].attributes.fadeTime.name",
+      "source": "Fade Time",
+      "zh-Hans": "淡化时间",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[120].attributes.fadeChanges",
+      "source": "Fade Changes",
+      "zh-Hans": "淡化变化",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[120].attributes.fadeTime",
+      "source": "Fade Time",
+      "zh-Hans": "淡化时间",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[41].values[129].attributes.flowVariance.name",
+      "source": "Flow Variance",
+      "zh-Hans": "流向变化",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Definitions/Translation/nodeStrings_en-GB.source.json",
+      "path": "$[65].value.enums.mode.0",
+      "source": "Add",
+      "zh-Hans": "加法",
+      "reason": "Arithmetic/additive blend operation, not a list-entry action."
+    },
+    {
+      "file": "Learn/Guides/Translation/strings_en-GB.source.json",
+      "path": "$[0].value.onboarding.uiDeepDive.step3.title",
+      "source": "Shelf",
+      "zh-Hans": "工具架",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Learn/Guides/Translation/strings_en-GB.source.json",
+      "path": "$[0].value.onboarding.button.back",
+      "source": "Back",
+      "zh-Hans": "上一步",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Learn/Guides/Translation/strings_en-GB.source.json",
+      "path": "$[0].value.onboarding.contextual_demoNotes.step0.title",
+      "source": "Notes",
+      "zh-Hans": "注释",
+      "reason": "Terminology chosen using this vendor field and its source notes; never a global override."
+    },
+    {
+      "file": "Plugins/Spherise Filter/Translation/strings_en-GB.source.json",
+      "path": "$[0].value.enums.visibility.2",
+      "source": "Back",
+      "zh-Hans": "背面",
+      "reason": "Reverse-facing sphere surface, not tutorial navigation."
+    }
+  ]
+}

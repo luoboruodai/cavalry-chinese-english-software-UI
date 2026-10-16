@@ -1,7 +1,7 @@
 /**
- * [INPUT]: 依赖 Cavalry 2.7.2 的 libExtensionLayer/libCore/libskia 双 slice UUID、机器码包络、Mach-O 符号表与 Skia 字体/Path ABI
- * [OUTPUT]: 提供五条 TransformTool CJK Path、七条 UI Canvas 绘制与三条 Lina 省略测宽适配；全函数摘要限制 UTF-8 边界修复，未知 caller/ABI 原样透传；诊断仅含聚合计数
- * [POS]: injector 的 macOS 自绘文字适配器；以进程级 SkTextUtils::GetPath interpose 承接调用，但用三层 return-address 与逐 image 合同把有效范围收敛到唯一 action producer
+ * [INPUT]: 依赖 Cavalry 2.7.2 的 libExtensionLayer/libCore/libskia 双 slice UUID、机器码包络、Mach-O 符号表与 Skia 字体/Path ABI；可选 2.8 arm64/x86_64 另需各自 UUID、动作/前缀独立调用点及 CoreText→Skia 字体桥
+ * [OUTPUT]: 提供五条 TransformTool CJK Path、七条 UI Canvas 绘制与三条 Lina 省略测宽适配；2.8 arm64/x86_64 分别仅开放经审计的十条动作、三条前缀 Path 与固定视口子集，其中五条为 Soft Selection 定点 action，通用 Canvas 继续关闭；首个真实 GetPath 可在转发前重试配置，双语匹配同时接受纯译文组合与已组装文本并拒绝重复拼接，全函数摘要限制 UTF-8 边界修复，未知 caller/ABI 原样透传；诊断仅含聚合计数
+ * [POS]: injector 的 macOS 自绘文字适配器；以进程级 SkTextUtils::GetPath interpose 承接调用，但用三层 return-address 与逐 image 合同把有效范围分别收敛到已验证的动作和前缀 producer
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
 #include "cavalry_i18n_macos_tool_help_text_path.h"
@@ -12,13 +12,18 @@
 #include <mach-o/nlist.h>
 #include <uuid/uuid.h>
 
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreText/CoreText.h>
+
 #include <array>
 #include <atomic>
+#include <cstdio>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <new>
+#include <type_traits>
 #include <utility>
 
 namespace {
@@ -58,12 +63,17 @@ static_assert(sizeof(SkSpTypefaceAbi) == 0x8);
 static_assert(sizeof(SkFontAbi) == 0x18);
 
 using MakeTypefaceFunction = SkSpTypefaceAbi (*)(const char *, std::uint32_t);
+using MakeTypefaceFromCTFontFunction = SkSpTypefaceAbi (*)(const void *);
 using MakeScalableFontFunction = SkFontAbi (*)(SkSpTypefaceAbi, float);
 using UnicharToGlyphFunction = std::uint16_t (*)(const void *, std::int32_t);
 using SetFontSizeFunction = void (*)(void *, float);
 using PathIsEmptyFunction = bool (*)(const void *);
 
+#if defined(CAVALRY_I18N_CAVALRY_280)
+constexpr std::uint64_t kAllSourceBits = 0x1fff;
+#else
 constexpr std::uint64_t kAllSourceBits = 0x1f;
+#endif
 constexpr std::size_t kActionCount =
     cavalry_i18n::kMacToolHelpActionCount;
 constexpr std::size_t kTranslationCapacity = 512;
@@ -72,19 +82,31 @@ constexpr std::uint32_t kNormalSkFontStyle = 0x00050190u;
 struct ApprovedAction {
     const char *source;
     std::uint64_t sourceBit;
+    bool prefixCallsite;
 };
 
 constexpr ApprovedAction kApprovedActions[kActionCount] = {
-    {"Insert Keyframe", 1ull << 0},
-    {"Direct Layer Selection", 1ull << 1},
-    {"Play/ Stop", 1ull << 2},
-    {"Pan", 1ull << 3},
-    {"Enable Snapping", 1ull << 4},
+    {"Insert Keyframe", 1ull << 0, false},
+    {"Direct Layer Selection", 1ull << 1, false},
+    {"Play/ Stop", 1ull << 2, false},
+    {"Pan", 1ull << 3, false},
+    {"Enable Snapping", 1ull << 4, false},
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    {"S + click Motion Path", 1ull << 5, true},
+    {"Hold S", 1ull << 6, true},
+    {"Space + click + drag", 1ull << 7, true},
+    {"Click drag a line between two vertices to create an edge", 1ull << 8, false},
+    {"Click drag a line between two vertices to create an edge.", 1ull << 9, false},
+    {"Disable Soft Selection", 1ull << 10, false},
+    {"Click drag to edit Soft Selection size", 1ull << 11, false},
+    {"Add or edit Bind positions", 1ull << 12, false},
+#endif
 };
 
 struct ConfiguredAction {
     const char *source;
     std::uint64_t sourceBit;
+    bool prefixCallsite;
     std::size_t translationSize;
     char translation[kTranslationCapacity];
 };
@@ -102,6 +124,7 @@ struct LoadedImage {
 
 struct RuntimeState {
     std::atomic<GetPathFunction> originalGetPath{nullptr};
+    std::atomic<cavalry_i18n::MacToolHelpTextPathConfigurationRetry> configurationRetry{nullptr};
     std::atomic<bool> configured{false};
     std::atomic<bool> vendorContractVerified{false};
     std::atomic<bool> rendererReady{false};
@@ -310,7 +333,78 @@ GetPathFunction resolveOriginalGetPath() noexcept
 /* -----------------------------------------------------------------------
  * Cavalry 2.7.2 双 slice 不可变合同
  * ----------------------------------------------------------------------- */
-#if defined(__arm64__)
+#if defined(__arm64__) && defined(CAVALRY_I18N_CAVALRY_280)
+constexpr char kExtensionUuid[] = "448DD50E-75F4-3F2D-A46B-2C9F00DF9408";
+constexpr char kCoreUuid[] = "55C6FCB7-E0DA-3AC1-8C45-055CC6ECEAD9";
+constexpr char kSkiaUuid[] = "E6258D2F-A1BB-3CEE-9DBA-6DB3BA0303D2";
+constexpr std::uintptr_t kCoreGetPathReturn = 0x69a70;
+constexpr std::uintptr_t kExtensionMakePathReturn = 0x24128c;
+constexpr std::uintptr_t kExtensionPrefixReturn = 0x2374bc;
+constexpr std::uintptr_t kExtensionActionReturn = 0x2374d4;
+constexpr std::uintptr_t kMakeScalableFontOffset = 0xa0818;
+constexpr std::uintptr_t kGetPathOffset = 0x1c5f0;
+constexpr std::uintptr_t kMakeTypefaceFromCTFontOffset = 0x356cf8;
+constexpr std::uintptr_t kUnicharToGlyphOffset = 0x1b5c64;
+constexpr std::uintptr_t kSetFontSizeOffset = 0x10ba5c;
+constexpr std::uintptr_t kPathIsEmptyOffset = 0x153178;
+constexpr std::array<std::uint8_t, 16> kCoreGetPathCall = {
+    0xA3, 0xE3, 0x00, 0xD1, 0xE4, 0xC3, 0x00, 0x91,
+    0x02, 0x00, 0x80, 0x52, 0x1B, 0x13, 0x2B, 0x94,
+};
+constexpr std::array<std::uint8_t, 20> kExtensionMakePathCall = {
+    0xE8, 0x03, 0x13, 0xAA, 0xE0, 0x03, 0x15, 0xAA, 0x00, 0x41,
+    0x60, 0x1E, 0x7B, 0xFB, 0x2D, 0x94, 0xE8, 0xC3, 0x00, 0x91,
+};
+constexpr std::array<std::uint8_t, 20> kExtensionPrefixCall = {
+    0xE8, 0x03, 0x01, 0x91, 0x00, 0x10, 0x65, 0x1E, 0xE1, 0x03,
+    0x16, 0xAA, 0xE2, 0x03, 0x15, 0xAA, 0x0E, 0x27, 0x00, 0x94,
+};
+constexpr std::array<std::uint8_t, 20> kExtensionActionCall = {
+    0xE8, 0x03, 0x00, 0x91, 0x00, 0x10, 0x65, 0x1E, 0xE1, 0x03,
+    0x16, 0xAA, 0xE2, 0x03, 0x15, 0xAA, 0x08, 0x27, 0x00, 0x94,
+};
+constexpr std::uintptr_t kCoreGetPathCallOffset = 0x69a60;
+constexpr std::uintptr_t kExtensionMakePathCallOffset = 0x24127c;
+constexpr std::uintptr_t kExtensionPrefixCallOffset = 0x2374a8;
+constexpr std::uintptr_t kExtensionActionCallOffset = 0x2374c0;
+#elif defined(__x86_64__) && defined(CAVALRY_I18N_CAVALRY_280)
+constexpr char kExtensionUuid[] = "DB431633-99A8-3C32-89EF-3378D4B418EA";
+constexpr char kCoreUuid[] = "F1CF1469-3FB9-3C2B-B695-3827F32F341A";
+constexpr char kSkiaUuid[] = "3E709FF2-F798-3456-9282-28F9350B57A7";
+constexpr std::uintptr_t kCoreGetPathReturn = 0x797b8;
+constexpr std::uintptr_t kExtensionMakePathReturn = 0x27a7c2;
+constexpr std::uintptr_t kExtensionPrefixReturn = 0x26e680;
+constexpr std::uintptr_t kExtensionActionReturn = 0x26e69d;
+constexpr std::uintptr_t kMakeScalableFontOffset = 0xb7ce0;
+constexpr std::uintptr_t kGetPathOffset = 0x1b760;
+constexpr std::uintptr_t kMakeTypefaceFromCTFontOffset = 0x3dd8f0;
+constexpr std::uintptr_t kUnicharToGlyphOffset = 0x1e5560;
+constexpr std::uintptr_t kSetFontSizeOffset = 0x122f00;
+constexpr std::uintptr_t kPathIsEmptyOffset = 0x17c950;
+constexpr std::array<std::uint8_t, 24> kCoreGetPathCall = {
+    0x48, 0x8D, 0x4D, 0xB0, 0x4C, 0x8D, 0x45, 0xD8,
+    0x0F, 0x57, 0xC0, 0x0F, 0x57, 0xC9, 0x4C, 0x89,
+    0xF7, 0x31, 0xD2, 0xE8, 0xE6, 0x2D, 0xC9, 0x00,
+};
+constexpr std::array<std::uint8_t, 16> kExtensionMakePathCall = {
+    0x48, 0x89, 0xDF, 0x4C, 0x89, 0xFE, 0xF2, 0x0F,
+    0x10, 0x45, 0x98, 0xE8, 0x8B, 0x82, 0xCC, 0x00,
+};
+constexpr std::array<std::uint8_t, 26> kExtensionPrefixCall = {
+    0x4C, 0x89, 0xEF, 0x4C, 0x89, 0xF2, 0xF2, 0x0F,
+    0x10, 0x05, 0xA4, 0xA6, 0xCE, 0x00, 0x4C, 0x8B,
+    0x6D, 0xC0, 0x4C, 0x89, 0xE9, 0xE8, 0x90, 0xBF, 0x00, 0x00,
+};
+constexpr std::array<std::uint8_t, 25> kExtensionActionCall = {
+    0x4C, 0x89, 0xE3, 0x4C, 0x89, 0xE7, 0x4C, 0x89, 0xF2,
+    0xF2, 0x0F, 0x10, 0x05, 0x83, 0xA6, 0xCE, 0x00, 0x4C,
+    0x89, 0xE9, 0xE8, 0x73, 0xBF, 0x00, 0x00,
+};
+constexpr std::uintptr_t kCoreGetPathCallOffset = 0x797a0;
+constexpr std::uintptr_t kExtensionMakePathCallOffset = 0x27a7b2;
+constexpr std::uintptr_t kExtensionPrefixCallOffset = 0x26e666;
+constexpr std::uintptr_t kExtensionActionCallOffset = 0x26e684;
+#elif defined(__arm64__)
 constexpr char kExtensionUuid[] = "9A99CECD-995B-34D6-B089-6A19093A35B1";
 constexpr char kCoreUuid[] = "78BAF3D2-2FEA-3189-A62B-24F20318AB28";
 constexpr char kSkiaUuid[] = "2BAE604B-4AEE-3007-B6C3-4369789BBCB0";
@@ -395,6 +489,9 @@ bool verifyVendorContract() noexcept
         original != reinterpret_cast<GetPathFunction>(imageAddress(skia, kGetPathOffset)) ||
         !matchesCode(core, kCoreGetPathCallOffset, kCoreGetPathCall) ||
         !matchesCode(extension, kExtensionMakePathCallOffset, kExtensionMakePathCall) ||
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        !matchesCode(extension, kExtensionPrefixCallOffset, kExtensionPrefixCall) ||
+#endif
         !matchesCode(extension, kExtensionActionCallOffset, kExtensionActionCall)) {
         return false;
     }
@@ -486,8 +583,13 @@ bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
         return false;
     }
 
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    auto makeTypeface = reinterpret_cast<MakeTypefaceFromCTFontFunction>(
+        findMachOSymbol(gState.skiaImage, "__Z24SkMakeTypefaceFromCTFontPK8__CTFont"));
+#else
     auto makeTypeface = reinterpret_cast<MakeTypefaceFunction>(
         findMachOSymbol(gState.skiaImage, "__ZN10SkTypeface12MakeFromNameEPKc11SkFontStyle"));
+#endif
     auto makeScalableFont = reinterpret_cast<MakeScalableFontFunction>(
         findMachOSymbol(
             gState.coreImage,
@@ -499,7 +601,10 @@ bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
     auto pathIsEmpty = reinterpret_cast<PathIsEmptyFunction>(
         findMachOSymbol(gState.skiaImage, "__ZNK6SkPath7isEmptyEv"));
 
-    if (makeTypeface != reinterpret_cast<MakeTypefaceFunction>(
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    constexpr auto kMakeTypefaceOffset = kMakeTypefaceFromCTFontOffset;
+#endif
+    if (makeTypeface != reinterpret_cast<std::decay_t<decltype(makeTypeface)> >(
             imageAddress(gState.skiaImage, kMakeTypefaceOffset)) ||
         makeScalableFont != reinterpret_cast<MakeScalableFontFunction>(
             imageAddress(gState.coreImage, kMakeScalableFontOffset)) ||
@@ -513,7 +618,22 @@ bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
     }
 
     if (fontFamily != nullptr && fontFamily[0] != '\0') family = fontFamily;
-    SkSpTypefaceAbi typeface = makeTypeface(family, kNormalSkFontStyle);
+    SkSpTypefaceAbi typeface = [&]() -> SkSpTypefaceAbi {
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        CFStringRef familyRef = CFStringCreateWithCString(
+            kCFAllocatorDefault, family, kCFStringEncodingUTF8);
+        CTFontRef ctFont = familyRef != nullptr
+            ? CTFontCreateWithName(familyRef, 1.0, nullptr)
+            : nullptr;
+        if (familyRef != nullptr) CFRelease(familyRef);
+        if (ctFont == nullptr) return {};
+        SkSpTypefaceAbi created = makeTypeface(ctFont);
+        CFRelease(ctFont);
+        return created;
+#else
+        return makeTypeface(family, kNormalSkFontStyle);
+#endif
+    }();
     if (typeface.pointer == nullptr ||
         !fontCoversTranslations(typeface.pointer, unicharToGlyph)) {
         return false;
@@ -531,10 +651,43 @@ bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
     return true;
 }
 
-const ConfiguredAction *configuredActionFor(
+bool matchesBilingualText(
+    const char *translation,
+    std::size_t translationSize,
+    const char *source,
     const void *text,
     std::size_t size) noexcept
 {
+    if (translation == nullptr || source == nullptr || text == nullptr) return false;
+    constexpr std::uint8_t left[] = {0xef, 0xbc, 0x88};
+    constexpr std::uint8_t right[] = {0xef, 0xbc, 0x89};
+    const std::size_t sourceSize = std::strlen(source);
+    const auto *translationBytes = reinterpret_cast<const std::uint8_t *>(translation);
+    if (translationSize >= sourceSize + sizeof(left) + sizeof(right)) {
+        const std::size_t prefixSize = translationSize - sourceSize - sizeof(left) - sizeof(right);
+        const bool alreadyBilingual =
+            std::memcmp(translationBytes + prefixSize, left, sizeof(left)) == 0 &&
+            std::memcmp(translationBytes + prefixSize + sizeof(left), source, sourceSize) == 0 &&
+            std::memcmp(translationBytes + prefixSize + sizeof(left) + sourceSize, right, sizeof(right)) == 0;
+        if (alreadyBilingual) {
+            return size == translationSize && std::memcmp(text, translation, size) == 0;
+        }
+    }
+
+    if (size != translationSize + sourceSize + sizeof(left) + sizeof(right)) return false;
+    const auto *bytes = static_cast<const std::uint8_t *>(text);
+    return std::memcmp(bytes, translation, translationSize) == 0 &&
+        std::memcmp(bytes + translationSize, left, sizeof(left)) == 0 &&
+        std::memcmp(bytes + translationSize + sizeof(left), source, sourceSize) == 0 &&
+        std::memcmp(bytes + translationSize + sizeof(left) + sourceSize, right, sizeof(right)) == 0;
+}
+
+const ConfiguredAction *configuredActionFor(
+    const void *text,
+    std::size_t size,
+    bool *bilingual) noexcept
+{
+    if (bilingual != nullptr) *bilingual = false;
     if (text == nullptr) {
         return nullptr;
     }
@@ -543,15 +696,27 @@ const ConfiguredAction *configuredActionFor(
         if (size == sourceSize && std::memcmp(text, action.source, size) == 0) {
             return &action;
         }
+        if (matchesBilingualText(action.translation, action.translationSize, action.source, text, size)) {
+            if (bilingual != nullptr) *bilingual = true;
+            return &action;
+        }
     }
     return nullptr;
 }
 
-bool callerChainMatches(void *return0, void *return1, void *return2) noexcept
+bool callerChainMatches(
+    void *return0, void *return1, void *return2, bool prefixCallsite = false) noexcept
 {
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    void *expectedReturn = imageAddress(
+        gState.extensionImage,
+        prefixCallsite ? kExtensionPrefixReturn : kExtensionActionReturn);
+#else
+    void *expectedReturn = imageAddress(gState.extensionImage, kExtensionActionReturn);
+#endif
     return return0 == imageAddress(gState.coreImage, kCoreGetPathReturn) &&
         return1 == imageAddress(gState.extensionImage, kExtensionMakePathReturn) &&
-        return2 == imageAddress(gState.extensionImage, kExtensionActionReturn);
+        return2 == expectedReturn;
 }
 
 void recordFallback(const ConfiguredAction &action) noexcept
@@ -573,6 +738,12 @@ void recordFallback(const ConfiguredAction &action) noexcept
 #include "cavalry_bilingual_macos_viewport.inc"
 
 namespace cavalry_i18n {
+
+void setMacToolHelpTextPathConfigurationRetry(
+    MacToolHelpTextPathConfigurationRetry retry) noexcept
+{
+    gState.configurationRetry.store(retry, std::memory_order_release);
+}
 
 void configureMacToolHelpTextPath(
     const char *language,
@@ -604,6 +775,7 @@ void configureMacToolHelpTextPath(
             ConfiguredAction &output = gState.actions[actionIndex];
             output.source = approved.source;
             output.sourceBit = approved.sourceBit;
+            output.prefixCallsite = approved.prefixCallsite;
             output.translationSize = translationSize;
             std::memcpy(output.translation, input.translation, translationSize + 1);
             configuredMask |= approved.sourceBit;
@@ -611,12 +783,14 @@ void configureMacToolHelpTextPath(
         }
     }
     if (configuredMask != kAllSourceBits) {
+        std::fprintf(stderr, "[cavalry-i18n] tool-path configuration incomplete: mask=0x%llx\n", configuredMask);
         return;
     }
 
     const bool verified = verifyVendorContract();
     gState.vendorContractVerified.store(verified, std::memory_order_release);
     if (!verified) {
+        std::fprintf(stderr, "[cavalry-i18n] tool-path vendor contract failed\n");
         return;
     }
 
@@ -625,8 +799,12 @@ void configureMacToolHelpTextPath(
     configureViewportNames();
     const bool rendererReady = buildDisplayFont(language, fontFamily);
     gState.rendererReady.store(rendererReady, std::memory_order_release);
-    if (rendererReady) gState.configured.store(true, std::memory_order_release);
-    else gState.rendererFailure.fetch_add(1, std::memory_order_relaxed);
+    if (rendererReady) {
+        gState.configured.store(true, std::memory_order_release);
+    } else {
+        std::fprintf(stderr, "[cavalry-i18n] tool-path renderer initialization failed\n");
+        gState.rendererFailure.fetch_add(1, std::memory_order_relaxed);
+    }
 }
 
 bool macVendorContractVerified() noexcept
@@ -692,12 +870,22 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
         return;
     }
     if (!gState.configured.load(std::memory_order_acquire)) {
-        original(text, size, encoding, x, y, font, path);
-        return;
+        const auto retry = gState.configurationRetry.load(std::memory_order_acquire);
+        if (retry != nullptr) {
+            recursionActive = true;
+            retry();
+            recursionActive = false;
+        }
+        if (!gState.configured.load(std::memory_order_acquire)) {
+            original(text, size, encoding, x, y, font, path);
+            return;
+        }
     }
 
-    const ConfiguredAction *action = configuredActionFor(text, size);
-    const ViewportHint *viewport = viewportPathHintFor(text, size);
+    bool actionBilingual = false;
+    bool viewportBilingual = false;
+    const ConfiguredAction *action = configuredActionFor(text, size, &actionBilingual);
+    const ViewportHint *viewport = viewportPathHintFor(text, size, &viewportBilingual);
     if (action == nullptr && viewport == nullptr) {
         original(text, size, encoding, x, y, font, path);
         return;
@@ -717,7 +905,8 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
     void *return0 = __builtin_extract_return_addr(__builtin_return_address(0));
     void *return1 = __builtin_extract_return_addr(__builtin_return_address(1));
     void *return2 = __builtin_extract_return_addr(__builtin_return_address(2));
-    const bool approvedAction = action && callerChainMatches(return0, return1, return2);
+    const bool approvedAction = action && callerChainMatches(
+        return0, return1, return2, action->prefixCallsite);
     const bool approvedViewport = viewport && callerChainMatchesViewport(return0, return1, return2);
     if (!approvedAction && !approvedViewport) { fallback(); return; }
     if (approvedAction) gState.canonicalCalls.fetch_add(1, std::memory_order_relaxed);
@@ -740,15 +929,14 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
         displayFont.storage.size());
     gState.setFontSize(&displayFont, fontSize);
 
+    const void *approvedText = approvedAction
+        ? (actionBilingual ? text : action->translation)
+        : (viewportBilingual ? text : viewport->translation);
+    const std::size_t approvedSize = approvedAction
+        ? (actionBilingual ? size : action->translationSize)
+        : (viewportBilingual ? size : viewport->translationSize);
     recursionActive = true;
-    original(
-        approvedAction ? action->translation : viewport->translation,
-        approvedAction ? action->translationSize : viewport->translationSize,
-        encoding,
-        x,
-        y,
-        &displayFont,
-        path);
+    original(approvedText, approvedSize, encoding, x, y, &displayFont, path);
     recursionActive = false;
 
     if (!gState.pathIsEmpty(path)) {

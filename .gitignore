@@ -23,3 +23,7 @@ gui/runtime/
 gui/src-tauri/runtime/
 
 build/
+
+# Python catalog audit/test caches
+__pycache__/
+*.py[cod]

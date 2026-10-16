@@ -1,5 +1,5 @@
 # [INPUT]: 依赖产品及搜索合同一致的 QT_NO_KEYWORDS 配置、CMake 4.2+、Visual Studio 2022+ 的 MSVC v143、Qt 6.6.3 x64 SDK及版本化 QPA 头、Windows Psapi、本目录源码、Classic rank/Quick Add 合同 fixture、../generated_translations.inc 与可选 vendor 根
-# [OUTPUT]: 对外构建发布态 generic/cavalryi18n.dll、qpa/qwindows.dll 与不发布的 acceptance/generic/cavalryi18n_acceptance.dll，并注册显示/hook/vendor、Quick Add 顶部标签显示合同、QPA manifest、Classic 同一 Qt fixture 排序合同、Windows vendor priority 静态 ABI 门、测试态 vendor 主窗口缝及环境/显式入口合同测试
+# [OUTPUT]: 对外构建发布态 generic/cavalryi18n.dll、qpa/qwindows.dll 与不发布的 acceptance/generic/cavalryi18n_acceptance.dll，并注册双语display/public-Qt/input值回归（Release断言保持启用）及显示/hook/vendor、Quick Add 顶部标签显示合同、QPA/generic 产品 DLL 加载与无效激活拒绝、QPA manifest、Classic 同一 Qt fixture 排序合同、Windows vendor priority 静态 ABI 门、测试态 vendor 主窗口缝及环境/显式入口合同测试
 # [POS]: injector/windows 的唯一构建入口，以严格 ABI/架构/manifest 前置检查约束通用翻译 runtime 与原生入口 QPA 代理，并隔离验收 driver
 # [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
 cmake_minimum_required(VERSION 4.2)
@@ -294,6 +294,7 @@ if(BUILD_TESTING)
     add_dependencies(
         cavalryi18n_qpa_binary_smoke_test
         cavalryi18n_qpa
+        cavalryi18n
     )
 
     add_test(
@@ -303,6 +304,7 @@ if(BUILD_TESTING)
             "PATH=$<TARGET_FILE_DIR:Qt6::Core>$<SEMICOLON>$ENV{PATH}"
             "$<TARGET_FILE:cavalryi18n_qpa_binary_smoke_test>"
             "$<TARGET_FILE:cavalryi18n_qpa>"
+            "$<TARGET_FILE:cavalryi18n>"
     )
 
     add_executable(cavalryi18n_display_test
@@ -791,4 +793,25 @@ if(BUILD_TESTING)
     target_compile_definitions(cavalry_bilingual_translator_test PRIVATE QT_NO_KEYWORDS CAVALRY_BILINGUAL_ENABLED=1)
     target_link_libraries(cavalry_bilingual_translator_test PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
     add_test(NAME cavalry_bilingual_translator_test COMMAND cavalry_bilingual_translator_test)
+endif()
+
+if(BUILD_TESTING)
+    # Product mode matters: the upstream monolingual display fixture must not be
+    # mistaken for a test of the bilingual font and width integration.
+    add_executable(cavalry_bilingual_display_test
+        "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/windows_bilingual_display.cpp"
+        cavalry_i18n_display.cpp cavalry_i18n_display.h
+        cavalry_i18n_classic_rank_windows.cpp
+        cavalry_i18n_translator.cpp)
+    target_compile_definitions(cavalry_bilingual_display_test PRIVATE QT_NO_KEYWORDS CAVALRY_BILINGUAL_ENABLED=1)
+    target_link_libraries(cavalry_bilingual_display_test PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Psapi)
+    target_compile_options(cavalry_bilingual_display_test PRIVATE /UNDEBUG)
+    target_compile_options(cavalry_bilingual_translator_test PRIVATE /UNDEBUG)
+    add_test(NAME cavalry_bilingual_display COMMAND cavalry_bilingual_display_test)
+    foreach(fixture qt_runtime input_value)
+        add_executable(cavalry_bilingual_${fixture}_test "${CMAKE_CURRENT_SOURCE_DIR}/../../tests/${fixture}.cpp")
+        target_link_libraries(cavalry_bilingual_${fixture}_test PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets)
+        target_compile_options(cavalry_bilingual_${fixture}_test PRIVATE /UNDEBUG /utf-8)
+        add_test(NAME cavalry_bilingual_${fixture} COMMAND cavalry_bilingual_${fixture}_test)
+    endforeach()
 endif()

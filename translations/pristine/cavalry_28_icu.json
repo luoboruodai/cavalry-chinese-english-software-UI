@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "scope": "Cavalry 2.8 ICU translation candidates. Not host/UI acceptance. English locale retained for bilingual source experiments.",
+  "entries": [
+    {
+      "source": "{0, plural, one {# hour} other {# hours}}",
+      "zh-Hans": "{0, plural, one {# 小时} other {# 小时}}"
+    },
+    {
+      "source": "{0, plural, one {# hour} other {# hours}} {1, plural, one {# minute} other {# minutes}}",
+      "zh-Hans": "{0, plural, one {# 小时} other {# 小时}} {1, plural, one {# 分钟} other {# 分钟}}"
+    },
+    {
+      "source": "{0, plural, one {# minute} other {# minutes}}",
+      "zh-Hans": "{0, plural, one {# 分钟} other {# 分钟}}"
+    },
+    {
+      "source": "{0, plural, one {# second} other {# seconds}}",
+      "zh-Hans": "{0, plural, one {# 秒} other {# 秒}}"
+    },
+    {
+      "source": "AI Studio: saved {0, plural, one {# layer file} other {# layer files}} to {1}.",
+      "zh-Hans": "AI 工作室：已将{0, plural, one {# 个图层文件} other {# 个图层文件}}保存到{1}。"
+    },
+    {
+      "source": "{0, plural, one {# layer} other {# layers}}",
+      "zh-Hans": "{0, plural, one {# 个图层} other {# 个图层}}"
+    },
+    {
+      "source": "Delete Selected {0, plural, one {Attribute} other {Attributes}}",
+      "zh-Hans": "删除所选{0, plural, one {属性} other {属性}}"
+    },
+    {
+      "source": "Audio resampling failed {0, plural, one {# time} other {# times}} during playback.",
+      "zh-Hans": "播放期间，音频重采样失败了{0, plural, one {# 次} other {# 次}}。"
+    },
+    {
+      "source": "Cavalry will remind you every {0, plural, one {# minute} other {# minutes}} to save your Scene.",
+      "zh-Hans": "Cavalry 将每隔{0, plural, one {# 分钟} other {# 分钟}}提醒你保存场景。"
+    },
+    {
+      "source": "Save reminder: {0, plural, one {# minute} other {# minutes}} since this Scene was last saved.",
+      "zh-Hans": "保存提醒：距上次保存此场景已过{0, plural, one {# 分钟} other {# 分钟}}。"
+    },
+    {
+      "source": "Cavalry will save your Scene every {0, plural, one {# minute} other {# minutes}}.",
+      "zh-Hans": "Cavalry 将每隔{0, plural, one {# 分钟} other {# 分钟}}保存场景。"
+    },
+    {
+      "source": "{0, plural, one {# Asset} other {# Assets}}, you have reached the limit.",
+      "zh-Hans": "{0, plural, one {# 个素材} other {# 个素材}}，已达到上限。"
+    },
+    {
+      "source": "{0, plural, one {# Asset} other {# Assets}}, this is close to the limit of {1}.",
+      "zh-Hans": "{0, plural, one {# 个素材} other {# 个素材}}，已接近{1}的上限。"
+    },
+    {
+      "source": "{0, plural, one {# Asset} other {# Assets}}, this is over the limit of {1}.",
+      "zh-Hans": "{0, plural, one {# 个素材} other {# 个素材}}，已超过{1}的上限。"
+    },
+    {
+      "source": "{0, plural, one {There is # Smart Folder, please import its files as individual Assets.} other {There are # Smart Folders, please import their files as individual Assets.}}",
+      "zh-Hans": "{0, plural, one {有 # 个智能文件夹，请将其中的文件作为独立素材导入。} other {有 # 个智能文件夹，请将其中的文件作为独立素材导入。}}"
+    },
+    {
+      "source": "{0, plural, one {# Control Centre Attribute} other {# Control Centre Attributes}}, you have reached the limit.",
+      "zh-Hans": "{0, plural, one {# 个控制中心属性} other {# 个控制中心属性}}，已达到上限。"
+    },
+    {
+      "source": "{0, plural, one {# Control Centre Attribute} other {# Control Centre Attributes}}, this is close to the limit of {1}.",
+      "zh-Hans": "{0, plural, one {# 个控制中心属性} other {# 个控制中心属性}}，已接近{1}的上限。"
+    },
+    {
+      "source": "{0, plural, one {# Control Centre Attribute} other {# Control Centre Attributes}}, this is over the limit of {1}.",
+      "zh-Hans": "{0, plural, one {# 个控制中心属性} other {# 个控制中心属性}}，已超过{1}的上限。"
+    },
+    {
+      "source": "{0, plural, one {There is # Control Centre Attribute Canva does not support, it will be left out.} other {There are # Control Centre Attributes Canva does not support, these will be left out.}}",
+      "zh-Hans": "{0, plural, one {有 # 个控制中心属性不受 Canva 支持，将被排除。} other {有 # 个控制中心属性不受 Canva 支持，将被排除。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # Control Centre Attribute driven by a connection, it will be left out.} other {There are # Control Centre Attributes driven by connections, these will be left out.}}",
+      "zh-Hans": "{0, plural, one {有 # 个控制中心属性由连接驱动，将被排除。} other {有 # 个控制中心属性由连接驱动，将被排除。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # font collection (.ttc, .otc), please replace it with a .ttf or .otf file.} other {There are # font collections (.ttc, .otc), please replace each with a .ttf or .otf file.}}",
+      "zh-Hans": "{0, plural, one {有 # 个字体集合（.ttc、.otc），请将其替换为 .ttf 或 .otf 文件。} other {有 # 个字体集合（.ttc、.otc），请将其分别替换为 .ttf 或 .otf 文件。}}"
+    },
+    {
+      "source": "{0, plural, one {# font} other {# fonts}}, you have reached the limit.",
+      "zh-Hans": "{0, plural, one {# 种字体} other {# 种字体}}，已达到上限。"
+    },
+    {
+      "source": "{0, plural, one {# font} other {# fonts}}, this is close to the limit of {1}.",
+      "zh-Hans": "{0, plural, one {# 种字体} other {# 种字体}}，已接近{1}的上限。"
+    },
+    {
+      "source": "{0, plural, one {# font} other {# fonts}}, this is over the limit of {1}.",
+      "zh-Hans": "{0, plural, one {# 种字体} other {# 种字体}}，已超过{1}的上限。"
+    },
+    {
+      "source": "{0, plural, one {There is # font file over {1} MB, please replace it with a smaller file.} other {There are # font files over {1} MB, please replace these with smaller files.}}",
+      "zh-Hans": "{0, plural, one {有 # 个字体文件超过 {1} MB，请替换为较小的文件。} other {有 # 个字体文件超过 {1} MB，请分别替换为较小的文件。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # file Canva cannot upload, please remove or replace it.} other {There are # files Canva cannot upload, please remove or replace these.}}",
+      "zh-Hans": "{0, plural, one {有 # 个文件无法上传到 Canva，请移除或替换。} other {有 # 个文件无法上传到 Canva，请移除或替换。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # font not licensed for use in Canva, please replace it.} other {There are # fonts not licensed for use in Canva, please replace these.}}",
+      "zh-Hans": "{0, plural, one {有 # 种字体未获许可在 Canva 中使用，请替换。} other {有 # 种字体未获许可在 Canva 中使用，请替换。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # image over {1}px, be aware that Canva will scale it down.} other {There are # images over {1}px, be aware that Canva will scale these down.}}",
+      "zh-Hans": "{0, plural, one {有 # 张图像超过 {1}px，请注意 Canva 会将其缩小。} other {有 # 张图像超过 {1}px，请注意 Canva 会将其缩小。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # Layer using JavaScript, which Canva cannot run.} other {There are # Layers using JavaScript, which Canva cannot run.}}",
+      "zh-Hans": "{0, plural, one {有 # 个图层使用了 JavaScript，Canva 无法运行这些代码。} other {有 # 个图层使用了 JavaScript，Canva 无法运行这些代码。}}"
+    },
+    {
+      "source": "{0, plural, one {There is # font not imported as an Asset, please add it with {1} → {2}} other {There are # fonts not imported as Assets, please add them with {1} → {2}}}",
+      "zh-Hans": "{0, plural, one {有 # 种字体尚未作为素材导入，请通过 {1} → {2} 添加} other {有 # 种字体尚未作为素材导入，请通过 {1} → {2} 添加}}"
+    },
+    {
+      "source": "{0, plural, one {# Issue} other {# Issues}}",
+      "zh-Hans": "{0, plural, one {# 个问题} other {# 个问题}}"
+    },
+    {
+      "source": "Delete {0, plural, one {Point} other {Points}}",
+      "zh-Hans": "删除{0, plural, one {点} other {点}}"
+    },
+    {
+      "source": "<br>Cavalry is offline, you must re-authenticate within {0, plural, one {# day} other {# days}}.",
+      "zh-Hans": "<br>Cavalry 处于离线状态，你必须在{0, plural, one {# 天} other {# 天}}内重新验证身份。"
+    },
+    {
+      "source": "<br>Your licence is suspended and will expire in less than {0, plural, one {# day} other {# days}}.<br><a href=\"{1}\">Manage your account.</a>",
+      "zh-Hans": "<br>你的许可证已暂停，将在不到{0, plural, one {# 天} other {# 天}}后到期。<br><a href=\"{1}\">管理账户。</a>"
+    },
+    {
+      "source": "Connected {0, plural, one {# Layer} other {# Layers}}.",
+      "zh-Hans": "已连接{0, plural, one {# 个图层} other {# 个图层}}。"
+    },
+    {
+      "source": "This will also <b>remove</b> {0, plural, one {# Attribute} other {# Attributes}} inside this Group from the Control Centre. Would you like to continue?",
+      "zh-Hans": "这也会从控制中心<b>移除</b>此组内的{0, plural, one {# 个属性} other {# 个属性}}。是否继续？"
+    },
+    {
+      "source": "Copied {0, plural, one {# Animated Attribute} other {# Animated Attributes}}",
+      "zh-Hans": "已复制{0, plural, one {# 个动画属性} other {# 个动画属性}}"
+    },
+    {
+      "source": "Copied {0, plural, one {# Keyframe} other {# Keyframes}}",
+      "zh-Hans": "已复制{0, plural, one {# 个关键帧} other {# 个关键帧}}"
+    },
+    {
+      "source": "Copied {0, plural, one {# Shape Animated Attribute} other {# Shape Animated Attributes}}",
+      "zh-Hans": "已复制{0, plural, one {# 个形状动画属性} other {# 个形状动画属性}}"
+    },
+    {
+      "source": "Copied {0, plural, one {# Shape Keyframe} other {# Shape Keyframes}}",
+      "zh-Hans": "已复制{0, plural, one {# 个形状关键帧} other {# 个形状关键帧}}"
+    },
+    {
+      "source": "Copied {0, plural, one {# Layer} other {# Layers}}.",
+      "zh-Hans": "已复制{0, plural, one {# 个图层} other {# 个图层}}。"
+    },
+    {
+      "source": "Copy {0, plural, one {# Layer} other {# Layers}}",
+      "zh-Hans": "复制{0, plural, one {# 个图层} other {# 个图层}}"
+    },
+    {
+      "source": "This design has {0, plural, one {# page} other {# pages}}.",
+      "zh-Hans": "此设计包含{0, plural, one {# 个页面} other {# 个页面}}。"
+    },
+    {
+      "source": "Left {0, plural, one {# connected Control Centre attribute} other {# connected Control Centre attributes}} out of the archive.",
+      "zh-Hans": "已从归档中排除{0, plural, one {# 个已连接的控制中心属性} other {# 个已连接的控制中心属性}}。"
+    },
+    {
+      "source": "Left {0, plural, one {# Control Centre attribute} other {# Control Centre attributes}} out of the archive: the plugin author has disabled Canva editing for this layer.",
+      "zh-Hans": "已从归档中排除{0, plural, one {# 个控制中心属性} other {# 个控制中心属性}}：插件作者已禁止在 Canva 中编辑此图层。"
+    },
+    {
+      "source": "Copy {0, plural, one {Animated Attribute} other {Animated Attributes}}",
+      "zh-Hans": "复制{0, plural, one {动画属性} other {动画属性}}"
+    },
+    {
+      "source": "Copy {0, plural, one {Keyframe} other {Keyframes}}",
+      "zh-Hans": "复制{0, plural, one {关键帧} other {关键帧}}"
+    },
+    {
+      "source": "Copy {0, plural, =1 {Layer} other {# Layers}}",
+      "zh-Hans": "复制{0, plural, =1 {图层} other {# 个图层}}"
+    },
+    {
+      "source": "Grouped: {0, plural, one {# item} other {# items}}.",
+      "zh-Hans": "已编组：{0, plural, one {# 个项目} other {# 个项目}}。"
+    },
+    {
+      "source": "Made {0, plural, one {# Layer} other {# Layers}} dynamic.",
+      "zh-Hans": "已为{0, plural, one {# 个图层} other {# 个图层}}启用动力学模拟。"
+    },
+    {
+      "source": "Pre-Composed: {0, plural, one {# item} other {# items}}.",
+      "zh-Hans": "已预合成：{0, plural, one {# 个项目} other {# 个项目}}。"
+    },
+    {
+      "source": "Un-grouped: {0, plural, one {# item} other {# items}}.",
+      "zh-Hans": "已取消编组：{0, plural, one {# 个项目} other {# 个项目}}。"
+    },
+    {
+      "source": "Reloaded {0, plural, one {# asset} other {# assets}}.",
+      "zh-Hans": "已重新加载{0, plural, one {# 个素材} other {# 个素材}}。"
+    },
+    {
+      "source": "{0, plural, =1 {Duplicate Composition} other {Duplicate # Compositions}}",
+      "zh-Hans": "{0, plural, =1 {复制合成} other {复制 # 个合成}}"
+    },
+    {
+      "source": "Used {0, plural, one {# time} other {# times}}",
+      "zh-Hans": "已使用{0, plural, one {# 次} other {# 次}}"
+    },
+    {
+      "source": "Delete {0, plural, one {Render Item} other {Render Items}}",
+      "zh-Hans": "删除{0, plural, one {渲染项目} other {渲染项目}}"
+    },
+    {
+      "source": "Retimed {0, plural, one {# animation curve} other {# animation curves}} (scale {1}).",
+      "zh-Hans": "已对{0, plural, one {# 条动画曲线} other {# 条动画曲线}}重定时（缩放比例 {1}）。"
+    },
+    {
+      "source": "Swapped {0, plural, one {# Composition} other {# Compositions}}.",
+      "zh-Hans": "已交换{0, plural, one {# 个合成} other {# 个合成}}。"
+    },
+    {
+      "source": "Disable {0, plural, one {Falloff} other {Falloffs}}",
+      "zh-Hans": "禁用{0, plural, one {衰减} other {衰减}}"
+    },
+    {
+      "source": "Enable {0, plural, one {Falloff} other {Falloffs}}",
+      "zh-Hans": "启用{0, plural, one {衰减} other {衰减}}"
+    },
+    {
+      "source": "Parented: {0, plural, one {# item} other {# items}}.",
+      "zh-Hans": "已设置父级：{0, plural, one {# 个项目} other {# 个项目}}。"
+    },
+    {
+      "source": "Un-Parented: {0, plural, one {# item} other {# items}}.",
+      "zh-Hans": "已解除父级：{0, plural, one {# 个项目} other {# 个项目}}。"
+    },
+    {
+      "source": "Cavalry is offline. You will need to re-authenticate in less than {0, plural, one {# day} other {# days}}.",
+      "zh-Hans": "Cavalry 处于离线状态。你需要在不到{0, plural, one {# 天} other {# 天}}内重新验证身份。"
+    },
+    {
+      "source": "Cut {0, plural, one {# Keyframe} other {# Keyframes}}",
+      "zh-Hans": "已剪切{0, plural, one {# 个关键帧} other {# 个关键帧}}"
+    },
+    {
+      "source": "Deleted {0, plural, one {# Keyframe} other {# Keyframes}}",
+      "zh-Hans": "已删除{0, plural, one {# 个关键帧} other {# 个关键帧}}"
+    },
+    {
+      "source": "Delete {0, plural, one {Keyframe} other {Keyframes}}",
+      "zh-Hans": "删除{0, plural, one {关键帧} other {关键帧}}"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖生成翻译表中的原始 context/source 键
- * [OUTPUT]: 对外提供自绘/动态 Qt 表面的精确 context/source 常量、8 条跨平台 scoped key、已由 macOS/Windows 双端 producer 采证的 TagHeader 邻接标签/Assets 动态菜单模板 key，以及具体快捷键与旧 MenuBarManager 静态前缀的 exact-only 判定
+ * [OUTPUT]: 新增 BilingualPreferences 专用上下文，禁止进入通用 source fallback； 对外提供自绘/动态 Qt 表面的精确 context/source 常量、8 条跨平台 scoped key、已由 macOS/Windows 双端 producer 采证的 TagHeader 邻接标签/Assets 动态菜单模板 key，以及具体快捷键与旧 MenuBarManager 静态前缀的 exact-only 判定
  * [POS]: injector 的翻译查询策略；共享专用词条与双平台邻接表面分层退出 source fallback，只能由精确 Qt 上下文或已验证的平台 owner/producer 回补消费
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -115,6 +115,7 @@ inline constexpr bool requiresExactTranslationContext(
     }
 
     const std::string_view contextView(context);
+    if (contextView == "BilingualPreferences") return true; // owner-scoped settings enums only
     if (contextView == "BilingualVendorEffects") return true; // only Create > Effects / verified graph type
 
     const std::string_view sourceView(sourceText);
