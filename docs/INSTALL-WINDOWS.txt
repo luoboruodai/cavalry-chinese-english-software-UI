@@ -1,0 +1,34 @@
+Cavalry Bilingual 0.1.0 Preview
+Windows x64 NSIS installer / Windows x64 NSIS 安装器
+====================================================
+
+中文
+----
+1. 运行 Windows x64 setup.exe 并按安装向导完成安装。
+2. 先保存自己的工程，再自行退出 Cavalry。工具不会自动保存或强制退出宿主。
+3. 运行 Cavalry Bilingual，检查排版与字体设置并保存；在状态页刷新检测。
+4. 只有宿主版本、资源和安全合同匹配时才应用。应用后重新打开 Cavalry。
+5. 需要回退时选择对应快照。“恢复”是恢复到快照，不一定等于原厂英文状态；恢复前也会保留当前状态。
+6. 卸载程序不会自动删除备份或设置；不要在不确认内容时手动删除它们。
+
+安装器未签名，Windows 可能显示 SmartScreen 提示；请只在核对发布页和文件哈希后自行决定是否继续。
+本安装器在 macOS 上交叉构建，只有静态/包装及明确记录的环境检查，未完成原生 Windows、MSVC 或真实 Cavalry 宿主验收。
+需要 Windows x64 和可用的 WebView2 Runtime。已验证范围不代表全界面、全版本或全平台兼容。
+本包不包含 Cavalry、Qt 或 Skia 的宿主二进制，与 Scene Group / Cavalry 官方无关。
+
+English
+-------
+1. Run the Windows x64 setup.exe and follow the installation wizard.
+2. Save your project and quit Cavalry yourself. The tool does not auto-save or force-quit the host.
+3. Run Cavalry Bilingual, review and save the typography/font settings, then refresh detection on the Status page.
+4. Apply only when the host version, resources, and safety contracts match. Relaunch Cavalry afterwards.
+5. To roll back, select a snapshot. Restore returns to that snapshot, not necessarily to a factory English state; the current state is also preserved first.
+6. Uninstalling does not automatically delete backups or settings. Do not delete them manually without reviewing their contents.
+
+The installer is unsigned, so Windows may show a SmartScreen warning; proceed only after reviewing the release page and file hashes yourself.
+This installer was cross-built on macOS. Only static/package checks and explicitly documented environment checks are available; native Windows, MSVC, and real Cavalry host acceptance are incomplete.
+Windows x64 and a working WebView2 Runtime are required. Validated areas do not establish full-UI, all-version, or all-platform compatibility.
+No Cavalry, Qt, or Skia host binaries are included. This project is not affiliated with Scene Group or Cavalry.
+
+License and upstream notices are installed in the Legal directory.
+许可与上游声明安装在 Legal 目录。

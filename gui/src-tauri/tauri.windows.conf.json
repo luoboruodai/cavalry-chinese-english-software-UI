@@ -5,7 +5,11 @@
     ],
     "resources": {
       "runtime/windows/generic/cavalryi18n.dll": "runtime/windows/generic/cavalryi18n.dll",
-      "runtime/windows/qpa/qwindows.dll": "runtime/windows/qpa/qwindows.dll"
+      "runtime/windows/qpa/qwindows.dll": "runtime/windows/qpa/qwindows.dll",
+      "../docs/INSTALL-WINDOWS.txt": "INSTALL.txt",
+      "../LICENSE": "Legal/LICENSE",
+      "../LICENSE.daftai": "Legal/LICENSE.daftai",
+      "../NOTICE.md": "Legal/NOTICE.md"
     },
     "icon": [
       "icons/icon.ico"

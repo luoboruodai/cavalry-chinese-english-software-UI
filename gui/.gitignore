@@ -2,3 +2,6 @@ target/
 node_modules/
 dist/
 feedback_auto/
+docs/
+LICENSE*
+NOTICE.md

@@ -4,7 +4,7 @@
 
 A Chinese-English UI tool for Cavalry. It displays Chinese alongside the original English to help users follow English tutorials, with typography settings, restorable patches, and backup management.
 
-> **Development candidate 0.1.0.** `0.1.0 Preview 1` pre-release packages are available; this is not a stable release, and full-UI, all-version, and all-platform compatibility are not claimed.
+> **Development candidate 0.1.0.** `0.1.0 Preview 2` pre-release packages are available; this is not a stable release, and full-UI, all-version, and all-platform compatibility are not claimed.
 > Not affiliated with Scene Group or Cavalry. No Cavalry, Qt, or Skia host binaries are redistributed.
 
 ## Platform status
@@ -14,7 +14,7 @@ A Chinese-English UI tool for Cavalry. It displays Chinese alongside the origina
 | macOS arm64 · Cavalry 2.7.2 / Qt 6.6.3 | The tool is installed locally and has selected real-host validation; this is not full-UI acceptance. |
 | macOS universal | The tool and injector build for arm64 + x86_64. Most x86_64 execution evidence uses Rosetta; native Intel hardware remains unverified. |
 | Cavalry 2.8.0 / Qt 6.9.2 | Isolated copies have evidence for selected strings, Paths, and fixed viewport hints. Production writes remain blocked; general Canvas/Graph, TrackingTool, and full-UI coverage are incomplete. |
-| Windows x64 | A cross-built portable ZIP is available. Native Windows, MSVC, NSIS, and a real Cavalry host remain unverified; the current Wine recheck did not complete. |
+| Windows x64 | A cross-built NSIS installer is available. Native Windows, MSVC, and a real Cavalry host remain unverified; the current Wine installation recheck did not complete. |
 
 See the [compatibility and coverage matrix](docs/COMPATIBILITY.md) for exact boundaries. Rosetta, Wine, static ABI checks, synthetic tests, and real-host validation are different kinds of evidence.
 
@@ -28,11 +28,11 @@ See the [compatibility and coverage matrix](docs/COMPATIBILITY.md) for exact bou
 
 ## Download and installation
 
-### 0.1.0 Preview 1 pre-release
+### 0.1.0 Preview 2 pre-release
 
-- [macOS universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.1/Cavalry-Bilingual_0.1.0-preview.1_macOS-universal.dmg): ad-hoc signed and not notarized.
-- [Windows x64 portable ZIP](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.1/Cavalry-Bilingual_0.1.0-preview.1_Windows-x64-portable.zip): not an NSIS installer, unsigned, and not accepted on native Windows.
-- [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.1/SHA256SUMS.txt) and the [pre-release notes](docs/RELEASE-0.1.0-preview.1.md).
+- [macOS universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_macOS-universal.dmg): ad-hoc signed and not notarized.
+- [Windows x64 NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_Windows-x64-setup.exe): unsigned and not accepted on native Windows.
+- [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/SHA256SUMS.txt) and the [pre-release notes](docs/RELEASE-0.1.0-preview.2.md).
 
 GitHub's automatic **Source code** archives are for source review and building; they are not installer packages.
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0 Preview 2 · 2026-10-17 · Windows NSIS 安装器
+
+- 新增 Windows x64 `setup.exe`，包含 GUI、generic/QPA DLL、双语 `INSTALL.txt` 和 Legal 文件；`prepare:resources` 负责生成 ignored 打包副本，公开真源仍在 `docs/` 与根目录许可文件。
+- 通过 7-Zip 直接核对 NSIS 成员和解压后文件：主程序为 PE x64 GUI，指南、许可和 runtime 字节一致；安装器本身隐私扫描 0 标记。
+- macOS DMG 更新为 Preview 2 指南并重新通过挂载、签名、架构、成员和隐私检查。
+- Windows 静默安装未完成且未生成目标目录，未记通过；原生 Windows、MSVC、真实宿主和 Intel 原生仍未验收。Preview 1 的便携 ZIP 保留为历史，当前主安装入口改为 EXE。
+
 ## 0.1.0 Preview 1 · 2026-10-17 · 首个预发布附件
 
 - 提供 macOS universal DMG 与 Windows x64 便携 ZIP；附件、哈希、安装指南及未覆盖范围见 `docs/RELEASE-0.1.0-preview.1.md`。这是预发布，不是稳定版或全平台验收结论。

@@ -4,7 +4,7 @@
 
 Cavalry 的中英双语界面工具：在保留英文原文的同时显示中文，帮助用户在跟随英文教程时理解界面，并提供字体排版、可恢复补丁和备份管理。
 
-> **0.1.0 开发候选。** 当前提供 `0.1.0 Preview 1` 预发布附件；它不是稳定版，也不能保证全界面、全版本或全平台兼容。
+> **0.1.0 开发候选。** 当前提供 `0.1.0 Preview 2` 预发布附件；它不是稳定版，也不能保证全界面、全版本或全平台兼容。
 > 与 Scene Group / Cavalry 官方无关；不分发 Cavalry、Qt 或 Skia 的宿主二进制。
 
 ## 当前平台状态
@@ -14,7 +14,7 @@ Cavalry 的中英双语界面工具：在保留英文原文的同时显示中文
 | macOS arm64 · Cavalry 2.7.2 / Qt 6.6.3 | 工具已在本机安装并完成部分真实宿主验证；仍不是全界面验收。 |
 | macOS universal | 工具与注入器可构建 arm64 + x86_64；x86_64 测试主要通过 Rosetta，Intel 原生硬件仍待验证。 |
 | Cavalry 2.8.0 / Qt 6.9.2 | 隔离副本已取得限定词条、Path 和固定视口证据；正式写入仍拒绝，通用 Canvas/Graph、TrackingTool 和全界面覆盖未完成。 |
-| Windows x64 | 当前提供交叉构建的便携 ZIP；原生 Windows、MSVC、NSIS 和真实 Cavalry 宿主仍未验收，本轮 Wine 复验未完成。 |
+| Windows x64 | 当前提供交叉构建的 NSIS 安装器；原生 Windows、MSVC 和真实 Cavalry 宿主仍未验收，本轮 Wine 安装复验未完成。 |
 
 详细边界见 [兼容与覆盖矩阵](docs/COMPATIBILITY.md)。Rosetta、Wine、静态 ABI 检查、合成测试和真实宿主验证是不同证据，不能互相替代。
 
@@ -28,11 +28,11 @@ Cavalry 的中英双语界面工具：在保留英文原文的同时显示中文
 
 ## 获取与安装
 
-### 0.1.0 Preview 1 预发布
+### 0.1.0 Preview 2 预发布
 
-- [macOS universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.1/Cavalry-Bilingual_0.1.0-preview.1_macOS-universal.dmg)：ad-hoc 签名，未公证。
-- [Windows x64 便携 ZIP](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.1/Cavalry-Bilingual_0.1.0-preview.1_Windows-x64-portable.zip)：不是 NSIS 安装器，未签名，原生 Windows 未验收。
-- [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.1/SHA256SUMS.txt) 与 [预发布说明](docs/RELEASE-0.1.0-preview.1.md)。
+- [macOS universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_macOS-universal.dmg)：ad-hoc 签名，未公证。
+- [Windows x64 NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_Windows-x64-setup.exe)：未签名，原生 Windows 未验收。
+- [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/SHA256SUMS.txt) 与 [预发布说明](docs/RELEASE-0.1.0-preview.2.md)。
 
 GitHub 自动生成的 **Source code** 仅用于审查和构建源码，不是安装包。
 
