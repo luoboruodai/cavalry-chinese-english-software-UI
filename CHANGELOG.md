@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.0 Preview 1 · 2026-10-17 · 首个预发布附件
+
+- 提供 macOS universal DMG 与 Windows x64 便携 ZIP；附件、哈希、安装指南及未覆盖范围见 `docs/RELEASE-0.1.0-preview.1.md`。这是预发布，不是稳定版或全平台验收结论。
+- macOS GUI 使用路径重映射重建，挂载后的 DMG 通过签名、架构、成员和隐私检查；仍为 ad-hoc 且未公证。
+- Windows 两个入口补充 release 下的 GUI subsystem，主程序从 console 改为 PE x64 GUI；ZIP 含当前 generic/QPA DLL、双语指南和许可，不是 NSIS 安装器，未签名。
+- Windows 本轮 Wine 复验因 wineserver 崩溃/超时停止，未记通过；原生 Windows、MSVC、安装器、真实宿主和 Intel 原生仍未验收。
+
 ## 未发布 · 2026-10-17 · 仓库双语使用指南
 
 - 将首屏研发记录整理为面向用户的中文 README，并新增互链的 `README.en.md`；两种语言均优先说明产品用途、平台边界、源码构建、使用与恢复流程。
