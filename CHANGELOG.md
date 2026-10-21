@@ -1,3 +1,10 @@
+# 0.1.1 · 2026-10-21
+
+- 正式发行 0.1.1；正式版身份不扩大原生平台或全界面验收范围。
+- 状态页新增原生 Cavalry 安装目录选择，支持 Windows 其他盘与有效 macOS `.app`；目标验证、持久化、完整路径显示、取消与无效输入保护均保留。
+- 修复非 macOS 反馈被硬编码为仅导出的问题；macOS 与 Windows 统一使用先脱敏预览、再 EmailJS 发送或本地保存的流程，不引入私密凭据或真实测试发送。
+- 保留 Preview 4 的 Windows Common Controls v6 启动修复，提供新的 macOS Universal DMG 与 Windows x64 NSIS 安装附件。
+
 # 0.1.0 Preview 4 · 2026-10-21
 
 - 修复 Windows 安装后启动时报 `TaskDialogIndirect` 入口点缺失：此前 EXE 导入 Comctl32 v6 API 但没有应用程序 manifest。

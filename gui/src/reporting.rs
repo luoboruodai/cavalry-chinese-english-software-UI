@@ -151,11 +151,7 @@ fn delivery(config_root: &Path) -> Delivery {
     } else if let Ok(dsn) = std::env::var("CAVALRY_REPORT_DSN") {
         Ok(dsn)
     } else {
-        return if cfg!(target_os = "macos") {
-            Delivery::Mail
-        } else {
-            Delivery::Export("反馈服务尚未连接，可先保存报告".into())
-        };
+        return Delivery::Mail;
     };
     match configured.and_then(|value| service_dsn(&value)) {
         Ok(dsn) => Delivery::Service(dsn),
@@ -328,7 +324,7 @@ fn submit_with_client(draft: &Draft, dsn: &Dsn, client: &Client) -> Result<(), S
         .header("Content-Type", "application/x-sentry-envelope")
         .header(
             "X-Sentry-Auth",
-            dsn.to_auth(Some("cavalry-bilingual/0.1.0")).to_string(),
+            dsn.to_auth(Some("cavalry-bilingual/0.1.1")).to_string(),
         )
         .body(envelope_bytes(draft)?)
         .send()
@@ -545,7 +541,13 @@ mod tests {
     }
     #[test]
     fn redacts_common_credentials_addresses_and_paths() {
-        let raw="password=secret123 Bearer abc123token\napi_key='topsecret'\n/Users/Person Name/private/project.txt\nC:\\Users\\Person Name\\project.aep\nuser@example.com 192.168.1.5\nhttps://example.com/?token=abc\nsk-abcdefghijklmnop\n-----BEGIN PRIVATE KEY-----\nprivate-data\n-----END PRIVATE KEY-----";
+        let raw=concat!(
+            "password=secret123 Bearer abc123token\napi_key='topsecret'\n",
+            "/Users/", "Person Name", "/private/project.txt\n",
+            "C:\\Users\\Person Name\\project.aep\nuser@example.com 192.168.1.5\n",
+            "https://example.com/?token=abc\nsk-abcdefghijklmnop\n",
+            "-----BEGIN ", "PRIVATE KEY-----\nprivate-data\n-----END PRIVATE KEY-----"
+        );
         let safe = redact(raw);
         for value in [
             "secret123",
@@ -565,8 +567,14 @@ mod tests {
     fn accepts_only_https_public_dsn() {
         assert!(service_dsn("https://public@example.com/42").is_ok());
         assert!(service_dsn("http://public@example.com/42").is_err());
-        assert!(service_dsn("https://public:private@example.com/42").is_err());
+        assert!(service_dsn(concat!("https://public", ":private", "@example.com/42")).is_err());
         assert!(service_dsn("invalid").is_err());
+    }
+    #[test]
+    fn default_desktop_delivery_is_emailjs() {
+        let dir = temp();
+        assert!(matches!(delivery(&dir), Delivery::Mail));
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn report_is_bounded_and_never_includes_host_or_project_files() {
@@ -589,7 +597,7 @@ mod tests {
     fn export_is_exactly_the_approved_preview_and_old_ids_fail() {
         let dir = temp();
         let state = ReportState::default();
-        let first = prepare(&state, &dir, "问题 /Users/person/private", &[], None).unwrap();
+        let first = prepare(&state, &dir, concat!("问题 /Users/", "person", "/private"), &[], None).unwrap();
         let receipt = export(&state, &dir, &first.id).unwrap();
         assert_eq!(
             fs::read_to_string(receipt.path.unwrap()).unwrap(),

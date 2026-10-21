@@ -294,6 +294,15 @@ export default function App() {
     return request;
   }, [addLog, pushToast, refresh]);
 
+  const handleBrowseCavalry = useCallback(async (): Promise<string | null> => {
+    try {
+      const path = await api.chooseCavalryDirectory();
+      return path ? handleSelectCavalry(path) : null;
+    } catch (reason) {
+      return errorText(reason);
+    }
+  }, [handleSelectCavalry]);
+
   const handleReportComplete = useCallback((receipt: ReportReceipt) => {
     if (receipt.delivery === "submitted" || receipt.delivery === "mail-sent") addLog(`反馈报告已提交 — 编号 ${receipt.id}`);
     else addLog(`反馈报告已保存：${receipt.path ?? "本机"}`);
@@ -393,6 +402,7 @@ export default function App() {
                 onRestoreLatest={() => handleRestore("")}
                 onNavigate={setView}
                 onSelectCavalry={handleSelectCavalry}
+                onBrowseCavalry={handleBrowseCavalry}
                 update={update}
                 operationBusy={operationBusy}
               />
@@ -409,7 +419,7 @@ export default function App() {
       </div>
 
       <footer className="bottom-bar">
-        <span>v{buildInfo?.appVersion ?? "0.1.0"}{isMock ? " · 界面演示" : " · 验证中"}</span>
+        <span>v{buildInfo?.appVersion ?? "0.1.1"}{isMock ? " · 界面演示" : " · 验证中"}</span>
         <span>仅供学习用途 · 与 Scene Group 无关</span>
       </footer>
 

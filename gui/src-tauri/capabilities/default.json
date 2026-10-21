@@ -3,5 +3,5 @@
   "identifier": "default",
   "description": "Default capability for the main window: core permissions for the Cavalry Bilingual GUI.",
   "windows": ["main"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "dialog:allow-open"]
 }

@@ -93,7 +93,7 @@ button:not(:disabled):active { transform: translateY(1px); }
 .target-count { padding-top: 2px; font-size: 11px; white-space: nowrap; color: var(--ui-muted); }
 .target-card-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .target-select { flex: 1 1 210px; min-width: 160px; }
-.target-card-note { margin-top: 12px; }
+.target-card-note { margin-top: 12px; overflow-wrap: anywhere; }
 .target-switch-button { min-width: 120px; }
 .target-switch-button[aria-busy="true"] { opacity: 1; color: var(--ui-green-deep); background: var(--ui-green-wash); border-color: transparent; cursor: progress; }
 .target-switch-state { margin-top: 10px; font-size: 11px; line-height: 1.6; color: var(--ui-green-deep); }

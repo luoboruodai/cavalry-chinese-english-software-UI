@@ -18,8 +18,10 @@ let checks = 0;
 const check = (value, message) => { assert.ok(value, message); ++checks; };
 try {
   const tauriConfig = JSON.parse(readFileSync(new URL('../../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
+  const capabilities = JSON.parse(readFileSync(new URL('../../src-tauri/capabilities/default.json', import.meta.url), 'utf8'));
   const externalHttpsOrigins = tauriConfig.app.security.csp.match(/https:\/\/[^\s;]+/g) ?? [];
   check(JSON.stringify(externalHttpsOrigins) === JSON.stringify(['https://api.emailjs.com']), 'CSP allows only the exact EmailJS HTTPS origin');
+  check(capabilities.permissions.includes('dialog:allow-open') && !capabilities.permissions.includes('dialog:default'), 'directory picker has only the required open permission');
   for (const [width, height] of [[700,540],[760,540],[880,620],[1000,760],[1280,800]]) {
     await page.setViewportSize({width,height});
     for (const view of ['status','type','backup','log']) {
@@ -36,6 +38,7 @@ try {
         check(await page.getByText('当前注入目标').isVisible(), 'status target switcher visible');
         check(await page.locator('.tb-refresh svg').evaluate(el => getComputedStyle(el).stroke) === 'rgb(76, 119, 53)', 'refresh icon uses the shared high-contrast green, not white');
         check(await page.getByRole('button', {name:'切换 Cavalry', exact:true}).isVisible(), 'status Cavalry switch button visible');
+        check(await page.getByRole('button', {name:'选择 Cavalry 安装路径', exact:true}).isVisible(), 'status custom-path picker visible');
         check(await page.getByRole('button', {name:'软件更新', exact:true}).isVisible(), 'status software update button visible');
         check(await page.getByRole('button', {name:'应用双语', exact:true}).isVisible(), 'status apply button renamed');
       }
@@ -713,6 +716,26 @@ try {
   await page.waitForFunction(()=>document.querySelector('.meta-cell .v')?.textContent==='2.8.0');
   check(await page.getByRole('button',{name:'切换 Cavalry',exact:true}).isDisabled(), 'ordinary browser demo also follows confirmed target changes, not only special test fixtures');
 
+  await page.goto(`${base}/?mock=choose-path#status`);
+  const originalTargetNote = await page.locator('.target-card-note').innerText();
+  await page.getByRole('button',{name:'选择 Cavalry 安装路径',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('.target-card-note')?.textContent?.includes('E:\\Cavalry'));
+  check(await page.locator('.target-card-note').innerText()==='当前路径：E:\\Cavalry', 'choosing a custom directory confirms and displays the exact target path');
+  await targetPicker.click();
+  check(await page.getByRole('option',{name:/E:\\Cavalry/}).isVisible(), 'same-version installations remain distinguishable by path in the picker');
+  await page.keyboard.press('Escape');
+
+  await page.goto(`${base}/?mock=choose-path-cancel#status`);
+  const beforeCancel = await page.locator('.target-card-note').innerText();
+  await page.getByRole('button',{name:'选择 Cavalry 安装路径',exact:true}).click();
+  check(await page.locator('.target-card-note').innerText()===beforeCancel && await page.getByRole('heading',{name:'未完成目标切换',exact:true}).count()===0, 'cancelling the native picker preserves the confirmed target without an error');
+
+  await page.goto(`${base}/?mock=choose-path-invalid#status`);
+  await page.getByRole('button',{name:'选择 Cavalry 安装路径',exact:true}).click();
+  await page.getByRole('heading',{name:'未完成目标切换',exact:true}).waitFor();
+  check((await page.locator('.target-card .resource-state').innerText()).includes('不是可识别的 Cavalry 安装目录'), 'an invalid directory explains why it was rejected');
+  check(await page.locator('.target-card-note').innerText()===originalTargetNote, 'an invalid directory preserves the previous confirmed target');
+
   await page.goto(`${base}/?mock=status-error#status`);
   await page.getByRole('heading',{name:'暂时无法检测 Cavalry',exact:true}).waitFor();
   check(await targetPicker.isEnabled(), 'failed detection retains the benign alternate-target recovery path');
@@ -757,7 +780,7 @@ try {
   check(await page.getByLabel('即将提交的报告内容',{exact:true}).isHidden(), 'raw serialized payload stays collapsed by default');
   check(await page.locator('.review-message').textContent()===description, 'human review preserves message text and line breaks exactly');
   check(await page.locator('.review-message').locator('*').count()===0, 'description markup remains text in the review');
-  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.0','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
+  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.1','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
   check(await page.getByRole('region',{name:'版本信息',exact:true}).isVisible(), 'environment section is simplified to version information');
   check(await page.locator('.review-logs li').count()===20, 'review retains all attached records, including below the fold');
   check(JSON.stringify(await page.locator('.review-logs p').allTextContents())===JSON.stringify(reviewLogs.map(entry=>entry.text)), 'operation text is not silently summarized or truncated');

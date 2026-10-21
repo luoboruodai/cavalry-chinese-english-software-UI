@@ -24,6 +24,7 @@ pub struct GuiState {
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             let backup_root = cbpatch::ops::default_backup_root()?;
             let config_root = backup_root.parent().unwrap().to_path_buf();

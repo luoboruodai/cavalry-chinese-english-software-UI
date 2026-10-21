@@ -4,25 +4,25 @@
 
 **简体中文** | [English](README.en.md)
 
-[![0.1.0 Preview 4](https://img.shields.io/badge/release-0.1.0%20Preview%203-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4)
-[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4)
-[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4)
+[![0.1.1](https://img.shields.io/badge/release-0.1.1-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1)
+[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1)
 [![License](https://img.shields.io/badge/license-MIT-80827f)](LICENSE)
 
 在保留英文原文的同时显示中文，帮助你一边使用 Cavalry，一边对照英文教程。工具还提供字体排版、可恢复补丁、备份管理和用户主动反馈。
 
-> **当前版本：0.1.0 Preview 4（预发布）。** 适合提前试用与反馈，不是稳定版，也不代表全界面、全版本或全平台验收完成。
+> **当前版本：0.1.1（正式发行）。** 正式版身份不代表全界面、全版本或全平台验收完成；具体证据与限制见兼容矩阵。
 > 本项目与 Scene Group / Cavalry 官方无关，不分发 Cavalry、Qt 或 Skia 的宿主二进制。
 
 ## 下载
 
 | 平台 | 安装附件 | 当前边界 |
 |---|---|---|
-| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.4/Cavalry-Bilingual_0.1.0-preview.4_macOS-universal.dmg) | ad-hoc 签名、未公证；Intel 原生硬件仍待验证 |
-| Windows x64 | [NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.4/Cavalry-Bilingual_0.1.0-preview.4_Windows-x64-setup.exe) | 未签名；交叉构建与包体验证，原生 Windows／真实宿主仍待验收 |
-| 校验 | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.4/SHA256SUMS.txt) | 下载后核对附件 SHA-256 |
+| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.1/Cavalry-Bilingual_0.1.1_macOS-universal.dmg) | ad-hoc 签名、未公证；Intel 原生硬件仍待验证 |
+| Windows x64 | [NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.1/Cavalry-Bilingual_0.1.1_Windows-x64-setup.exe) | 未签名；交叉构建与包体验证，原生 Windows／真实宿主仍待验收 |
+| 校验 | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.1/SHA256SUMS.txt) | 下载后核对附件 SHA-256 |
 
-[完整预发布说明](docs/RELEASE-0.1.0-preview.4.md) · [兼容与覆盖矩阵](docs/COMPATIBILITY.md) · [全部版本](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
+[完整发布说明](docs/RELEASE-0.1.1.md) · [兼容与覆盖矩阵](docs/COMPATIBILITY.md) · [全部版本](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
 
 GitHub 自动生成的 **Source code** 是源码快照，不是安装包。
 
@@ -34,13 +34,14 @@ GitHub 自动生成的 **Source code** 是源码快照，不是安装包。
 - **可恢复补丁与备份**：应用前创建带校验的快照，可按快照恢复；恢复前保留当前状态。
 - **清晰的操作反馈**：状态、日志与低优先级说明使用统一的右侧通知，关键确认保留在弹窗内。
 - **Windows 启动兼容**：嵌入 Common Controls v6 manifest，修复 `TaskDialogIndirect` 入口点缺失导致的启动失败；不请求管理员权限。
-- **用户主动反馈**：先预览脱敏报告，再决定是否发送；不读取工程文件或 Cavalry 原始日志，不自动收集遥测。
+- **自定义安装目录**：未自动发现 Cavalry 时，可在状态页选择包含 `Cavalry.exe` 的 Windows 安装目录或 macOS `.app`；当前完整路径清晰可见。
+- **用户主动反馈**：macOS 与 Windows 均可先预览脱敏报告，再决定发送或保存；不读取工程文件或 Cavalry 原始日志，不自动收集遥测。
 
 ## 使用流程
 
 1. **先保存工程，再自行退出 Cavalry。** 工具不会自动保存或强制退出宿主。
 2. 打开 Cavalry Bilingual，在“排版”中检查顺序与字体并保存设置。
-3. 在“状态”页刷新检测；只在版本、资源和安全合同匹配时应用双语。
+3. 在“状态”页刷新检测；未自动发现时，用“选择路径…”指定安装目录。只在版本、资源和安全合同匹配时应用双语。
 4. 重新打开 Cavalry。需要回退时，在“备份”中选择对应快照。
 5. 如遇问题，在“日志”页打开“反馈问题”，检查预览后自行决定保存或发送。
 
@@ -80,7 +81,7 @@ Windows 原生构建、交叉打包与验收要求见 [Windows／原生验收指
 
 - [Agent／维护者项目上下文](docs/PROJECT-CONTEXT.md)：架构、设计初衷、需求演变、堵点与解决方法。
 - [设计规范](DESIGN.md)：视觉 tokens、布局、动效、焦点与通知原则。
-- [更新日志](CHANGELOG.md) · [Preview 3 发布说明](docs/RELEASE-0.1.0-preview.4.md)
+- [更新日志](CHANGELOG.md) · [0.1.1 发布说明](docs/RELEASE-0.1.1.md)
 - [反馈安全说明](docs/FEEDBACK-SERVICE.md) · [兼容矩阵](docs/COMPATIBILITY.md)
 
 提交问题前，请移除工程文件、账号、真实路径和其他私人内容。应用内反馈也必须先预览，不会因打开弹窗而自动发送。

@@ -1,0 +1,37 @@
+Cavalry Bilingual 0.1.1 — macOS Universal
+==========================================
+
+中文
+----
+1. 将 “Cavalry Bilingual.app” 拖到本卷中的 Applications 链接。
+2. 先保存自己的工程，再自行退出 Cavalry。工具不会自动保存或强制退出宿主。
+3. 打开 Cavalry Bilingual，检查排版与字体设置并保存；在状态页刷新检测。若未自动发现 Cavalry，点击“选择路径…”并选择有效的 Cavalry .app。
+4. 只有宿主版本、资源和安全合同匹配时才应用。应用后重新打开 Cavalry。
+5. 需要回退时选择对应快照。“恢复”是恢复到快照，不一定等于原厂英文状态；恢复前也会保留当前状态。
+6. 更新工具后，如 macOS“隐私与安全性 → App 管理”重置权限，请重新允许并重启工具，不要在拒绝后反复写入。
+
+这是正式发行版本，但已验证范围不代表全界面、全版本或全平台兼容。
+Cavalry 2.8 的限定适配不代表通用 Canvas／Graph／TrackingTool 或所有工程均已覆盖；Intel 原生硬件尚未验收。
+应用使用 ad-hoc 签名，未公证。macOS 可能显示安全提示，请只在确认发布页和 SHA256SUMS.txt 后自行决定是否继续。
+本包不包含 Cavalry、Qt 或 Skia 的宿主二进制，与 Scene Group / Cavalry 官方无关。
+
+English
+-------
+1. Drag “Cavalry Bilingual.app” onto the Applications link in this volume.
+2. Save your project and quit Cavalry yourself. The tool does not auto-save or force-quit the host.
+3. Open Cavalry Bilingual, review and save the typography/font settings, then refresh detection on the Status page. If Cavalry is not detected, choose “选择路径…” and select a valid Cavalry .app.
+4. Apply only when the host version, resources, and safety contracts match. Relaunch Cavalry afterwards.
+5. To roll back, select a snapshot. Restore returns to that snapshot, not necessarily to a factory English state; the current state is also preserved first.
+6. After updating the tool, if macOS resets Privacy & Security → App Management, re-enable the permission and restart the tool instead of repeatedly attempting denied writes.
+
+This is a stable release, but validated areas do not establish full-UI, all-version, or all-platform compatibility.
+Selected Cavalry 2.8 support does not establish general Canvas/Graph/TrackingTool or every project-type coverage. Native Intel hardware remains unverified.
+The app uses ad-hoc signing and is not notarized. macOS may show a security warning; proceed only after reviewing the release page and SHA256SUMS.txt yourself.
+No Cavalry, Qt, or Skia host binaries are included. This project is not affiliated with Scene Group or Cavalry.
+
+Release / 发布页
+---------------
+https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1
+
+License and upstream notices are in the Legal directory.
+许可与上游声明位于 Legal 目录。

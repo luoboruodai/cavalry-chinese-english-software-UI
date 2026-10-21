@@ -21,6 +21,7 @@ interface Props {
   onRestoreLatest: () => Promise<string | null>;
   onNavigate: (view: View) => void;
   onSelectCavalry: (path: string) => Promise<string | null>;
+  onBrowseCavalry: () => Promise<string | null>;
   update: CavalryUpdateController;
   operationBusy: boolean;
 }
@@ -39,6 +40,7 @@ export function StatusSection({
   onRestoreLatest,
   onNavigate,
   onSelectCavalry,
+  onBrowseCavalry,
   update,
   operationBusy: busy,
 }: Props) {
@@ -68,6 +70,12 @@ export function StatusSection({
     const message = await onSelectCavalry(targetPath);
     setSwitchError(message);
   };
+  const browseTarget = async () => {
+    if (blocked) return;
+    switchFocus.current = true; setSwitchError(null);
+    const message = await onBrowseCavalry();
+    setSwitchError(message);
+  };
 
   const targetPanel = (
 <section className="target-card" aria-label="Cavalry 注入目标">
@@ -78,12 +86,14 @@ export function StatusSection({
           </div>
           <span className="target-count">{installs.length ? `${installs.length} 个本机版本` : "未发现版本"}</span>
         </div>
-        {switchError && <ResourceState compact title="未完成目标切换" description="未确认切换成功，所选版本已保留。可重试或重新选择。"/>}
+        {switchError && <ResourceState compact title="未完成目标切换" description={switchError}/>}
         <div className="target-card-controls">
-          <SearchSelect id="cavalry-target" label="Cavalry 目标版本" hideLabel value={targetPath} options={installs.map(item=>({value:item.path,label:item.displayName,detail:[item.running?"正在运行":"未运行",item.selected?"当前目标":""].filter(Boolean).join(" · ")}))} onChange={path => { setTargetPath(path); setSwitchError(null); }} disabled={!installs.length || blocked} placeholder="未发现可用 Cavalry" searchPlaceholder="搜索已安装版本…" emptyText="没有匹配的本机版本" className="target-select"/>
+          <SearchSelect id="cavalry-target" label="Cavalry 目标版本" hideLabel value={targetPath} options={installs.map(item=>({value:item.path,label:item.displayName,detail:[item.path,item.running?"正在运行":"未运行",item.selected?"当前目标":""].filter(Boolean).join(" · ")}))} onChange={path => { setTargetPath(path); setSwitchError(null); }} disabled={!installs.length || blocked} placeholder="未发现可用 Cavalry" searchPlaceholder="搜索已安装版本…" emptyText="没有匹配的本机版本" className="target-select"/>
           <button type="button" className="secondary-button target-switch-button" aria-busy={switching} aria-label={switching ? "正在切换 Cavalry" : switchError ? "重试切换 Cavalry" : "切换 Cavalry"} disabled={!targetPath || targetPath === selectedTarget || blocked} onClick={() => void switchTarget()}>{switching && <span className="progress-spinner button-spinner" aria-hidden="true"/>}{switching ? "正在切换…" : switchError ? "重试切换" : "切换 Cavalry"}</button>
+          <button type="button" className="secondary-button target-browse-button" aria-label="选择 Cavalry 安装路径" disabled={blocked} onClick={()=>void browseTarget()}><Icon name="folder"/>选择路径…</button>
           <button type="button" className="secondary-button update-link" aria-label="软件更新" onClick={update.show}><Icon name="download"/>{update.busy?"下载中…":"软件更新"}{update.hasUpdate&&!update.busy&&<span className="update-dot" role="status" aria-label={`发现新版本 ${update.release?.version}`}/>}</button>
         </div>
+        {selectedTarget && <p className="target-card-note">当前路径：{selectedTarget}</p>}
         {switching ? <p className="target-switch-state" role="status">正在确认新目标，完成后即可继续操作。</p> : targetPath !== selectedTarget && targetPath ? <p className="target-switch-state" role="status">尚未切换 · {selectedInstall ? `当前目标仍为 ${selectedInstall.displayName}` : selectedTarget ? "当前目标未在本机找到" : "当前目标尚未确认"}</p> : null}
       </section>
   );

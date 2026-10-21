@@ -131,8 +131,42 @@ fn cavalry_candidates() -> Vec<PathBuf> {
     apps
 }
 
-#[cfg(not(target_os = "macos"))]
+#[cfg(all(not(windows), not(target_os = "macos")))]
 fn cavalry_candidates() -> Vec<PathBuf> { Vec::new() }
+
+#[cfg(windows)]
+fn cavalry_candidates() -> Vec<PathBuf> {
+    let mut apps = Vec::new();
+    for name in ["ProgramFiles", "ProgramW6432", "LOCALAPPDATA"] {
+        if let Some(base) = env::var_os(name) {
+            for suffix in ["Cavalry", "Programs/Cavalry"] {
+                let path = PathBuf::from(&base).join(suffix);
+                if is_cavalry_install(&path) { apps.push(path); }
+            }
+        }
+    }
+    apps.sort();
+    apps.dedup();
+    apps
+}
+
+fn is_cavalry_install(path: &Path) -> bool {
+    #[cfg(windows)]
+    {
+        path.join("Cavalry.exe").is_file()
+    }
+    #[cfg(target_os = "macos")]
+    {
+        path.join("Contents/MacOS/Cavalry").is_file()
+            && cbpatch::plist::read_string(&path.join("Contents/Info.plist"), "CFBundleIdentifier")
+                .ok().flatten().as_deref() == Some("com.scenegroup.cavalry")
+    }
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    {
+        let _ = path;
+        false
+    }
+}
 
 fn selected_target(state: &GuiState) -> Option<PathBuf> {
     fs::read_to_string(&state.target_path_file)
@@ -173,13 +207,24 @@ fn cavalry_install_json(state: &GuiState, path: &Path) -> Value {
 
 #[tauri::command]
 pub fn list_cavalry_installs(state: State<GuiState>) -> Value {
-    json!(cavalry_candidates().iter().map(|path| cavalry_install_json(&state, path)).collect::<Vec<_>>())
+    json!(cavalry_install_list(&state))
+}
+
+fn cavalry_install_list(state: &GuiState) -> Vec<Value> {
+    let mut paths = cavalry_candidates();
+    if let Some(selected) = selected_target(state) {
+        if is_cavalry_install(&selected) && !paths.contains(&selected) { paths.push(selected); }
+    }
+    paths.iter().map(|path| cavalry_install_json(state, path)).collect()
 }
 
 #[tauri::command]
 pub fn set_target_cavalry(state: State<GuiState>, path: String) -> Result<Value, String> {
-    let candidate = PathBuf::from(&path);
-    if !cavalry_candidates().iter().any(|item| item == &candidate) {
+    set_target_cavalry_path(&state, &PathBuf::from(path))
+}
+
+fn set_target_cavalry_path(state: &GuiState, candidate: &Path) -> Result<Value, String> {
+    if !candidate.is_absolute() || !is_cavalry_install(candidate) {
         return Err("不是可识别的 Cavalry 安装目录".into());
     }
     let payload = serde_json::to_vec_pretty(&json!({ "path": candidate })).map_err(|e| e.to_string())?;
@@ -451,5 +496,61 @@ mod backup_read_tests {
         fs::write(fixture.0.join("2.7.2-1750000003"), b"file not snapshot").unwrap();
         let rows = scan_backups_checked(&fixture.0).unwrap();
         assert_eq!(rows.len(), 2); assert!(rows[0].0 > rows[1].0);
+    }
+}
+
+#[cfg(test)]
+mod target_selection_tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+    struct Fixture(PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!("cb-target-selection-{}", sentry_types::random_uuid()));
+            fs::create_dir(&path).unwrap();
+            fs::create_dir(path.join("backups")).unwrap();
+            Self(path)
+        }
+        fn state(&self) -> GuiState {
+            GuiState {
+                backup_root: self.0.join("backups"),
+                config_path: self.0.join("settings.json"),
+                dylib_path: self.0.join("legacy-runtime"),
+                dylib_280_path: self.0.join("280-runtime"),
+                target_path_file: self.0.join("target-cavalry.json"),
+                operation: Arc::new(Mutex::new(())),
+                downloads: Arc::new(crate::updates::DownloadState::default()),
+                reports: Arc::new(crate::reporting::ReportState::default()),
+            }
+        }
+        #[cfg(target_os = "macos")]
+        fn custom_app(&self) -> PathBuf {
+            let app = self.0.join("其他盘/Cavalry Custom.app");
+            fs::create_dir_all(app.join("Contents/MacOS")).unwrap();
+            fs::write(app.join("Contents/MacOS/Cavalry"), b"fixture").unwrap();
+            fs::write(app.join("Contents/Info.plist"), br#"<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict><key>CFBundleIdentifier</key><string>com.scenegroup.cavalry</string><key>CFBundleShortVersionString</key><string>2.7.2</string></dict></plist>"#).unwrap();
+            app
+        }
+        #[cfg(windows)]
+        fn custom_app(&self) -> PathBuf {
+            let app = self.0.join("OtherDrive/Cavalry");
+            fs::create_dir_all(&app).unwrap();
+            fs::write(app.join("Cavalry.exe"), b"fixture").unwrap();
+            app
+        }
+    }
+    impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+    #[test]
+    fn custom_target_is_persisted_listed_and_invalid_input_preserves_it() {
+        let fixture = Fixture::new();
+        let app = fixture.custom_app();
+        let state = fixture.state();
+        set_target_cavalry_path(&state, &app).unwrap();
+        assert_eq!(target_app(&state), app);
+        let installs = cavalry_install_list(&state);
+        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)));
+        let before = fs::read(&state.target_path_file).unwrap();
+        assert!(set_target_cavalry_path(&state, &fixture.0.join("missing")).is_err());
+        assert_eq!(fs::read(&state.target_path_file).unwrap(), before);
     }
 }
