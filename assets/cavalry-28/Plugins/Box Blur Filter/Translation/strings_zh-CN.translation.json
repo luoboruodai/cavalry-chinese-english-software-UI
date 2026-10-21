@@ -1,0 +1,25 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "boxBlurFilter",
+      "niceName": {
+        "UI-text": "Box Blur"
+      },
+      "layerInfo": {
+        "UI-text": "为形状和着色器添加快速方框模糊。"
+      },
+      "attributes": {
+        "amount": {
+          "name": {
+            "UI-text": "数量"
+          },
+          "tooltip": {
+            "UI-text": "设置应用于形状的模糊像素量。"
+          }
+        }
+      }
+    }
+  }
+]

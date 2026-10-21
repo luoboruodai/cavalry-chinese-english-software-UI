@@ -26,6 +26,18 @@ CMake 现有单语 fixture 之外，新增真实双语 display、公共 Qt runti
 
 > macOS 生成的 PE DLL/EXE 已在独立 Wine 前缀中运行若干离屏及 DLL 加载测试，仍未在原生 Windows 执行，不属于已验收 Windows 发布包，也不替代 MSVC 原生构建、NSIS 和宿主测试。手写交叉工具须显式匹配 Qt Release 的 `QT_NO_DEBUG`；省略时可链接成功但插件被标为 Debug，并在实际加载时拒绝。
 
+## Windows x64 交叉构建与 NSIS 回读
+
+在安装了 `x86_64-pc-windows-gnu` Rust 目标、MinGW、NSIS 与 Wine wrapper 的 macOS 构建机上：
+
+```bash
+npm ci --prefix gui/ui
+cargo check --manifest-path gui/Cargo.toml --target x86_64-pc-windows-gnu
+npm run tauri:build --prefix gui/ui -- --target x86_64-pc-windows-gnu --bundles nsis
+```
+
+`gui/ui/scripts/tauri.mjs` 只允许在 Tauri 已生成本次 `installer.nsi` 后调用交叉 NSIS fallback；脚本过旧表示编译或资源阶段未到达打包步骤，必须保留原错误并停止，不能拿旧 EXE 继续发布。生成的安装器再用 7-Zip 执行 CRC、成员与解压回读，逐项比较主程序、两个 DLL、`INSTALL.txt` 和全部 Legal 文件。即使这些检查通过，也只记为交叉构建与包体验证，不是原生 Windows 或真实 Cavalry 验收。
+
 ## Intel Mac 原生
 
 ```bash

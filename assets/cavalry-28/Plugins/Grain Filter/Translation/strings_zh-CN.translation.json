@@ -1,0 +1,174 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "grainFilter",
+      "niceName": {
+        "UI-text": "Grain"
+      },
+      "layerInfo": {
+        "UI-text": "为图像添加颗粒以模拟胶片质感"
+      },
+      "attributes": {
+        "time": {
+          "UI-text": "时间"
+        },
+        "sharpen": {
+          "name": {
+            "UI-text": "锐化"
+          },
+          "tooltip": {
+            "UI-text": "在添加噪点之前锐化图像。较高的值创建更清晰的边缘和细节。"
+          }
+        },
+        "sharpenEdgesOnly": {
+          "name": {
+            "UI-text": "仅锐化边缘"
+          },
+          "tooltip": {
+            "UI-text": "选中时，仅对明暗对比强烈的图像区域应用锐化。"
+          }
+        },
+        "grainAmount": {
+          "name": {
+            "UI-text": "颗粒数量"
+          },
+          "tooltip": {
+            "UI-text": "设置应用于图像的颗粒量。较高的值创建更可见的噪点纹理。"
+          }
+        },
+        "grainSize": {
+          "name": {
+            "UI-text": "大小"
+          },
+          "tooltip": {
+            "UI-text": "确定颗粒的大小。较大的值会产生更粗糙的噪点。"
+          }
+        },
+        "grainTexture": {
+          "name": {
+            "UI-text": "纹理"
+          },
+          "tooltip": {
+            "UI-text": "确定原始图像对颗粒放置的影响程度。较高的值使颗粒跟随图像结构。"
+          }
+        },
+        "logGrain": {
+          "name": {
+            "UI-text": "对数颗粒"
+          },
+          "tooltip": {
+            "UI-text": "Control the color space in which the grain is generated. ‘Log’ space will create more film-like grain characteristics."
+          }
+        },
+        "monochromeGrain": {
+          "name": {
+            "UI-text": "颗粒类型"
+          },
+          "tooltip": {
+            "UI-text": "确定颗粒是彩色还是黑白。单色会在所有通道上创建均匀的颗粒。"
+          }
+        },
+        "redAmount": {
+          "name": {
+            "UI-text": "红色数量"
+          },
+          "tooltip": {
+            "UI-text": "设置红色通道中的颗粒量。用于颜色特定的噪点控制。"
+          }
+        },
+        "greenAmount": {
+          "name": {
+            "UI-text": "绿色数量"
+          },
+          "tooltip": {
+            "UI-text": "设置绿色通道中的颗粒量。用于颜色特定的噪点控制。"
+          }
+        },
+        "blueAmount": {
+          "name": {
+            "UI-text": "蓝色数量"
+          },
+          "tooltip": {
+            "UI-text": "设置蓝色通道中的颗粒量。用于颜色特定的噪点控制。"
+          }
+        },
+        "redSize": {
+          "name": {
+            "UI-text": "红色大小"
+          },
+          "tooltip": {
+            "UI-text": "设置红色通道中颗粒的大小。用于每通道颗粒大小变化。"
+          }
+        },
+        "greenSize": {
+          "name": {
+            "UI-text": "绿色大小"
+          },
+          "tooltip": {
+            "UI-text": "设置绿色通道中颗粒的大小。用于每通道颗粒大小变化。"
+          }
+        },
+        "blueSize": {
+          "name": {
+            "UI-text": "蓝色大小"
+          },
+          "tooltip": {
+            "UI-text": "设置蓝色通道中颗粒的大小。用于每通道颗粒大小变化。"
+          }
+        },
+        "highlight": {
+          "name": {
+            "UI-text": "高光"
+          },
+          "tooltip": {
+            "UI-text": "设置图像高光中出现多少颗粒。较低的值减少亮区的颗粒。"
+          }
+        },
+        "midtone": {
+          "name": {
+            "UI-text": "中间调"
+          },
+          "tooltip": {
+            "UI-text": "设置图像中间调中出现多少颗粒。控制中等亮度范围的颗粒。"
+          }
+        },
+        "shadow": {
+          "name": {
+            "UI-text": "阴影"
+          },
+          "tooltip": {
+            "UI-text": "设置图像阴影中出现多少颗粒。较高的值在暗区添加更多颗粒。"
+          }
+        }
+      },
+      "enums": {
+        "sharpenEdgesOnly": {
+          "0": {
+            "UI-text": "禁用"
+          },
+          "1": {
+            "UI-text": "已启用"
+          }
+        },
+        "logGrain": {
+          "0": {
+            "UI-text": "线性"
+          },
+          "1": {
+            "UI-text": "对数"
+          }
+        },
+        "monochromeGrain": {
+          "0": {
+            "UI-text": "颜色"
+          },
+          "1": {
+            "UI-text": "单色"
+          }
+        }
+      }
+    }
+  }
+]

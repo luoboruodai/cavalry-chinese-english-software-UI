@@ -11,6 +11,7 @@ use crate::{
     util, windows_deployment as deployment, Result,
 };
 use std::{
+    collections::HashSet,
     ffi::OsString,
     fs,
     os::windows::ffi::{OsStrExt, OsStringExt},
@@ -26,6 +27,9 @@ fn wide(path: &Path) -> Vec<u16> {
     path.as_os_str().encode_wide().chain(Some(0)).collect()
 }
 pub fn default_app_path() -> PathBuf {
+    if let Some(running) = running_app_path() {
+        return running;
+    }
     for name in ["ProgramFiles", "ProgramW6432", "LOCALAPPDATA"] {
         if let Some(base) = std::env::var_os(name) {
             for suffix in ["Cavalry", "Programs/Cavalry"] {
@@ -38,6 +42,81 @@ pub fn default_app_path() -> PathBuf {
     }
     PathBuf::from(std::env::var_os("ProgramFiles").unwrap_or_else(|| "C:\\Program Files".into()))
         .join("Cavalry")
+}
+
+/// Prefer the exact Cavalry installation that is already running. This keeps
+/// refresh/apply/restore useful for per-user or custom Windows installs that
+/// are not under one of the conventional Program Files locations.
+///
+/// Process enumeration order is not stable. Collect every readable Cavalry
+/// process and choose the most recently created one instead of returning the
+/// first arbitrary 2.7/2.8 instance. If one process is inaccessible, keep
+/// scanning rather than turning a permission failure into "not detected".
+fn running_app_path() -> Option<PathBuf> {
+    unsafe {
+        let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if handle == INVALID_HANDLE_VALUE {
+            return None;
+        }
+        let snapshot = Handle(handle);
+        let mut entry: PROCESSENTRY32W = std::mem::zeroed();
+        entry.dwSize = std::mem::size_of_val(&entry) as u32;
+        let mut candidates: Vec<(u64, PathBuf)> = Vec::new();
+        let mut seen = HashSet::new();
+        let mut present = Process32FirstW(snapshot.0, &mut entry);
+        while present != 0 {
+            let end = entry
+                .szExeFile
+                .iter()
+                .position(|c| *c == 0)
+                .unwrap_or(entry.szExeFile.len());
+            if String::from_utf16_lossy(&entry.szExeFile[..end])
+                .eq_ignore_ascii_case("Cavalry.exe")
+            {
+                if let Some((root, created)) = process_root(entry.th32ProcessID) {
+                    let key = root.to_string_lossy().to_ascii_lowercase();
+                    if seen.insert(key) {
+                        candidates.push((created, root));
+                    }
+                }
+            }
+            present = Process32NextW(snapshot.0, &mut entry);
+        }
+        candidates.sort_by(|left, right| right.0.cmp(&left.0));
+        candidates.into_iter().next().map(|(_, root)| root)
+    }
+}
+
+/// Read one process path and its creation time. The latter is used only to
+/// make multiple simultaneously running Cavalry versions deterministic.
+fn process_root(pid: u32) -> Option<(PathBuf, u64)> {
+    unsafe {
+        let process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if process.is_null() {
+            return None;
+        }
+        let process = Handle(process);
+        let mut buffer = vec![0u16; 32768];
+        let mut size = buffer.len() as u32;
+        if QueryFullProcessImageNameW(process.0, 0, buffer.as_mut_ptr(), &mut size) == 0 {
+            return None;
+        }
+        let executable = PathBuf::from(OsString::from_wide(&buffer[..size as usize]));
+        let root = executable.parent()?.to_path_buf();
+        if !root.join("Cavalry.exe").is_file() {
+            return None;
+        }
+        let mut creation = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
+        let mut exit = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
+        let mut kernel = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
+        let mut user = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
+        let created = if GetProcessTimes(process.0, &mut creation, &mut exit, &mut kernel, &mut user) != 0 {
+            (u64::from(creation.dwHighDateTime) << 32) | u64::from(creation.dwLowDateTime)
+        } else {
+            0
+        };
+        Some((fs::canonicalize(&root).ok().unwrap_or(root), created))
+    }
 }
 pub fn product_version(path: &Path) -> Result<[u16; 4]> {
     let name = wide(path);

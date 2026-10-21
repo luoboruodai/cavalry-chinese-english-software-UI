@@ -1,0 +1,115 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "lightSweepFilter",
+      "niceName": {
+        "UI-text": "Light Sweep"
+      },
+      "layerInfo": {
+        "UI-text": "模拟光源在图层上移动的效果。"
+      },
+      "attributes": {
+        "sweepIntensity": {
+          "name": {
+            "UI-text": "扫光强度"
+          },
+          "tooltip": {
+            "UI-text": "Set the light’s brightness."
+          }
+        },
+        "direction": {
+          "name": {
+            "UI-text": "方向"
+          },
+          "tooltip": {
+            "UI-text": "设置扫光在图层上移动的角度（度）。"
+          }
+        },
+        "shape": {
+          "name": {
+            "UI-text": "形状"
+          },
+          "tooltip": {
+            "UI-text": "选择扫光形状。"
+          }
+        },
+        "centre": {
+          "name": {
+            "UI-text": "中心"
+          },
+          "tooltip": {
+            "UI-text": "Set the light sweep’s centre point."
+          }
+        },
+        "coneWidth": {
+          "name": {
+            "UI-text": "锥形宽度"
+          },
+          "tooltip": {
+            "UI-text": "设置光束的宽度。"
+          }
+        },
+        "conePercentage": {
+          "name": {
+            "UI-text": "锥形百分比"
+          },
+          "tooltip": {
+            "UI-text": "Set the distance the light beam’s opacity begins to falloff as a percentage from its centre to its edge."
+          }
+        },
+        "useFalloff": {
+          "name": {
+            "UI-text": "使用衰减"
+          },
+          "tooltip": {
+            "UI-text": "When the Shape is set to Line, limit the light sweep’s distance from the Centre along its Y axis."
+          }
+        },
+        "falloffDistance": {
+          "name": {
+            "UI-text": "衰减距离"
+          },
+          "tooltip": {
+            "UI-text": "设置光通过中心后衰减的距离。"
+          }
+        },
+        "edgeIntensity": {
+          "name": {
+            "UI-text": "边缘强度"
+          },
+          "tooltip": {
+            "UI-text": "设置光扫边缘的附加辉光强度。"
+          }
+        },
+        "edgeThickness": {
+          "name": {
+            "UI-text": "边缘厚度"
+          },
+          "tooltip": {
+            "UI-text": "Set the thickness of the light sweep’s edges."
+          }
+        },
+        "lightColor": {
+          "name": {
+            "UI-text": "光照颜色"
+          },
+          "tooltip": {
+            "UI-text": "设置光的颜色。"
+          }
+        }
+      },
+      "enums": {
+        "shape": {
+          "0": {
+            "UI-text": "直线"
+          },
+          "1": {
+            "UI-text": "圆形"
+          }
+        }
+      }
+    }
+  }
+]

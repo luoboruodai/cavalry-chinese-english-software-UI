@@ -60,7 +60,7 @@ fn dispatch(args: Vec<String>) -> Result<Json> {
         "apply" => {
             let dylib = match flags.dylib {
                 Some(path) => path,
-                None => ops::default_dylib_path()?,
+                None => ops::default_dylib_path_for_app(&app)?,
             };
             let mut settings = if let Some(path) = flags.config {
                 if !path.is_file() {

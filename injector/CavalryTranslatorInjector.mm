@@ -1,6 +1,6 @@
 /**
  * [INPUT]: 依赖 Qt 6.6.3 runtime ABI、AppKit、generated_translations.inc、共享 exact-context/选择输入值/Fast 与 Classic 搜索策略、Classic 评分 ABI 适配器及独立说明索引、macOS TransformTool text-path ABI 防火墙与显式 capture/session 环境
- * [OUTPUT]: 经精确 Preferences/Viewport popup owner 收敛的设置布局与经 vendor 合同与四项索引 schema 确认的 Autosave Folders Off 展示投影；Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；所有 QLineEdit 仅翻译 placeholder，输入值不读取/改写；Time Editor 模型不再做反向翻译写回；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action，2.8 另配置三条 prefix 与五条 Soft Selection action，并在首个真实 GetPath 前重试未完成的配置；font-only 实验模式只保留受审计字体/Path 能力并禁用 Qt 翻译与菜单刷新
+ * [OUTPUT]: 经精确 Preferences/Viewport popup owner 收敛的设置布局与经 vendor 合同与四项索引 schema 确认的 Autosave Folders Off 展示投影；Quick Add 分类从已验证 getter 读取完整源并只写 QLabel 显示副本；Classic 空结果在 exact 列表/viewport 首次绘制前幂等投影，不增加监听或轮询；对外提供 first-match-wins QTranslator、既有菜单/控件/模型保护链，以及 8 条 ordinary-Qt、Tag 邻接标签、Assets 动态 Create 模板和 Tracking dialog 的精确 owner 回补；所有 QLineEdit 仅翻译 placeholder，输入值不读取/改写；Time Editor 模型不再做反向翻译写回；交互补全输入（含 parentless 构建阶段）保留用户原文，FastQuickAdd 双语索引独立过滤且标题仅在已验证 vendor 的绘制副本投影；AttrControlRow 仅在主标签指针匹配后绘制受宽度约束的双语副本并保留完整 tooltip、图标和数值控件；Classic 完整及前缀本地标题仅在已验证 ABI 的原厂排序期间补分；Qt runtime 版本确认后配置五条 TransformTool 自绘 action，2.8 另配置三条 prefix 与五条 Soft Selection action；2.8 自绘空状态同时覆盖 QRect、QRectF 与 QTextOption 三条 QPainter 入口，并从 QtGui 原始导出转发以避免递归；启动后对延迟加载的 Core/ExtensionLayer 做有限重试，并在首个真实 GetPath 前继续重试未完成的配置；font-only 实验模式只保留受审计字体/Path 能力并禁用 Qt 翻译与菜单刷新
  * [POS]: macOS injector 核心；普通文本只在已证 Qt owner 内补译，AttrControlRow 只读取精确 2.7.2 双架构合同的标签副本，不修改数值控件或用户内容；parentless Assets 菜单只承接一个事件循环的 owner，Transform 自绘交给独立 ABI 适配器，可编辑/字体 Combo 的值及弹出列表、Time Editor 模型 identity、快捷键 prefix 与无关同文保持原值
  * [PROTOCOL]: 变更时更新此头部，然后检查 CLAUDE.md
  */
@@ -21,6 +21,10 @@
 #import <CommonCrypto/CommonDigest.h>
 #import <Foundation/Foundation.h>
 
+#include <mach-o/dyld.h>
+#include <mach-o/loader.h>
+#include <mach-o/nlist.h>
+
 #include <dispatch/dispatch.h>
 #include <dlfcn.h>
 #include <atomic>
@@ -40,6 +44,7 @@
 #include <QtGui/qfontmetrics.h>
 #include <QtGui/QHelpEvent>
 #include <QtGui/qpainter.h>
+#include <QtGui/qtextoption.h>
 #include <QtGui/QTextCursor>
 #include <QtGui/QTextDocument>
 #include <QtCore/qabstractitemmodel.h>
@@ -93,6 +98,10 @@ namespace {
 
 constexpr int kMaxInstallAttempts = 20;
 constexpr int kRetryDelayMs = 250;
+// Core/ExtensionLayer may appear only after Cavalry completes its login
+// hand-off. Keep the exact ABI gate retrying for a bounded 60-second window;
+// this does not widen the contract or touch unknown callers.
+constexpr int kMaxToolPathConfigurationAttempts = 240;
 constexpr int kWarmupRefreshAttempts = 3;
 constexpr int kRefreshDelayMs = 1000;
 constexpr int kDirtyDrainMaxObjects = 32;
@@ -263,6 +272,29 @@ void retryMacToolHelpTextPathConfiguration() noexcept
     }
     configureMacToolHelpTextPathFromEnvironment();
     inProgress.store(false, std::memory_order_release);
+}
+
+// 2.8 loads Core/ExtensionLayer after the first application bootstrap. The
+// initial constructor and the first Qt install attempt can therefore run
+// before the vendor images exist. Retry for a bounded startup window instead
+// of permanently keeping the fail-closed state after that first miss.
+void scheduleToolPathConfigurationAttempts(int attempt)
+{
+    dispatch_after(
+        dispatch_time(
+            DISPATCH_TIME_NOW,
+            static_cast<int64_t>(attempt == 0 ? 0 : kRetryDelayMs) * NSEC_PER_MSEC),
+        dispatch_get_main_queue(),
+        ^{
+            if (cavalry_i18n::macToolHelpTextPathDiagnostics().configured) {
+                return;
+            }
+            retryMacToolHelpTextPathConfiguration();
+            if (!cavalry_i18n::macToolHelpTextPathDiagnostics().configured &&
+                attempt + 1 < kMaxToolPathConfigurationAttempts) {
+                scheduleToolPathConfigurationAttempts(attempt + 1);
+            }
+        });
 }
 
 QString normalizeMenuText(const QString &text);
@@ -2237,8 +2269,67 @@ QString translatedMixedNoPrefixText(const QString &lang, const QString &sourceTe
 QString translatedCopiedLogMessage(const QString &lang, const QString &message);
 QString translatedUndoRedoLogMessage(const QString &lang, const QString &message);
 
+#if defined(CAVALRY_I18N_CAVALRY_280)
+// These literals are reviewed 2.8 appStrings fields observed in the formal
+// workspace. They are fixed UI display strings, not user input or model data;
+// keep them bilingual even when the vendor widget is parentless/custom-painted
+// and therefore does not expose a stable Qt translation context.
+QString translatedCavalry28ObservedText(
+    const QString &lang,
+    const QString &sourceText)
+{
+    if (lang != QStringLiteral("zh-Hans")) {
+        return QString();
+    }
+    const QString source = normalizeMenuText(sourceText);
+    if (source == QStringLiteral("Double click here to import Assets.")) {
+        return QStringLiteral("双击此处导入素材（Double click here to import Assets.）");
+    }
+    if (source == QStringLiteral("Drag some JavaScript here to make a Snippet.")) {
+        return QStringLiteral("将 JavaScript 拖到此处以创建代码片段（Drag some JavaScript here to make a Snippet.）");
+    }
+    if (source == QStringLiteral("Enter an Attribute name")) {
+        return QStringLiteral("输入属性名称（Enter an Attribute name）");
+    }
+    if (source == QStringLiteral("Enter a Layer name")) {
+        return QStringLiteral("输入图层名称（Enter a Layer name）");
+    }
+    if (source.contains(QStringLiteral("Select layers to see their settings"))) {
+        return QStringLiteral("选择图层以查看其设置（Select layers to see their settings）");
+    }
+    if (source == QStringLiteral("Drag layers here to see their settings.")) {
+        return QStringLiteral("将图层拖到此处以查看其设置（Drag layers here to see their settings.）");
+    }
+    if (source.contains(QStringLiteral("Use the Create menu to add a Layer to the active Composition"))) {
+        return QStringLiteral("使用“创建”菜单在活动合成中添加图层。（Use the Create menu to add a Layer to the active Composition.）");
+    }
+    if (source.contains(QStringLiteral("Use the Create menu to add a layer to your Composition"))) {
+        return QStringLiteral("使用“创建”菜单在合成中添加图层（Use the Create menu to add a layer to your Composition.）");
+    }
+    if (source == QStringLiteral("Search Layers...")) {
+        return QStringLiteral("搜索图层…（Search Layers...）");
+    }
+    if (source == QStringLiteral("Bezier")) {
+        return QStringLiteral("贝塞尔（Bezier）");
+    }
+    if (source == QStringLiteral("Straight")) {
+        return QStringLiteral("直线（Straight）");
+    }
+    if (source == QStringLiteral("Orthogonal")) {
+        return QStringLiteral("正交（Orthogonal）");
+    }
+    return QString();
+}
+#endif
+
 QString translatedWidgetText(const QString &lang, const QString &sourceText)
 {
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    const QString observed28 = translatedCavalry28ObservedText(lang, sourceText);
+    if (!observed28.isEmpty()) {
+        return observed28;
+    }
+#endif
     const QString translated = translatedCompoundWidgetText(lang, sourceText);
     if (translated.isEmpty() || translated == sourceText) {
         const QString noPrefixTranslation = translatedMixedNoPrefixText(lang, sourceText);
@@ -2823,8 +2914,12 @@ bool isCenteredExtensionLayerEmptyStateHint(const QString &text)
         QStringLiteral("Select layers to see their settings"),
         QStringLiteral("Drag some JavaScript here to make a Snippet."),
         QStringLiteral("Use the Create menu to add a layer to your Composition."),
+        QStringLiteral("Use the Create menu to add a Layer to the active Composition."),
     };
-    return kCenteredEmptyStateHints.contains(text);
+    const QString normalized = normalizeMenuText(text);
+    return kCenteredEmptyStateHints.contains(text)
+        || normalized.contains(QStringLiteral("Select layers to see their settings"))
+        || normalized.contains(QStringLiteral("Use the Create menu to add a Layer to the active Composition"));
 }
 
 QString translatedCenteredExtensionLayerHint(const QString &text)
@@ -2833,9 +2928,16 @@ QString translatedCenteredExtensionLayerHint(const QString &text)
         return QString();
     }
 
-    const QByteArray lang = readEnvVar("CAVALRY_I18N_LANG").toUtf8();
+    const QString lang = readEnvVar("CAVALRY_I18N_LANG");
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    const QString observed28 = translatedCavalry28ObservedText(lang, text);
+    if (!observed28.isEmpty()) {
+        return observed28;
+    }
+#endif
+    const QByteArray langBytes = lang.toUtf8();
     const QByteArray source = text.toUtf8();
-    const char *translation = embeddedTranslationForSource(lang.constData(), source.constData());
+    const char *translation = embeddedTranslationForSource(langBytes.constData(), source.constData());
     return translation != nullptr ? QString::fromUtf8(translation) : QString();
 }
 
@@ -2846,6 +2948,243 @@ void drawPointTextWithoutInterpose(QPainter *painter, const QPointF &point, cons
     // 前导下划线误传给 dlsym 的解析路径，从结构上杜绝解析失败后吞掉文字。
     painter->drawText(point, text, 0, 0);
 }
+
+using QPainterDrawRectFTextFunction = void (*)(
+    QPainter *,
+    const QRectF &,
+    int,
+    const QString &,
+    QRectF *);
+using QPainterDrawRectFOptionTextFunction = void (*)(
+    QPainter *,
+    const QRectF &,
+    const QString &,
+    const QTextOption &);
+using QPainterDrawRectTextFunction = void (*)(
+    QPainter *,
+    const QRect &,
+    int,
+    const QString &,
+    QRect *);
+
+void *resolveQtGuiTextSymbol(const char *symbol)
+{
+    if (symbol == nullptr) {
+        return nullptr;
+    }
+
+    // The raw Mach-O nlist stores the same double-underscore spelling used by
+    // the __asm interpose declarations. No dlsym normalization is needed here.
+    const char *lookupSymbol = symbol;
+
+    for (std::uint32_t imageIndex = 0; imageIndex < _dyld_image_count(); ++imageIndex) {
+        const char *path = _dyld_get_image_name(imageIndex);
+        const mach_header *rawHeader = _dyld_get_image_header(imageIndex);
+        if (path == nullptr || rawHeader == nullptr
+            || strstr(path, "/QtGui.framework/") == nullptr
+            || rawHeader->magic != MH_MAGIC_64) {
+            continue;
+        }
+
+        const auto *header = reinterpret_cast<const mach_header_64 *>(rawHeader);
+        const auto *command = reinterpret_cast<const std::uint8_t *>(header) + sizeof(*header);
+        const segment_command_64 *linkedit = nullptr;
+        const segment_command_64 *text = nullptr;
+        const symtab_command *symbolTable = nullptr;
+        for (std::uint32_t commandIndex = 0; commandIndex < header->ncmds; ++commandIndex) {
+            const auto *loadCommand = reinterpret_cast<const load_command *>(command);
+            if (loadCommand->cmd == LC_SEGMENT_64) {
+                const auto *segment = reinterpret_cast<const segment_command_64 *>(loadCommand);
+                if (strcmp(segment->segname, SEG_LINKEDIT) == 0) {
+                    linkedit = segment;
+                } else if (strcmp(segment->segname, SEG_TEXT) == 0) {
+                    text = segment;
+                }
+            } else if (loadCommand->cmd == LC_SYMTAB) {
+                symbolTable = reinterpret_cast<const symtab_command *>(loadCommand);
+            }
+            command += loadCommand->cmdsize;
+        }
+        if (linkedit == nullptr || text == nullptr || symbolTable == nullptr) {
+            continue;
+        }
+
+        const std::intptr_t slide = _dyld_get_image_vmaddr_slide(imageIndex);
+        const std::uintptr_t linkeditBase =
+            static_cast<std::uintptr_t>(slide) + linkedit->vmaddr - linkedit->fileoff;
+        const auto *symbols = reinterpret_cast<const nlist_64 *>(
+            linkeditBase + symbolTable->symoff);
+        const auto *strings = reinterpret_cast<const char *>(
+            linkeditBase + symbolTable->stroff);
+        const std::uintptr_t textStart =
+            static_cast<std::uintptr_t>(slide) + text->vmaddr;
+        const std::uintptr_t textEnd = textStart + text->vmsize;
+
+        for (std::uint32_t symbolIndex = 0; symbolIndex < symbolTable->nsyms; ++symbolIndex) {
+            const std::uint32_t stringOffset = symbols[symbolIndex].n_un.n_strx;
+            if (stringOffset == 0 || stringOffset >= symbolTable->strsize
+                || strcmp(strings + stringOffset, lookupSymbol) != 0) {
+                continue;
+            }
+            const std::uintptr_t address =
+                static_cast<std::uintptr_t>(slide) + symbols[symbolIndex].n_value;
+            if (address >= textStart && address < textEnd) {
+                return reinterpret_cast<void *>(address);
+            }
+        }
+    }
+    return nullptr;
+}
+
+QPainterDrawRectFTextFunction originalQPainterDrawRectFText()
+{
+    static QPainterDrawRectFTextFunction original =
+        reinterpret_cast<QPainterDrawRectFTextFunction>(resolveQtGuiTextSymbol(
+            "__ZN8QPainter8drawTextERK6QRectFiRK7QStringPS0_"));
+    return original;
+}
+
+QPainterDrawRectFOptionTextFunction originalQPainterDrawRectFOptionText()
+{
+    static QPainterDrawRectFOptionTextFunction original =
+        reinterpret_cast<QPainterDrawRectFOptionTextFunction>(resolveQtGuiTextSymbol(
+            "__ZN8QPainter8drawTextERK6QRectFRK7QStringRK11QTextOption"));
+    return original;
+}
+
+QPainterDrawRectTextFunction originalQPainterDrawRectText()
+{
+    static QPainterDrawRectTextFunction original =
+        reinterpret_cast<QPainterDrawRectTextFunction>(resolveQtGuiTextSymbol(
+            "__ZN8QPainter8drawTextERK5QRectiRK7QStringPS0_"));
+    return original;
+}
+
+QTextOption textOptionFromPainterFlags(int flags)
+{
+    QTextOption option;
+    const int alignmentMask = static_cast<int>(
+        Qt::AlignHorizontal_Mask | Qt::AlignVertical_Mask | Qt::AlignAbsolute);
+    option.setAlignment(static_cast<Qt::Alignment>(flags & alignmentMask));
+    if ((flags & Qt::TextWordWrap) != 0) {
+        option.setWrapMode(QTextOption::WordWrap);
+    }
+    return option;
+}
+
+void drawRectFTextWithoutInterpose(
+    QPainter *painter,
+    const QRectF &rect,
+    int flags,
+    const QString &text,
+    QRectF *boundingRect)
+{
+    if (painter == nullptr) {
+        return;
+    }
+    if (QPainterDrawRectFTextFunction original = originalQPainterDrawRectFText()) {
+        original(painter, rect, flags, text, boundingRect);
+        return;
+    }
+    if (QPainterDrawRectFOptionTextFunction original = originalQPainterDrawRectFOptionText()) {
+        original(painter, rect, text, textOptionFromPainterFlags(flags));
+        if (boundingRect != nullptr) {
+            *boundingRect = rect;
+        }
+    }
+}
+
+void drawRectTextWithoutInterpose(
+    QPainter *painter,
+    const QRect &rect,
+    int flags,
+    const QString &text,
+    QRect *boundingRect)
+{
+    if (painter == nullptr) {
+        return;
+    }
+    if (QPainterDrawRectTextFunction original = originalQPainterDrawRectText()) {
+        original(painter, rect, flags, text, boundingRect);
+        return;
+    }
+    QRectF rectF(rect);
+    QRectF boundsF;
+    drawRectFTextWithoutInterpose(
+        painter,
+        rectF,
+        flags,
+        text,
+        boundingRect != nullptr ? &boundsF : nullptr);
+    if (boundingRect != nullptr) {
+        *boundingRect = boundsF.toRect();
+    }
+}
+
+void drawRectFOptionTextWithoutInterpose(
+    QPainter *painter,
+    const QRectF &rect,
+    const QString &text,
+    const QTextOption &option)
+{
+    if (painter == nullptr) {
+        return;
+    }
+    if (QPainterDrawRectFOptionTextFunction original = originalQPainterDrawRectFOptionText()) {
+        original(painter, rect, text, option);
+        return;
+    }
+    if (QPainterDrawRectFTextFunction original = originalQPainterDrawRectFText()) {
+        int flags = static_cast<int>(option.alignment());
+        if (option.wrapMode() != QTextOption::NoWrap) {
+            flags |= Qt::TextWordWrap;
+        }
+        original(painter, rect, flags, text, nullptr);
+    }
+}
+
+extern "C" __attribute__((noinline)) void replacementQPainterDrawRectFOptionText(
+    QPainter *painter,
+    const QRectF &rect,
+    const QString &text,
+    const QTextOption &option)
+{
+    if (painter == nullptr) {
+        return;
+    }
+    const bool widgetDevice =
+        painter->device() && painter->device()->devType() == QInternal::Widget;
+    const QString translated =
+        widgetDevice ? translatedCenteredExtensionLayerHint(text) : QString();
+    const QFont originalFont = painter->font();
+    if (widgetDevice) {
+        QFont displayFont = cavalry_bilingual::displayFont(originalFont);
+        displayFont.setStyleStrategy(QFont::PreferDefault);
+        painter->setFont(displayFont);
+    }
+    drawRectFOptionTextWithoutInterpose(
+        painter,
+        rect,
+        translated.isEmpty() ? text : translated,
+        option);
+    if (widgetDevice) {
+        painter->setFont(originalFont);
+    }
+}
+
+extern "C" void qtPainterDrawRectFOptionTextInterposeTarget(
+    QPainter *,
+    const QRectF &,
+    const QString &,
+    const QTextOption &) __asm("__ZN8QPainter8drawTextERK6QRectFRK7QStringRK11QTextOption");
+
+__attribute__((used)) static struct {
+    const void *replacement;
+    const void *replacee;
+} kQPainterDrawRectFOptionTextInterpose __attribute__((section("__DATA,__interpose"))) = {
+    reinterpret_cast<const void *>(replacementQPainterDrawRectFOptionText),
+    reinterpret_cast<const void *>(qtPainterDrawRectFOptionTextInterposeTarget),
+};
 
 void replacementQPainterDrawPointText(
     QPainter *painter,
@@ -2890,6 +3229,140 @@ void replacementQPainterDrawPointText(
     }
     painter->setFont(sourceFont);
 }
+
+extern "C" __attribute__((noinline)) void replacementQPainterDrawRectFText(
+    QPainter *painter,
+    const QRectF &rect,
+    int flags,
+    const QString &text,
+    QRectF *boundingRect)
+{
+    if (painter == nullptr) {
+        return;
+    }
+
+    const bool widgetDevice =
+        painter->device() && painter->device()->devType() == QInternal::Widget;
+    const QString translated =
+        widgetDevice ? translatedCenteredExtensionLayerHint(text) : QString();
+    const QFont originalFont = painter->font();
+    if (widgetDevice) {
+        QFont displayFont = cavalry_bilingual::displayFont(originalFont);
+        displayFont.setStyleStrategy(QFont::PreferDefault);
+        painter->setFont(displayFont);
+    }
+    drawRectFTextWithoutInterpose(
+        painter,
+        rect,
+        flags,
+        translated.isEmpty() ? text : translated,
+        boundingRect);
+    if (widgetDevice) {
+        painter->setFont(originalFont);
+    }
+}
+
+extern "C" void qtPainterDrawRectFTextInterposeTarget(
+    QPainter *,
+    const QRectF &,
+    int,
+    const QString &,
+    QRectF *) __asm("__ZN8QPainter8drawTextERK6QRectFiRK7QStringPS0_");
+
+__attribute__((used)) static struct {
+    const void *replacement;
+    const void *replacee;
+} kQPainterDrawRectFTextInterpose __attribute__((section("__DATA,__interpose"))) = {
+    reinterpret_cast<const void *>(replacementQPainterDrawRectFText),
+    reinterpret_cast<const void *>(qtPainterDrawRectFTextInterposeTarget),
+};
+
+extern "C" __attribute__((noinline)) void replacementQPainterDrawRectText(
+    QPainter *painter,
+    const QRect &rect,
+    int flags,
+    const QString &text,
+    QRect *boundingRect)
+{
+    if (painter == nullptr) {
+        return;
+    }
+
+    const bool widgetDevice =
+        painter->device() && painter->device()->devType() == QInternal::Widget;
+    const QString translated =
+        widgetDevice ? translatedCenteredExtensionLayerHint(text) : QString();
+    const QFont originalFont = painter->font();
+    if (widgetDevice) {
+        QFont displayFont = cavalry_bilingual::displayFont(originalFont);
+        displayFont.setStyleStrategy(QFont::PreferDefault);
+        painter->setFont(displayFont);
+    }
+    drawRectTextWithoutInterpose(
+        painter,
+        rect,
+        flags,
+        translated.isEmpty() ? text : translated,
+        boundingRect);
+    if (widgetDevice) {
+        painter->setFont(originalFont);
+    }
+}
+
+extern "C" void qtPainterDrawRectTextInterposeTarget(
+    QPainter *,
+    const QRect &,
+    int,
+    const QString &,
+    QRect *) __asm("__ZN8QPainter8drawTextERK5QRectiRK7QStringPS0_");
+
+__attribute__((used)) static struct {
+    const void *replacement;
+    const void *replacee;
+} kQPainterDrawRectTextInterpose __attribute__((section("__DATA,__interpose"))) = {
+    reinterpret_cast<const void *>(replacementQPainterDrawRectText),
+    reinterpret_cast<const void *>(qtPainterDrawRectTextInterposeTarget),
+};
+
+#if defined(CAVALRY_I18N_CAVALRY_280)
+// dyld only applies __interpose while an image is loaded. The formal 2.8
+// process can already be running when the injector is dlopened for a live
+// repair, so apply all custom-painted text tuples to currently loaded images
+// as well. The original QtGui exports are resolved directly from that image,
+// which keeps these replacement paths non-recursive.
+struct CavalryDyldInterposeTuple {
+    const void *replacement;
+    const void *replacee;
+};
+extern "C" void dyld_dynamic_interpose(
+    const struct mach_header *mh,
+    const CavalryDyldInterposeTuple *array,
+    std::size_t count);
+
+void installDynamicTextInterpose() noexcept
+{
+    const CavalryDyldInterposeTuple tuples[] = {
+        {
+            reinterpret_cast<const void *>(replacementQPainterDrawRectFText),
+            reinterpret_cast<const void *>(qtPainterDrawRectFTextInterposeTarget),
+        },
+        {
+            reinterpret_cast<const void *>(replacementQPainterDrawRectFOptionText),
+            reinterpret_cast<const void *>(qtPainterDrawRectFOptionTextInterposeTarget),
+        },
+        {
+            reinterpret_cast<const void *>(replacementQPainterDrawRectText),
+            reinterpret_cast<const void *>(qtPainterDrawRectTextInterposeTarget),
+        },
+    };
+    for (std::uint32_t index = 0; index < _dyld_image_count(); ++index) {
+        const mach_header *header = _dyld_get_image_header(index);
+        if (header != nullptr) {
+            dyld_dynamic_interpose(header, tuples, sizeof(tuples) / sizeof(tuples[0]));
+        }
+    }
+}
+#endif
 
 extern "C" void qtPainterDrawPointTextInterposeTarget(
     QPainter *,
@@ -3619,6 +4092,13 @@ bool installTranslator()
         for (auto widget : gui->allWidgets()) cavalry_bilingual::polishWidget(widget);
     }
     retryMacToolHelpTextPathConfiguration();
+    if (!cavalry_i18n::macToolHelpTextPathDiagnostics().configured) {
+        // installTranslator() can run before the vendor images exist. Start a
+        // second bounded chain from the first real Qt application, not only
+        // from NSApplicationDidFinishLaunching, so delayed login/workspace
+        // creation can still configure before the host caches Path text.
+        scheduleToolPathConfigurationAttempts(0);
+    }
 
     if (envFlagEnabled("CAVALRY_I18N_FONT_ONLY")) {
         fprintf(stderr, "[cavalry-i18n] font-only mode active; Qt translation disabled\n");
@@ -3735,6 +4215,7 @@ void bootstrapInjector()
                             fprintf(stderr, "[cavalry-i18n] NSApplicationDidFinishLaunching lang=%s\n",
                                     lang.toUtf8().constData());
                             scheduleInstallAttempt(0);
+                            scheduleToolPathConfigurationAttempts(0);
                             if (!envFlagEnabled("CAVALRY_I18N_FONT_ONLY")) {
                                 refreshNativeMenuBar(lang);
                                 scheduleRefreshAttempts(lang);
@@ -3748,6 +4229,9 @@ void bootstrapInjector()
 
 __attribute__((constructor)) static void cavalryTranslatorInjectorLoad()
 {
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    installDynamicTextInterpose();
+#endif
     // Configure exact vendor-owned UI text-path projection before the host's
     // GraphicsViewportBase::setupToolHelp caches English Skia paths. When a
     // library/renderer is not ready yet, configuration is retried by

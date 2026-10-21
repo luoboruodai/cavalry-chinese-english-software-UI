@@ -1,0 +1,137 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "rippleFilter",
+      "niceName": {
+        "UI-text": "Ripple"
+      },
+      "layerInfo": {
+        "UI-text": "Distort a Shape’s materials using linear, concentric or spiral wave patterns."
+      },
+      "attributes": {
+        "mode": {
+          "name": {
+            "UI-text": "模式"
+          },
+          "tooltip": {
+            "UI-text": "Choose the type of ripple. Linear sends waves along a direction; Concentric spreads rings out from a centre point; Spiral winds those rings into arms."
+          }
+        },
+        "centre": {
+          "name": {
+            "UI-text": "中心"
+          },
+          "tooltip": {
+            "UI-text": "Set the origin of the ripples, where (0, 0) is the centre of the Shape."
+          }
+        },
+        "direction": {
+          "name": {
+            "UI-text": "方向"
+          },
+          "tooltip": {
+            "UI-text": "Set the direction the wave propagates along, in degrees."
+          }
+        },
+        "displacementAxis": {
+          "name": {
+            "UI-text": "置换"
+          },
+          "tooltip": {
+            "UI-text": "Choose whether pixels are pushed perpendicular to the wave direction (classic wave) or along it (compression/stretch)."
+          }
+        },
+        "amount": {
+          "name": {
+            "UI-text": "振幅"
+          },
+          "tooltip": {
+            "UI-text": "Set the maximum displacement, in pixels."
+          }
+        },
+        "wavelength": {
+          "name": {
+            "UI-text": "Wavelength"
+          },
+          "tooltip": {
+            "UI-text": "Set the distance between successive crests, in pixels."
+          }
+        },
+        "phase": {
+          "name": {
+            "UI-text": "Phase"
+          },
+          "tooltip": {
+            "UI-text": "Set the phase offset of the wave, in degrees. Animate this to make the wave travel."
+          }
+        },
+        "waveform": {
+          "name": {
+            "UI-text": "Waveform"
+          },
+          "tooltip": {
+            "UI-text": "Choose the shape of the wave."
+          }
+        },
+        "arms": {
+          "name": {
+            "UI-text": "Arms"
+          },
+          "tooltip": {
+            "UI-text": "Set the number of spiral arms. Negative values wind the spiral the other way; zero falls back to plain concentric rings."
+          }
+        },
+        "decay": {
+          "name": {
+            "UI-text": "Decay"
+          },
+          "tooltip": {
+            "UI-text": "Set how quickly the ripple’s Amplitude falls off with distance. Higher values will concentrate the ripples nearer the centre."
+          }
+        },
+        "decayLength": {
+          "name": {
+            "UI-text": "Decay Length"
+          },
+          "tooltip": {
+            "UI-text": "Set a reference distance over which one unit of Decay reduces the Amplitude."
+          }
+        }
+      },
+      "enums": {
+        "mode": {
+          "0": {
+            "UI-text": "线性"
+          },
+          "1": {
+            "UI-text": "同心"
+          },
+          "2": {
+            "UI-text": "螺旋"
+          }
+        },
+        "displacementAxis": {
+          "0": {
+            "UI-text": "Perpendicular"
+          },
+          "1": {
+            "UI-text": "Parallel"
+          }
+        },
+        "waveform": {
+          "0": {
+            "UI-text": "正弦"
+          },
+          "1": {
+            "UI-text": "三角形"
+          },
+          "2": {
+            "UI-text": "方形"
+          }
+        }
+      }
+    }
+  }
+]

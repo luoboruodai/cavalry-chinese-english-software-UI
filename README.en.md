@@ -1,104 +1,89 @@
 # Cavalry Bilingual
 
+![Cavalry Bilingual: Chinese-English UI, typography, and restorable snapshots](docs/assets/social-preview.png)
+
 [简体中文](README.md) | **English**
 
-A Chinese-English UI tool for Cavalry. It displays Chinese alongside the original English to help users follow English tutorials, with typography settings, restorable patches, and backup management.
+[![0.1.0 Preview 3](https://img.shields.io/badge/release-0.1.0%20Preview%203-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![License](https://img.shields.io/badge/license-MIT-80827f)](LICENSE)
 
-> **Development candidate 0.1.0.** `0.1.0 Preview 2` pre-release packages are available; this is not a stable release, and full-UI, all-version, and all-platform compatibility are not claimed.
-> Not affiliated with Scene Group or Cavalry. No Cavalry, Qt, or Skia host binaries are redistributed.
+Read Chinese alongside the original English UI, so you can use Cavalry while following English tutorials. The desktop manager also provides typography controls, restorable patches, backups, and user-initiated feedback.
+
+> **Current version: 0.1.0 Preview 3 (pre-release).** Intended for early evaluation and feedback. It is not a stable release and does not establish full-UI, all-version, or all-platform acceptance.
+> This project is not affiliated with Scene Group or Cavalry and does not redistribute Cavalry, Qt, or Skia host binaries.
+
+## Download
+
+| Platform | Installer | Current boundary |
+|---|---|---|
+| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/Cavalry-Bilingual_0.1.0-preview.3_macOS-universal.dmg) | Ad-hoc signed, not notarized; native Intel hardware remains unverified |
+| Windows x64 | [NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/Cavalry-Bilingual_0.1.0-preview.3_Windows-x64-setup.exe) | Unsigned; cross-built and package-verified, native Windows and real-host acceptance remain incomplete |
+| Checksums | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/SHA256SUMS.txt) | Verify the downloaded attachment's SHA-256 |
+
+[Full pre-release notes](docs/RELEASE-0.1.0-preview.3.md) · [Compatibility matrix](docs/COMPATIBILITY.md) · [All releases](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
+
+GitHub's automatic **Source code** archives are source snapshots, not installers.
+
+## Highlights
+
+- **Chinese + English side by side**: retain the original English while adding Chinese for tutorial-friendly reading.
+- **Cavalry 2.7.2 / 2.8.0 on macOS**: version-specific Qt contracts and injection resources stay closed when the target does not match.
+- **Typography controls**: adjust language order and fonts with a draft preview; empty font fields follow the system.
+- **Restorable patches and backups**: create verified snapshots before changes and preserve the current state before restoring.
+- **Clear operation feedback**: status, logs, and supplemental explanations share the same right-side notification language while critical confirmations remain explicit.
+- **User-initiated feedback**: review a redacted report before choosing to send it. No project files, raw Cavalry logs, or automatic telemetry are collected.
+
+## Quick start
+
+1. **Save your project and quit Cavalry yourself.** The tool does not auto-save or force-quit the host.
+2. Open Cavalry Bilingual, review the language order and fonts on the Typography page, then save the settings.
+3. Refresh detection on the Status page and apply only when the version, resources, and safety contracts match.
+4. Relaunch Cavalry. To roll back, choose the corresponding snapshot on the Backups page.
+5. If something goes wrong, open “Report a problem” on the Logs page and review the report before choosing to save or send it.
+
+After updating the macOS tool, check **Privacy & Security → App Management** if macOS resets the permission. Re-enable it and restart the tool instead of repeatedly attempting writes after a permission denial.
 
 ## Platform status
 
-| Platform / host | Current status |
-|---|---|
-| macOS arm64 · Cavalry 2.7.2 / Qt 6.6.3 | The tool is installed locally and has selected real-host validation; this is not full-UI acceptance. |
-| macOS universal | The tool and injector build for arm64 + x86_64. Most x86_64 execution evidence uses Rosetta; native Intel hardware remains unverified. |
-| Cavalry 2.8.0 / Qt 6.9.2 | Isolated copies have evidence for selected strings, Paths, and fixed viewport hints. Production writes remain blocked; general Canvas/Graph, TrackingTool, and full-UI coverage are incomplete. |
-| Windows x64 | A cross-built NSIS installer is available. Native Windows, MSVC, and a real Cavalry host remain unverified; the current Wine installation recheck did not complete. |
+| Platform / host | Evidence available | Still incomplete |
+|---|---|---|
+| macOS · Cavalry 2.7.2 / Qt 6.6.3 | Local tool installation, selected real-host and snapshot workflows | Full UI and every project type |
+| macOS · Cavalry 2.8.0 / Qt 6.9.2 | Dedicated 2.8 injector/resources, selected UI and viewport text, actual apply/restore workflows | Full UI and general Canvas/Graph/TrackingTool coverage |
+| macOS universal | arm64 + x86_64 builds; x86_64 evidence primarily through Rosetta | Native Intel hardware |
+| Windows x64 | Cross-built PE/DLLs, synthetic Wine and load checks, NSIS member verification | Native Windows, MSVC, real Cavalry host, and full installation experience |
 
-See the [compatibility and coverage matrix](docs/COMPATIBILITY.md) for exact boundaries. Rosetta, Wine, static ABI checks, synthetic tests, and real-host validation are different kinds of evidence.
+See [COMPATIBILITY.md](docs/COMPATIBILITY.md) and [NATIVE-ACCEPTANCE.md](docs/NATIVE-ACCEPTANCE.md) for evidence levels. Static ABI checks, synthetic tests, Wine/Rosetta, and native-host validation are not interchangeable.
 
-## Features
+## Build from source
 
-- **Chinese-English display**: keeps the original English beside Chinese labels for easier tutorial matching.
-- **Typography and fonts**: configure display order and font families with a preview; an empty font follows the system.
-- **Restorable patches**: creates validated snapshots before applying changes and restores to selected snapshots.
-- **Input safety**: preserves user input, custom layer names, paths, expressions, port IDs, and connection data; only UI presentation fields are translated.
-- **Fail-closed compatibility**: unknown host versions, Qt ABIs, UUIDs, or call sites remain disabled instead of being forced.
+### macOS Universal
 
-## Download and installation
-
-### 0.1.0 Preview 2 pre-release
-
-- [macOS universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_macOS-universal.dmg): ad-hoc signed and not notarized.
-- [Windows x64 NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_Windows-x64-setup.exe): unsigned and not accepted on native Windows.
-- [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/SHA256SUMS.txt) and the [pre-release notes](docs/RELEASE-0.1.0-preview.2.md).
-
-GitHub's automatic **Source code** archives are for source review and building; they are not installer packages.
-
-### Build the macOS universal tool from source
-
-Requirements: Node.js, Python 3.10+, Rust, macOS developer tools, a Qt 6.6.3 SDK, and both Rust macOS target libraries.
+You need Node.js, Python 3.10+, Rust, macOS development tools, the appropriate Qt SDK, and both macOS Rust targets.
 
 ```bash
 git clone https://github.com/luoboruodai/cavalry-chinese-english-software-UI.git
 cd cavalry-chinese-english-software-UI
-
 npm ci --prefix gui/ui
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
 export CAVALRY_QT_PREFIX=/path/to/Qt/6.6.3/macos
 npm run build:macos-universal
 ```
 
-Output:
+Output: `gui/target/universal-apple-darwin/release/bundle/macos/Cavalry Bilingual.app`.
 
-```text
-gui/target/universal-apple-darwin/release/bundle/macos/Cavalry Bilingual.app
-```
+For native Windows builds, cross-packaging, and acceptance requirements, see the [Windows/native acceptance guide](docs/NATIVE-ACCEPTANCE.md). Build-time public feedback configuration is documented in [FEEDBACK-SERVICE.md](docs/FEEDBACK-SERVICE.md); mailbox authorization codes and private keys must never be committed.
 
-Local builds use ad-hoc signing and are not notarized. Do not describe them as notarized distribution packages. See the [native acceptance guide](docs/NATIVE-ACCEPTANCE.md) for Windows build entry points and acceptance requirements.
+## Documentation and contributing
 
-## Usage
+- [Project context for agents and maintainers](docs/PROJECT-CONTEXT.md): architecture, original intent, requirement evolution, blockers, and solutions.
+- [Design guide](DESIGN.md): visual tokens, layout, motion, focus, and notification principles.
+- [Changelog](CHANGELOG.md) · [Preview 3 release notes](docs/RELEASE-0.1.0-preview.3.md)
+- [Feedback security](docs/FEEDBACK-SERVICE.md) · [Compatibility matrix](docs/COMPATIBILITY.md)
 
-1. **Save your project and quit Cavalry yourself.** The tool does not auto-save or force-quit the host.
-2. Open Cavalry Bilingual, adjust display order and fonts under Typography & Fonts, review the preview, and save the settings.
-3. Refresh detection on the Status page. Apply is enabled only when the host version, resources, and safety contracts match.
-4. Relaunch Cavalry after applying.
-5. To roll back, select the corresponding snapshot. **Restore returns to that snapshot; it does not necessarily mean a factory English state.** The current state is also preserved before restoration.
+Remove project files, accounts, real paths, and other private material before filing an issue. Opening the in-app feedback dialog never sends a report by itself.
 
-Old backups without a complete validation manifest are read-only and must not be restored automatically. Do not overwrite host files while Cavalry is running.
+## License and notices
 
-## Tests and audits
-
-```bash
-npm test --prefix gui/ui
-cargo test --manifest-path patcher/Cargo.toml
-bash tools/test_qt_runtime.sh
-npm run test:generator
-npm run test:translations
-npm run audit:translations
-npm run test:catalog28
-npm run test:macos-canvas
-```
-
-`bash tools/test_qt_runtime.sh` requires a valid `CAVALRY_QT_PREFIX`. Dictionary counts, successful compilation, and synthetic tests do not establish live-UI coverage. Publishing also requires privacy checks on candidate files, the Git index/history, and the final archive.
-
-## Project layout
-
-- `gui/`: Tauri + React interface, draft settings, and status display.
-- `patcher/`: Rust patch guards, versioned configuration, backup validation, and restore transactions.
-- `injector/`: Qt runtime translation and self-drawn-text adapters guarded by exact ABI contracts.
-- `translations/pristine/`: translation sources; model identities, user names, and IDs are not replaced by translations.
-- `tools/`, `tests/`: build, generation, audit, and synthetic contract tests.
-
-## Documentation
-
-- [Changelog](CHANGELOG.md)
-- [Compatibility and coverage matrix](docs/COMPATIBILITY.md)
-- [Windows / Intel / Cavalry 2.8 native acceptance guide](docs/NATIVE-ACCEPTANCE.md)
-
-## License
-
-Distributed under the [MIT License](LICENSE). Copyright and MIT notices for derived portions from `daftAI2026/Cavalry-i18n` are retained in [LICENSE.daftai](LICENSE.daftai) and [NOTICE.md](NOTICE.md).
-
-The GUI uses system fonts. Selecting a local font does not copy or redistribute the font file.
+[MIT](LICENSE). See [NOTICE.md](NOTICE.md) and the bundled `Legal/` directory for upstream and third-party notices.

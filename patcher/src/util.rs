@@ -11,6 +11,15 @@ use crate::error::{msg, Result};
 
 static TMP_COUNTER: AtomicU64 = AtomicU64::new(0);
 
+pub(crate) fn io_context(action: &str, path: &Path, error: std::io::Error) -> crate::error::Error {
+    let hint = if cfg!(target_os = "macos") && error.raw_os_error() == Some(1) {
+        "；请检查 macOS“系统设置 > 隐私与安全性 > App 管理”是否已允许 Cavalry Bilingual，以及目标文件是否被锁定"
+    } else {
+        ""
+    };
+    msg(format!("{action}：{}（{error}）{hint}", path.display()))
+}
+
 pub struct CommandOutput {
     pub success: bool,
     pub code: Option<i32>,
@@ -53,16 +62,21 @@ pub fn atomic_write_with_mode(path: &Path, bytes: &[u8], mode: Option<u32>) -> R
         let mut file = fs::OpenOptions::new()
             .write(true)
             .create_new(true)
-            .open(&tmp)?;
-        file.write_all(bytes)?;
-        file.sync_all()?;
+            .open(&tmp)
+            .map_err(|error| io_context("准备写入", path, error))?;
+        file.write_all(bytes)
+            .map_err(|error| io_context("写入临时文件", path, error))?;
+        file.sync_all()
+            .map_err(|error| io_context("同步临时文件", path, error))?;
         drop(file);
         let effective_mode = mode.or_else(|| permissions_mode(path));
-        set_mode(&tmp, effective_mode.unwrap_or(0o644))?;
+        set_mode(&tmp, effective_mode.unwrap_or(0o644))
+            .map_err(|error| io_context("设置文件权限", path, error))?;
         #[cfg(windows)]
         crate::windows::replace_file(&tmp, path)?;
         #[cfg(not(windows))]
-        fs::rename(&tmp, path)?;
+        fs::rename(&tmp, path)
+            .map_err(|error| io_context("替换应用文件", path, error))?;
         Ok(())
     })();
     if result.is_err() {
@@ -85,14 +99,13 @@ fn permissions_mode(_path: &Path) -> Option<u32> {
 }
 
 #[cfg(unix)]
-fn set_mode(path: &Path, mode: u32) -> Result<()> {
+fn set_mode(path: &Path, mode: u32) -> std::io::Result<()> {
     use std::os::unix::fs::PermissionsExt;
-    fs::set_permissions(path, fs::Permissions::from_mode(mode))?;
-    Ok(())
+    fs::set_permissions(path, fs::Permissions::from_mode(mode))
 }
 
 #[cfg(not(unix))]
-fn set_mode(_path: &Path, _mode: u32) -> Result<()> {
+fn set_mode(_path: &Path, _mode: u32) -> std::io::Result<()> {
     Ok(())
 }
 
@@ -166,6 +179,29 @@ pub fn sha256_hex(data: &[u8]) -> String {
 
 pub fn file_sha256(path: &Path) -> Result<String> {
     Ok(sha256_hex(&fs::read(path)?))
+}
+
+#[cfg(target_os = "macos")]
+pub fn normalized_binary_sha256(path: &Path) -> Result<String> {
+    let unique = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+    let temporary = std::env::temp_dir().join(format!("cb-hash-{}-{unique}", std::process::id()));
+    fs::copy(path, &temporary)?;
+    let output = run("codesign", &["--remove-signature".into(), temporary.to_string_lossy().into_owned()])?;
+    if !output.success {
+        let _ = fs::remove_file(&temporary);
+        if output.stderr.contains("code object is not signed") {
+            return file_sha256(path);
+        }
+        return Err(msg(format!("无法规范化 Mach-O 签名 {}: {}", path.display(), output.stderr.trim())));
+    }
+    let result = file_sha256(&temporary);
+    let _ = fs::remove_file(&temporary);
+    result
+}
+
+#[cfg(not(target_os = "macos"))]
+pub fn normalized_binary_sha256(path: &Path) -> Result<String> {
+    file_sha256(path)
 }
 
 /// FIPS 180-4 SHA-256 的最小完整实现（避免引入外部 crate）。
@@ -305,6 +341,22 @@ mod tests {
         assert_eq!(sha256_hex(&data), system_hex);
     }
 
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn normalized_hash_ignores_ad_hoc_signature() {
+        let dir = std::env::temp_dir().join(format!("cb-normalized-hash-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let original = dir.join("original.dylib");
+        let signed = dir.join("signed.dylib");
+        std::fs::copy("/usr/bin/true", &original).unwrap();
+        std::fs::copy(&original, &signed).unwrap();
+        let output = super::run("codesign", &["--force".into(), "--sign".into(), "-".into(), signed.to_string_lossy().into_owned()]).unwrap();
+        assert!(output.success, "{}", output.stderr);
+        assert_eq!(super::normalized_binary_sha256(&original).unwrap(), super::normalized_binary_sha256(&signed).unwrap());
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
     #[test]
     fn atomic_write_replaces_and_preserves_existing_mode() {
         #[cfg(unix)]
@@ -335,5 +387,18 @@ mod tests {
         );
 
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn eperm_includes_app_management_hint_and_target_path() {
+        let text = super::io_context(
+            "替换应用文件",
+            std::path::Path::new("/tmp/Example.app/Contents/Info.plist"),
+            std::io::Error::from_raw_os_error(1),
+        )
+        .to_string();
+        assert!(text.contains("App 管理"), "{text}");
+        assert!(text.contains("/tmp/Example.app/Contents/Info.plist"), "{text}");
     }
 }

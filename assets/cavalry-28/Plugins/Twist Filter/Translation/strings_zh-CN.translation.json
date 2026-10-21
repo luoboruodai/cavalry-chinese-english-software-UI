@@ -1,0 +1,62 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "twistFilter",
+      "niceName": {
+        "UI-text": "Twist"
+      },
+      "layerInfo": {
+        "UI-text": "Rotate a Shape’s materials around a centre point."
+      },
+      "attributes": {
+        "centre": {
+          "name": {
+            "UI-text": "中心"
+          },
+          "tooltip": {
+            "UI-text": "Set the pivot point of the twist, where (0, 0) is the centre of the Shape."
+          }
+        },
+        "angle": {
+          "name": {
+            "UI-text": "角度"
+          },
+          "tooltip": {
+            "UI-text": "Set the twist angle at the Centre, in degrees. The angle falls off to zero at the Radius."
+          }
+        },
+        "radius": {
+          "name": {
+            "UI-text": "半径"
+          },
+          "tooltip": {
+            "UI-text": "Set the distance from the centre, in pixels, at which the twist’s Angle returns to zero."
+          }
+        },
+        "falloff": {
+          "name": {
+            "UI-text": "衰减"
+          },
+          "tooltip": {
+            "UI-text": "Set the shape for how the Angle falls off from the Centre to the Radius."
+          }
+        }
+      },
+      "enums": {
+        "falloff": {
+          "0": {
+            "UI-text": "线性"
+          },
+          "1": {
+            "UI-text": "平滑"
+          },
+          "2": {
+            "UI-text": "Quadratic"
+          }
+        }
+      }
+    }
+  }
+]

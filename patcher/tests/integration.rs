@@ -640,7 +640,7 @@ fn snapshot_symlink_target_is_rejected() {
 }
 
 #[test]
-fn failed_apply_reports_and_restores_preoperation_state() {
+fn failed_apply_before_any_write_preserves_state_without_rollback() {
     let temp = TempDir::new("rollback");
     let app = vendor_fixture(temp.path());
     fs::write(
@@ -655,10 +655,24 @@ fn failed_apply_reports_and_restores_preoperation_state() {
     let error = ops::apply(&app, &dylib, "zh-Hans", &root)
         .unwrap_err()
         .to_string();
-    assert!(error.contains("回滚已完成"), "{error}");
+    assert!(error.contains("回滚无需执行，目标保持原状"), "{error}");
     assert_eq!(before, snapshot_tree(&app));
     assert!(backup::latest_backup_dir(&root).unwrap().is_some());
 }
+
+#[test]
+fn restore_files_skips_files_that_already_match_the_snapshot() {
+    let temp = TempDir::new("rollback-noop");
+    let app = vendor_fixture(temp.path());
+    let root = temp.path().join("backups");
+    let dir = cbpatch::transaction::capture(&app, &root).unwrap();
+    let before = snapshot_tree(&app);
+    let (restored, removed) = cbpatch::transaction::restore_files(&app, &dir).unwrap();
+    assert!(restored.is_empty(), "unchanged files must not be rewritten");
+    assert!(removed.is_empty(), "absent patch files must stay absent");
+    assert_eq!(before, snapshot_tree(&app));
+}
+
 #[test]
 fn cross_process_lock_is_per_target_and_released() {
     let temp = TempDir::new("lock");

@@ -1,0 +1,81 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "rectToPolarFilter",
+      "niceName": {
+        "UI-text": "Polar Coordinates"
+      },
+      "layerInfo": {
+        "UI-text": "将图层重新映射到极坐标空间。"
+      },
+      "attributes": {
+        "centre": {
+          "name": {
+            "UI-text": "中心"
+          },
+          "tooltip": {
+            "UI-text": "设置极坐标原点（像素），其中 0,0 是图层中心。"
+          }
+        },
+        "radius": {
+          "name": {
+            "UI-text": "半径"
+          },
+          "tooltip": {
+            "UI-text": "设置外半径，以最短图层尺寸的百分比表示。"
+          }
+        },
+        "innerRadius": {
+          "name": {
+            "UI-text": "内半径"
+          },
+          "tooltip": {
+            "UI-text": "通过跳过给定百分比的半径将映射从极点偏移。"
+          }
+        },
+        "angleOffset": {
+          "name": {
+            "UI-text": "旋转"
+          },
+          "tooltip": {
+            "UI-text": "旋转极坐标转换（度）。"
+          }
+        },
+        "angularRange": {
+          "name": {
+            "UI-text": "角度范围"
+          },
+          "tooltip": {
+            "UI-text": "将转换限制在圆的一个扇形区域内（度）。"
+          }
+        },
+        "invertRadius": {
+          "name": {
+            "UI-text": "内外翻转"
+          },
+          "tooltip": {
+            "UI-text": "翻转映射，使源的底部变为外边缘，顶部映射到极点。"
+          }
+        },
+        "edgeFeather": {
+          "name": {
+            "UI-text": "边缘羽化"
+          },
+          "tooltip": {
+            "UI-text": "应用于内外圆形边缘的羽化宽度（像素）。"
+          }
+        },
+        "seamFeather": {
+          "name": {
+            "UI-text": "接缝羽化"
+          },
+          "tooltip": {
+            "UI-text": "应用于角接缝的羽化宽度（度）。"
+          }
+        }
+      }
+    }
+  }
+]

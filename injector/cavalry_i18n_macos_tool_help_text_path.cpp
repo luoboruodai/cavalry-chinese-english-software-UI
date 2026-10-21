@@ -39,6 +39,14 @@ struct SkSpTypefaceAbi {
     {
         other.pointer = nullptr;
     }
+    SkSpTypefaceAbi &operator=(SkSpTypefaceAbi &&other) noexcept
+    {
+        if (this != &other) {
+            pointer = other.pointer;
+            other.pointer = nullptr;
+        }
+        return *this;
+    }
     SkSpTypefaceAbi(const SkSpTypefaceAbi &) = delete;
     ~SkSpTypefaceAbi() {}
 };
@@ -109,6 +117,10 @@ struct ConfiguredAction {
     bool prefixCallsite;
     std::size_t translationSize;
     char translation[kTranslationCapacity];
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    std::size_t compositeTranslationSize = 0;
+    char compositeTranslation[kTranslationCapacity]{};
+#endif
 };
 
 struct LoadedImage {
@@ -565,21 +577,41 @@ bool fontCoversTranslations(
                 return false;
             }
         }
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        offset = 0;
+        while (offset < action.compositeTranslationSize) {
+            std::int32_t codepoint = 0;
+            if (!decodeNextUtf8(
+                    action.compositeTranslation,
+                    action.compositeTranslationSize,
+                    &offset,
+                    &codepoint)) {
+                return false;
+            }
+            if (codepoint > 0x20 && unicharToGlyph(typeface, codepoint) == 0) {
+                return false;
+            }
+        }
+#endif
     }
     return true;
 }
 
 bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
 {
-    const char *family = nullptr;
+    const char *defaultFamily = nullptr;
     if (std::strcmp(language, "zh-Hans") == 0) {
-        family = "PingFang SC";
+        // Cavalry 2.8's CoreText->Skia bridge renders the reviewed 2.8 Path
+        // whitelist reliably with Hiragino Sans GB. PingFang SC passes glyph
+        // presence checks but can produce unreadable outlines in the host's
+        // cached SkPath path; keep it as an explicit user preference only.
+        defaultFamily = "Hiragino Sans GB";
     } else if (std::strcmp(language, "zh-Hant") == 0) {
-        family = "PingFang TC";
+        defaultFamily = "Hiragino Sans";
     } else if (std::strcmp(language, "ja_JP") == 0) {
-        family = "Hiragino Sans";
+        defaultFamily = "Hiragino Sans";
     }
-    if (family == nullptr) {
+    if (defaultFamily == nullptr) {
         return false;
     }
 
@@ -617,8 +649,7 @@ bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
         return false;
     }
 
-    if (fontFamily != nullptr && fontFamily[0] != '\0') family = fontFamily;
-    SkSpTypefaceAbi typeface = [&]() -> SkSpTypefaceAbi {
+    auto createTypeface = [&](const char *family) -> SkSpTypefaceAbi {
 #if defined(CAVALRY_I18N_CAVALRY_280)
         CFStringRef familyRef = CFStringCreateWithCString(
             kCFAllocatorDefault, family, kCFStringEncodingUTF8);
@@ -633,7 +664,20 @@ bool buildDisplayFont(const char *language, const char *fontFamily) noexcept
 #else
         return makeTypeface(family, kNormalSkFontStyle);
 #endif
-    }();
+    };
+    const char *preferredFamily =
+        fontFamily != nullptr && fontFamily[0] != '\0' ? fontFamily : defaultFamily;
+    SkSpTypefaceAbi typeface = createTypeface(preferredFamily);
+    if (typeface.pointer == nullptr ||
+        !fontCoversTranslations(typeface.pointer, unicharToGlyph)) {
+        if (preferredFamily == defaultFamily) {
+            return false;
+        }
+        // A user-selected family is a preference, not a reason to disable the
+        // verified CJK path. Fall back to the language default when it cannot
+        // cover every approved translation glyph.
+        typeface = createTypeface(defaultFamily);
+    }
     if (typeface.pointer == nullptr ||
         !fontCoversTranslations(typeface.pointer, unicharToGlyph)) {
         return false;
@@ -700,9 +744,42 @@ const ConfiguredAction *configuredActionFor(
             if (bilingual != nullptr) *bilingual = true;
             return &action;
         }
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        if (action.compositeTranslationSize > 0 &&
+            size == action.compositeTranslationSize &&
+            std::memcmp(text, action.compositeTranslation, size) == 0) {
+            if (bilingual != nullptr) *bilingual = true;
+            return &action;
+        }
+#endif
     }
     return nullptr;
 }
+
+#if defined(CAVALRY_I18N_CAVALRY_280)
+const char *compositeToolHelpTranslation(const char *language, const char *source) noexcept
+{
+    if (language == nullptr || source == nullptr || std::strcmp(language, "zh-Hans") != 0) {
+        return nullptr;
+    }
+    if (std::strcmp(source, "S + click Motion Path") == 0) {
+        return "S + 单击运动路径以（S + click Motion Path）";
+    }
+    if (std::strcmp(source, "Hold S") == 0) {
+        return "按住 S 以（Hold S）";
+    }
+    if (std::strcmp(source, "Play/ Stop") == 0) {
+        return "以播放/停止（Play/ Stop）";
+    }
+    if (std::strcmp(source, "Pan") == 0) {
+        return "以平移（Pan）";
+    }
+    if (std::strcmp(source, "Enable Snapping") == 0) {
+        return "以启用吸附（Enable Snapping）";
+    }
+    return nullptr;
+}
+#endif
 
 bool callerChainMatches(
     void *return0, void *return1, void *return2, bool prefixCallsite = false) noexcept
@@ -778,6 +855,16 @@ void configureMacToolHelpTextPath(
             output.prefixCallsite = approved.prefixCallsite;
             output.translationSize = translationSize;
             std::memcpy(output.translation, input.translation, translationSize + 1);
+#if defined(CAVALRY_I18N_CAVALRY_280)
+            if (const char *composite = compositeToolHelpTranslation(language, approved.source)) {
+                const std::size_t compositeSize = std::strlen(composite);
+                if (compositeSize == 0 || compositeSize >= kTranslationCapacity) {
+                    return;
+                }
+                output.compositeTranslationSize = compositeSize;
+                std::memcpy(output.compositeTranslation, composite, compositeSize + 1);
+            }
+#endif
             configuredMask |= approved.sourceBit;
             break;
         }
@@ -929,12 +1016,23 @@ extern "C" __attribute__((noinline)) void replacementSkTextUtilsGetPath(
         displayFont.storage.size());
     gState.setFontSize(&displayFont, fontSize);
 
-    const void *approvedText = approvedAction
-        ? (actionBilingual ? text : action->translation)
-        : (viewportBilingual ? text : viewport->translation);
-    const std::size_t approvedSize = approvedAction
-        ? (actionBilingual ? size : action->translationSize)
-        : (viewportBilingual ? size : viewport->translationSize);
+    const void *approvedText = nullptr;
+    std::size_t approvedSize = 0;
+    if (approvedAction) {
+#if defined(CAVALRY_I18N_CAVALRY_280)
+        if (action->compositeTranslationSize > 0) {
+            approvedText = action->compositeTranslation;
+            approvedSize = action->compositeTranslationSize;
+        } else
+#endif
+        {
+            approvedText = actionBilingual ? text : action->translation;
+            approvedSize = actionBilingual ? size : action->translationSize;
+        }
+    } else {
+        approvedText = viewportBilingual ? text : viewport->translation;
+        approvedSize = viewportBilingual ? size : viewport->translationSize;
+    }
     recursionActive = true;
     original(approvedText, approvedSize, encoding, x, y, &displayFont, path);
     recursionActive = false;

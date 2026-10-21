@@ -30,6 +30,60 @@ pub fn path(app: &Path) -> PathBuf {
         app.join("Contents/assets/Definitions/nodeStrings.json")
     }
 }
+
+pub const CAVALRY_280_OVERLAY_FILES: [&str; 17] = [
+    "Definitions/Translation/appStrings_zh-CN.translation.json",
+    "Definitions/Translation/nodeStrings_zh-CN.translation.json",
+    "Learn/Guides/Translation/strings_zh-CN.translation.json",
+    "Plugins/Bilateral Blur Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Box Blur Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Bulge Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Chroma Key Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Directional Blur Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Erosion Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Gaussian Blur Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Grain Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Light Sweep Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Polar Coordinates Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Ripple Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Spherise Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Twist Filter/Translation/strings_zh-CN.translation.json",
+    "Plugins/Zoom Blur Filter/Translation/strings_zh-CN.translation.json",
+];
+
+pub enum AssetInstall {
+    Single { bytes: Vec<u8>, updated: usize },
+    Overlay { files: Vec<(PathBuf, Vec<u8>)>, updated: usize },
+}
+
+fn count_ui_text(value: &Value) -> usize {
+    match value {
+        Value::Object(entries) => entries.iter().map(|(key, value)| usize::from(key == "UI-text") + count_ui_text(value)).sum(),
+        Value::Array(entries) => entries.iter().map(count_ui_text).sum(),
+        _ => 0,
+    }
+}
+
+pub fn prepare_280(root: &Path) -> Result<AssetInstall> {
+    let mut files = Vec::new();
+    let mut updated = 0;
+    for relative in CAVALRY_280_OVERLAY_FILES {
+        let source = root.join(relative);
+        let metadata = fs::symlink_metadata(&source).map_err(|_| msg(format!("2.8 汉化资源缺失：{relative}")))?;
+        if metadata.file_type().is_symlink() || !metadata.is_file() {
+            return Err(msg(format!("2.8 汉化资源不是普通文件：{relative}")));
+        }
+        let bytes = fs::read(&source)?;
+        let json: Value = serde_json::from_slice(&bytes).map_err(|_| msg(format!("2.8 汉化资源不是合法 JSON：{relative}")))?;
+        let rows = json.as_array().ok_or_else(|| msg(format!("2.8 汉化资源必须是数组：{relative}")))?;
+        if rows.is_empty() || rows.iter().any(|row| row.get("type").and_then(Value::as_str).is_none() || (row.get("value").is_none() && row.get("values").is_none())) {
+            return Err(msg(format!("2.8 汉化资源缺少 type/value：{relative}")));
+        }
+        updated += count_ui_text(&json);
+        files.push((PathBuf::from("Contents").join("assets").join(relative), bytes));
+    }
+    Ok(AssetInstall::Overlay { files, updated })
+}
 pub fn sample_english() -> &'static str {
     EN
 }
@@ -323,6 +377,22 @@ pub fn prepare(app: &Path, settings: &Settings) -> Result<(Vec<u8>, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn cavalry_280_overlay_is_complete_and_validated() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../assets/cavalry-28");
+        match prepare_280(&root).unwrap() {
+            AssetInstall::Overlay { files, updated } => {
+                assert_eq!(files.len(), CAVALRY_280_OVERLAY_FILES.len());
+                assert!(updated > 0);
+                for (path, bytes) in files {
+                    assert!(path.starts_with("Contents/assets"));
+                    assert!(!bytes.is_empty());
+                }
+            }
+            AssetInstall::Single { .. } => panic!("2.8 must use the multi-file overlay"),
+        }
+    }
     #[test]
     fn raw_catalog_names_are_identities_but_all_display_titles_remain_bilingual() {
         let english = index(&serde_json::from_str(EN).unwrap()).unwrap();

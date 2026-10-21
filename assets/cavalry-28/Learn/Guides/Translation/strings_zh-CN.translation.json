@@ -1,0 +1,307 @@
+[
+  {
+    "type": "strings",
+    "value": {
+      "onboarding.firstLaunch.step0.title": {
+        "UI-text": "欢迎使用 Cavalry 🎉"
+      },
+      "onboarding.firstLaunch.step0.body": {
+        "UI-text": "这是<b>视口</b>，你的设计将在这里栩栩如生。使用它来实时预览和交互你的合成。"
+      },
+      "onboarding.firstLaunch.step1.title": {
+        "UI-text": "场景树"
+      },
+      "onboarding.firstLaunch.step1.body": {
+        "UI-text": "Use the <b>Scene Tree</b> to select, rename, reorder and organise a Composition’s Layers."
+      },
+      "onboarding.firstLaunch.step2.title": {
+        "UI-text": "属性编辑器"
+      },
+      "onboarding.firstLaunch.step2.body": {
+        "UI-text": "Use the <b>Attribute Editor</b> to fine-tune a Layer’s properties – position, fill/stroke color, size and more."
+      },
+      "onboarding.firstLaunch.step3.title": {
+        "UI-text": "时间编辑器"
+      },
+      "onboarding.firstLaunch.step3.body": {
+        "UI-text": "使用<b>时间编辑器</b>来调整动画时序和图层可见性。"
+      },
+      "onboarding.firstLaunch.step4.title": {
+        "UI-text": "资源窗口"
+      },
+      "onboarding.firstLaunch.step4.body": {
+        "UI-text": "使用<b>文件 > 导入资源...</b>或在此窗口中双击来导入图像、视频、字体、音频文件等。"
+      },
+      "onboarding.uiDeepDive.step0.title": {
+        "UI-text": "播放控件"
+      },
+      "onboarding.uiDeepDive.step0.body": {
+        "UI-text": "使用<b>播放控件</b>来播放和暂停你的动画。使用右侧按钮来调整各种视口和场景设置。"
+      },
+      "onboarding.uiDeepDive.step1.title": {
+        "UI-text": "工具栏"
+      },
+      "onboarding.uiDeepDive.step1.body": {
+        "UI-text": "<b>工具栏</b>包含所有绘制和选择工具。<b>按 Alt/Option + 点击</b>基本形状工具可立即以默认大小创建形状。"
+      },
+      "onboarding.uiDeepDive.step2.title": {
+        "UI-text": "工具设置"
+      },
+      "onboarding.uiDeepDive.step2.body": {
+        "UI-text": "当前活动工具的设置将显示在此处。"
+      },
+      "onboarding.uiDeepDive.step3.title": {
+        "UI-text": "Shelf"
+      },
+      "onboarding.uiDeepDive.step3.body": {
+        "UI-text": "<b>功能架</b>提供对常用功能的快速访问，如复制器、对齐行为与布局组。"
+      },
+      "onboarding.uiDeepDive.step4.title": {
+        "UI-text": "合成设置"
+      },
+      "onboarding.uiDeepDive.step4.body": {
+        "UI-text": "Click the {0} button to open the <b>Composition Settings</b> window where you can adjust a Composition’s Resolution, Frame Rate, Background Colour and more."
+      },
+      "onboarding.uiDeepDive.step5.title": {
+        "UI-text": "添加图层"
+      },
+      "onboarding.uiDeepDive.step5.body": {
+        "UI-text": "Click the {0} button to add Shapes, Behaviours, Effects and more to a Composition."
+      },
+      "onboarding.uiDeepDive.step6.title": {
+        "UI-text": "项目设置"
+      },
+      "onboarding.uiDeepDive.step6.body": {
+        "UI-text": "Keep Scenes, Assets and Palettes organised with <b>Project Settings</b> {0} so Cavalry can manage file paths relative to your Project."
+      },
+      "onboarding.animationBasics.step0.title": {
+        "UI-text": "设置关键帧"
+      },
+      "onboarding.animationBasics.step0.body": {
+        "UI-text": "Click the diamond icon {0} next to <b>Position X</b> to create a keyframe for this attribute."
+      },
+      "onboarding.animationBasics.step1.title": {
+        "UI-text": "移动播放头"
+      },
+      "onboarding.animationBasics.step1.body": {
+        "UI-text": "在时间轴中点击第 50 帧附近来定位<b>播放头</b>。"
+      },
+      "onboarding.animationBasics.step2.title": {
+        "UI-text": "移动你的形状"
+      },
+      "onboarding.animationBasics.step2.body": {
+        "UI-text": "将<b>我的形状</b>拖向侧面，移动到视口的右侧新位置。"
+      },
+      "onboarding.animationBasics.step3.title": {
+        "UI-text": "添加一些弹跳"
+      },
+      "onboarding.animationBasics.step3.body": {
+        "UI-text": "右键点击第一个关键帧（在第 0 帧处），选择 <b>缓动魔法 &rarr; 弹跳出</b>。"
+      },
+      "onboarding.animationBasics.step4.title": {
+        "UI-text": "播放看看！"
+      },
+      "onboarding.animationBasics.step4.body": {
+        "UI-text": "Hit <b>Play</b> {0} to see your animation in action."
+      },
+      "onboarding.comp.behaviourGuide.name": {
+        "UI-text": "行为指南"
+      },
+      "onboarding.layer.ellipse.name": {
+        "UI-text": "椭圆"
+      },
+      "onboarding.layer.duplicator.name": {
+        "UI-text": "复制器"
+      },
+      "onboarding.layer.colours.name": {
+        "UI-text": "颜色"
+      },
+      "onboarding.behaviourBasics.step0.title": {
+        "UI-text": "添加行为"
+      },
+      "onboarding.behaviourBasics.step0.body": {
+        "UI-text": "右键点击 <b>形状位置</b> 属性，选择 <b>添加行为 &rarr; 噪波</b>。"
+      },
+      "onboarding.behaviourBasics.step1.title": {
+        "UI-text": "编辑噪波行为"
+      },
+      "onboarding.behaviourBasics.step1.body": {
+        "UI-text": "在场景树中双击<b>噪波行为</b>，在属性编辑器中加载其设置。"
+      },
+      "onboarding.behaviourBasics.step2.title": {
+        "UI-text": "加大力度"
+      },
+      "onboarding.behaviourBasics.step2.body": {
+        "UI-text": "将<b>强度</b>值增加到 <b>200%</b> 以上，让噪波效果更加明显。"
+      },
+      "onboarding.behaviourBasics.step3.title": {
+        "UI-text": "添加衰减"
+      },
+      "onboarding.behaviourBasics.step3.body": {
+        "UI-text": "切换到<b>衰减</b>选项卡，然后点击<b>添加衰减</b>按钮并选择<b>衰减</b>。"
+      },
+      "onboarding.behaviourBasics.step4.title": {
+        "UI-text": "编辑衰减"
+      },
+      "onboarding.behaviourBasics.step4.body": {
+        "UI-text": "在场景树中双击<b>衰减</b>以加载其设置。"
+      },
+      "onboarding.behaviourBasics.step5.title": {
+        "UI-text": "设置缩放"
+      },
+      "onboarding.behaviourBasics.step5.body": {
+        "UI-text": "点击并拖动 <b>缩放 X</b> 属性至 <b>2.5</b> 或更高。按住 <b>Alt/Option</b> 可同时设置 X 和 Y。"
+      },
+      "onboarding.behaviourBasics.step6.title": {
+        "UI-text": "播放看看！"
+      },
+      "onboarding.behaviourBasics.step6.body": {
+        "UI-text": "Hit <b>Play</b> {0} to see your procedural noise animation in action."
+      },
+      "onboarding.choiceView.title": {
+        "UI-text": "继续探索"
+      },
+      "onboarding.nextGuide.uiDeepDive.label": {
+        "UI-text": "深入了解界面"
+      },
+      "onboarding.nextGuide.uiDeepDive.description": {
+        "UI-text": "播放控件、工具等。"
+      },
+      "onboarding.nextGuide.animationBasics.label": {
+        "UI-text": "用关键帧制作动画"
+      },
+      "onboarding.nextGuide.animationBasics.description": {
+        "UI-text": "了解如何设置关键帧。"
+      },
+      "onboarding.nextGuide.behaviourBasics.label": {
+        "UI-text": "行为入门"
+      },
+      "onboarding.nextGuide.behaviourBasics.description": {
+        "UI-text": "使用行为进行程序化动画。"
+      },
+      "onboarding.dialog.resetWorkspace.title": {
+        "UI-text": "重置工作区？"
+      },
+      "onboarding.dialog.resetWorkspace.body": {
+        "UI-text": "本指南在默认布局下效果最佳。是否立即重置？"
+      },
+      "onboarding.comp.animationGuide.name": {
+        "UI-text": "动画指南"
+      },
+      "onboarding.layer.myShape.name": {
+        "UI-text": "我的形状"
+      },
+      "onboarding.button.next": {
+        "UI-text": "下一步"
+      },
+      "onboarding.button.back": {
+        "UI-text": "Back"
+      },
+      "onboarding.button.skip": {
+        "UI-text": "关闭"
+      },
+      "onboarding.button.done": {
+        "UI-text": "完成"
+      },
+      "onboarding.button.done.tada": {
+        "UI-text": "完成"
+      },
+      "onboarding.choiceView.demoSectionTitle": {
+        "UI-text": "或者从一个演示场景开始：<b>创建 > 演示场景</b>"
+      },
+      "onboarding.demo.audio.label": {
+        "UI-text": "Audio",
+        "dontTranslate": true
+      },
+      "onboarding.demo.overAndOver.label": {
+        "UI-text": "Over and Over",
+        "dontTranslate": true
+      },
+      "onboarding.demo.axonometric.label": {
+        "UI-text": "Axonometric",
+        "dontTranslate": true
+      },
+      "onboarding.demo.dynamicText.label": {
+        "UI-text": "Dynamic Text",
+        "dontTranslate": true
+      },
+      "onboarding.demo.variableFont.label": {
+        "UI-text": "Variable Font",
+        "dontTranslate": true
+      },
+      "onboarding.demo.gradientAlongPath.label": {
+        "UI-text": "Gradient along a Path",
+        "dontTranslate": true
+      },
+      "onboarding.contextual_demoNotes.step0.title": {
+        "UI-text": "Notes"
+      },
+      "onboarding.contextual_demoNotes.step0.body": {
+        "UI-text": "Click on the <b>Notes</b> icons {0} to learn about this demo scene."
+      },
+      "onboarding.nextGuide.connectionBasics.label": {
+        "UI-text": "使用连接驱动数值"
+      },
+      "onboarding.nextGuide.connectionBasics.description": {
+        "UI-text": "了解如何将属性连接在一起。"
+      },
+      "onboarding.comp.connectionGuide.name": {
+        "UI-text": "连接指南"
+      },
+      "onboarding.connectionBasics.step0.title": {
+        "UI-text": "创建矩形"
+      },
+      "onboarding.connectionBasics.step0.body": {
+        "UI-text": "按住 <b>Alt/Option</b> 并点击<b>矩形</b>工具以创建矩形。"
+      },
+      "onboarding.connectionBasics.step1.title": {
+        "UI-text": "建立连接"
+      },
+      "onboarding.connectionBasics.step1.body": {
+        "UI-text": "Drag from the highlighted blue {0} label to the highlighted <b>Rotation</b> field to connect them."
+      },
+      "onboarding.connectionBasics.step2.title": {
+        "UI-text": "调整数值"
+      },
+      "onboarding.connectionBasics.step2.body": {
+        "UI-text": "现在在 <b>位置 X</b> 字段中点击并拖动。注意矩形会随着数值变化而旋转！"
+      },
+      "onboarding.nextGuide.renderBasics.label": {
+        "UI-text": "渲染动画"
+      },
+      "onboarding.nextGuide.renderBasics.description": {
+        "UI-text": "了解如何导出你的作品"
+      },
+      "onboarding.renderBasics.step0.title": {
+        "UI-text": "导出静态图像"
+      },
+      "onboarding.renderBasics.step0.body": {
+        "UI-text": "要快速导出单帧，请使用<b>文件 &gt; 渲染当前帧...</b>保存为 PNG。"
+      },
+      "onboarding.renderBasics.step1.title": {
+        "UI-text": "渲染管理器"
+      },
+      "onboarding.renderBasics.step1.body": {
+        "UI-text": "要导出视频或图像序列，请使用<b>渲染管理器</b>。随时从<b>文件 &gt; 渲染管理器</b>打开，或按 <b>Alt/Option + B</b>。"
+      },
+      "onboarding.renderBasics.step2.title": {
+        "UI-text": "添加合成"
+      },
+      "onboarding.renderBasics.step2.body": {
+        "UI-text": "点击 <b>+ 当前合成</b> 将当前活动合成添加到渲染队列。每个项目都可以配置自己的格式和输出路径。"
+      },
+      "onboarding.renderBasics.step3.title": {
+        "UI-text": "渲染"
+      },
+      "onboarding.renderBasics.step3.body": {
+        "UI-text": "点击<b>全部渲染</b>以导出。Cavalry 支持 PNG、JPEG、MP4、QuickTime、WebM 等格式。"
+      },
+      "onboarding.renderBasics.step4.title": {
+        "UI-text": "查找文件"
+      },
+      "onboarding.renderBasics.step4.body": {
+        "UI-text": "After rendering, click this arrow {0} to reveal the output file in Finder/Explorer."
+      }
+    }
+  }
+]

@@ -1,0 +1,70 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "erosionFilter",
+      "niceName": {
+        "UI-text": "Erosion"
+      },
+      "layerInfo": {
+        "UI-text": "侵蚀图层 Alpha 以用于过渡和蒙版调整"
+      },
+      "attributes": {
+        "amount": {
+          "name": {
+            "UI-text": "数量"
+          },
+          "tooltip": {
+            "UI-text": "设置侵蚀量（像素）。"
+          }
+        },
+        "directionMode": {
+          "name": {
+            "UI-text": "方向模式"
+          },
+          "tooltip": {
+            "UI-text": "选择各方向均匀侵蚀或向特定角度偏移的方向性侵蚀。"
+          }
+        },
+        "angle": {
+          "name": {
+            "UI-text": "角度"
+          },
+          "tooltip": {
+            "UI-text": "设置方向性侵蚀偏移的角度。"
+          }
+        },
+        "directionStrength": {
+          "name": {
+            "UI-text": "方向强度"
+          },
+          "tooltip": {
+            "UI-text": "控制侵蚀向指定方向偏移的强度。"
+          }
+        }
+      },
+      "enums": {
+        "directionMode": {
+          "0": {
+            "UI-text": "均匀"
+          },
+          "1": {
+            "UI-text": "方向性"
+          }
+        },
+        "edgeTint": {
+          "0": {
+            "UI-text": "无"
+          },
+          "1": {
+            "UI-text": "变暗"
+          },
+          "2": {
+            "UI-text": "自定义颜色"
+          }
+        }
+      }
+    }
+  }
+]

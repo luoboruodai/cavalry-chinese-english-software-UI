@@ -91,6 +91,31 @@ int main() {
     assert(!matchesBilingualText(assembled.data(), assembled.size(), "Enable Snapping", duplicated.data(), duplicated.size()));
     const std::string userText = u8"用户名称（Insert Keyframe）";
     assert(!matchesBilingualText("插入关键帧", std::strlen("插入关键帧"), "Insert Keyframe", userText.data(), userText.size()));
+#if defined(CAVALRY_I18N_CAVALRY_280)
+    assert(std::string(compositeToolHelpTranslation("zh-Hans", "S + click Motion Path")) == u8"S + 单击运动路径以（S + click Motion Path）");
+    assert(std::string(compositeToolHelpTranslation("zh-Hans", "Hold S")) == u8"按住 S 以（Hold S）");
+    assert(std::string(compositeToolHelpTranslation("zh-Hans", "Play/ Stop")) == u8"以播放/停止（Play/ Stop）");
+    assert(std::string(compositeToolHelpTranslation("zh-Hans", "Pan")) == u8"以平移（Pan）");
+    assert(std::string(compositeToolHelpTranslation("zh-Hans", "Enable Snapping")) == u8"以启用吸附（Enable Snapping）");
+    assert(compositeToolHelpTranslation("zh-Hant", "Play/ Stop") == nullptr);
+    assert(compositeToolHelpTranslation("zh-Hans", "Insert Keyframe") == nullptr);
+    assert(compositeToolHelpTranslation("zh-Hans", "user-owned layer name") == nullptr);
+    for (std::size_t index = 0; index < kActionCount; ++index) {
+        gState.actions[index].source = kApprovedActions[index].source;
+    }
+    auto &compositeAction = gState.actions[2];
+    compositeAction.source = "Play/ Stop";
+    compositeAction.translationSize = std::strlen("播放/停止");
+    std::memcpy(compositeAction.translation, "播放/停止", compositeAction.translationSize + 1);
+    const std::string composite = compositeToolHelpTranslation("zh-Hans", "Play/ Stop");
+    compositeAction.compositeTranslationSize = composite.size();
+    std::memcpy(compositeAction.compositeTranslation, composite.data(), composite.size() + 1);
+    const std::string oldDisplay = u8"播放/停止（Play/ Stop）";
+    bool compositeBilingual = false;
+    assert(configuredActionFor(oldDisplay.data(), oldDisplay.size(), &compositeBilingual) == &compositeAction && compositeBilingual);
+    compositeBilingual = false;
+    assert(configuredActionFor(composite.data(), composite.size(), &compositeBilingual) == &compositeAction && compositeBilingual);
+#endif
     gState.coreImage.header = reinterpret_cast<const mach_header_64*>(0x10000);
     gState.extensionImage.header = reinterpret_cast<const mach_header_64*>(0x20000);
     assert(callerChainMatches(imageAddress(gState.coreImage,kCoreGetPathReturn), imageAddress(gState.extensionImage,kExtensionMakePathReturn), imageAddress(gState.extensionImage,kExtensionActionReturn)));

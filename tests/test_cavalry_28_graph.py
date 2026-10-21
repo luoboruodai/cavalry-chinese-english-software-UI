@@ -2,7 +2,10 @@
 import hashlib
 import re
 import unittest
+import pathlib
+import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "tools"))
 import audit_cavalry_28_graph as audit
 import audit_cavalry_28_tool_path as common
 from audit_macos_canvas import verify_graph_elision

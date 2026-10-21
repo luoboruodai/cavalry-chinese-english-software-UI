@@ -1,0 +1,74 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "bulgeFilter",
+      "niceName": {
+        "UI-text": "Bulge"
+      },
+      "layerInfo": {
+        "UI-text": "通过将形状映射到球面上来产生扭曲，创建凸出或收缩效果。"
+      },
+      "attributes": {
+        "passthroughBackground": {
+          "name": {
+            "UI-text": "直通背景"
+          },
+          "tooltip": {
+            "UI-text": "选中时，当混合模式设置为替换时，凸起外部的背景将被渲染。"
+          }
+        },
+        "amount": {
+          "name": {
+            "UI-text": "数量"
+          },
+          "tooltip": {
+            "UI-text": "确定球面变形的强度，正值产生凸起效果，负值产生收缩效果。"
+          }
+        },
+        "centre": {
+          "name": {
+            "UI-text": "中心"
+          },
+          "tooltip": {
+            "UI-text": "设置球面效果的中心点（像素），其中 0,0 是图像的中心。"
+          }
+        },
+        "radius": {
+          "name": {
+            "UI-text": "半径"
+          },
+          "tooltip": {
+            "UI-text": "Set the radius of the spherical effect as a percentage of the Shape’s size."
+          }
+        },
+        "enableRefraction": {
+          "name": {
+            "UI-text": "折射"
+          },
+          "tooltip": {
+            "UI-text": "取消选中时，效果变为简单的高度图变形而没有光学效果。"
+          }
+        },
+        "refractiveIndex": {
+          "name": {
+            "UI-text": "折射率"
+          },
+          "tooltip": {
+            "UI-text": "Set the material’s refractive index to control how much light bends. Common values include 1.33 (water), 1.5 (glass) and 2.4 (diamond)."
+          }
+        },
+        "chromaticAberration": {
+          "name": {
+            "UI-text": "色差"
+          },
+          "tooltip": {
+            "UI-text": "When ‘Refraction’ is checked, set the amount of color separation in pixels at the sphere’s edges to simulate light dispersion through glass."
+          }
+        }
+      },
+      "enums": {}
+    }
+  }
+]

@@ -1,0 +1,91 @@
+{
+  "source": "private-testing/2026-10-14/wine-migration/2.8-review-draft-v2",
+  "scope": "原生欢迎页已验证；其余界面覆盖不宣称完成",
+  "files": [
+    {
+      "path": "Definitions/Translation/appStrings_zh-CN.translation.json",
+      "sha256": "9cb26e617cb60f9c2ec3824882c05415a6200482969e3dfb6dd910b8f62adb97",
+      "bytes": 335522
+    },
+    {
+      "path": "Definitions/Translation/nodeStrings_zh-CN.translation.json",
+      "sha256": "effc78a8ce569acb8d2462bb7887c7804b4614c9a595d4a3b256a1e481aeda87",
+      "bytes": 696587
+    },
+    {
+      "path": "Learn/Guides/Translation/strings_zh-CN.translation.json",
+      "sha256": "b9f9c04d30b38edc6af9b5018614ef5bf94ef324a3429f34d2a6a624c39ff6bd",
+      "bytes": 12059
+    },
+    {
+      "path": "Plugins/Bilateral Blur Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "a058fc871bbb9d22f16d1099a7be88d7db3fb6e1a1f5f96381b3901b1be0fce4",
+      "bytes": 1061
+    },
+    {
+      "path": "Plugins/Box Blur Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "21391ad41803655048d547e4f62a69fdc924f89ccfdc2b329fb8ec267dfe691b",
+      "bytes": 514
+    },
+    {
+      "path": "Plugins/Bulge Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "b4e99192902bd0f601640fa9e3b7e557caf76a0386bb15574ab70f359cb9d8e3",
+      "bytes": 2200
+    },
+    {
+      "path": "Plugins/Chroma Key Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "1658833560d047f80b961317846274dd7a4f84e0f56632524dc5d14785a53b7d",
+      "bytes": 8056
+    },
+    {
+      "path": "Plugins/Directional Blur Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "dec5c0867d9da9f83b94c2d5c48121cbbcf4174db33395d816d1af0ab3498dbf",
+      "bytes": 797
+    },
+    {
+      "path": "Plugins/Erosion Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "67930cbf357cf0643dca6d2d9a2ae94b4724ca8b2baa31232c18b3b8c40b3428",
+      "bytes": 1571
+    },
+    {
+      "path": "Plugins/Gaussian Blur Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "6cc820309a4f1ad3d1a39609dfcad9bf57d8b8f1272ff03e6febacfab5e1f6f8",
+      "bytes": 530
+    },
+    {
+      "path": "Plugins/Grain Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "f2fad3106ad93d6e5b9022a9825680e21d141ccd26b789a9a6b58d987504cf44",
+      "bytes": 4793
+    },
+    {
+      "path": "Plugins/Light Sweep Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "b2ab8adfdbacbe6ed970c34b2d5543eb96977b3871e90bd93eb8073aa52878df",
+      "bytes": 2842
+    },
+    {
+      "path": "Plugins/Polar Coordinates Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "c8bbb9a99ce9af07322e1b97bc7a1578fb92c2c12b1307b5d496d9693ac02bf1",
+      "bytes": 2089
+    },
+    {
+      "path": "Plugins/Ripple Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "0f1682ed79a37a714b6cb2b8ffab1a36d71dad494b94f64597d709084463f798",
+      "bytes": 3653
+    },
+    {
+      "path": "Plugins/Spherise Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "89d393384d844414469b4a3dcc93611b92a8e13c578b86aff7d9ddfadf7b4089",
+      "bytes": 4802
+    },
+    {
+      "path": "Plugins/Twist Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "6a784963d0ee70e8db36ab3c7f4adc17665c691012f3db4cca8e0488fac2381e",
+      "bytes": 1511
+    },
+    {
+      "path": "Plugins/Zoom Blur Filter/Translation/strings_zh-CN.translation.json",
+      "sha256": "25d0e3f1f07a486cff6785ce45237ee690cba4c0930e648846ab86966ef666ed",
+      "bytes": 1017
+    }
+  ]
+}

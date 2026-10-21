@@ -9,7 +9,8 @@
       "../docs/INSTALL-WINDOWS.txt": "INSTALL.txt",
       "../LICENSE": "Legal/LICENSE",
       "../LICENSE.daftai": "Legal/LICENSE.daftai",
-      "../NOTICE.md": "Legal/NOTICE.md"
+      "../NOTICE.md": "Legal/NOTICE.md",
+      "runtime/legal/sentry-types-MIT.txt": "Legal/sentry-types-MIT.txt"
     },
     "icon": [
       "icons/icon.ico"

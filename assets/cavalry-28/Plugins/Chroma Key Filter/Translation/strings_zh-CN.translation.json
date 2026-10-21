@@ -1,0 +1,255 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "chromaKeyFilter",
+      "niceName": {
+        "UI-text": "Chroma Key"
+      },
+      "layerInfo": {
+        "UI-text": "通过高级蒙版控制从视频/图像中去除绿幕/蓝幕。"
+      },
+      "attributes": {
+        "viewMode": {
+          "name": {
+            "UI-text": "视图"
+          },
+          "tooltip": {
+            "UI-text": "Select what to render in the Viewport. ‘Final Result’ shows the matted image with transparency."
+          }
+        },
+        "screenColor": {
+          "name": {
+            "UI-text": "屏幕颜色"
+          },
+          "tooltip": {
+            "UI-text": "要变为透明的颜色（通常是绿色或蓝色背景）。使用取色器从图像中选择颜色。"
+          }
+        },
+        "screenGain": {
+          "name": {
+            "UI-text": "屏幕增益"
+          },
+          "tooltip": {
+            "UI-text": "控制颜色键控的强度。较高的值移除更多背景。"
+          }
+        },
+        "screenBalance": {
+          "name": {
+            "UI-text": "屏幕平衡"
+          },
+          "tooltip": {
+            "UI-text": "调整颜色饱和度测量值。0.0 = 使用其他通道的最大值，0.5 = 使用平均值（绿幕），1.0 = 使用最小值（蓝幕）。"
+          }
+        },
+        "shadowTolerance": {
+          "name": {
+            "UI-text": "阴影容差"
+          },
+          "tooltip": {
+            "UI-text": "确定屏幕颜色的较暗变化可以多暗仍被包含在遮片中。这对于移除投射在背景上的阴影很有用。"
+          }
+        },
+        "shadowSoftness": {
+          "name": {
+            "UI-text": "阴影柔化"
+          },
+          "tooltip": {
+            "UI-text": "控制阴影内外区域之间的过渡。较高的值将产生更平滑的过渡。"
+          }
+        },
+        "alphaBias": {
+          "name": {
+            "UI-text": "Alpha 偏移"
+          },
+          "tooltip": {
+            "UI-text": "调整偏移以减少前景/主体透明度。使用取色器从图像中选择颜色。"
+          }
+        },
+        "despillBias": {
+          "name": {
+            "UI-text": "去溢色偏移"
+          },
+          "tooltip": {
+            "UI-text": "从遮片边缘去除溢色。选择头发或肤色通常会产生最佳效果。"
+          }
+        },
+        "useAlphaBiasForDespill": {
+          "name": {
+            "UI-text": "使用 Alpha 偏移进行去溢色"
+          },
+          "tooltip": {
+            "UI-text": "When checked, the ‘Alpha Bias’ color is used to affect despill calulations."
+          }
+        },
+        "despillStrength": {
+          "name": {
+            "UI-text": "去溢色强度"
+          },
+          "tooltip": {
+            "UI-text": "控制去溢色的整体强度。使用较低的值进行微妙的去溢色，使用较高的值进行强力去除。"
+          }
+        },
+        "clipBlack": {
+          "name": {
+            "UI-text": "裁切黑色"
+          },
+          "tooltip": {
+            "UI-text": "设置透明度截止值。低于此值的遮片值变为完全透明。请谨慎使用以避免硬边缘。"
+          }
+        },
+        "clipWhite": {
+          "name": {
+            "UI-text": "裁切白色"
+          },
+          "tooltip": {
+            "UI-text": "设置不透明度截止值。高于此值的遮片值变为完全不透明。请谨慎使用以避免硬边缘。"
+          }
+        },
+        "clipRollback": {
+          "name": {
+            "UI-text": "裁剪回滚"
+          },
+          "tooltip": {
+            "UI-text": "通过恢复一些边缘细节来柔化裁剪效果。较高的值恢复更多原始遮片。"
+          }
+        },
+        "screenDilate": {
+          "name": {
+            "UI-text": "屏幕扩张"
+          },
+          "tooltip": {
+            "UI-text": "Grow or shrink the matte’s edges. Use sparingly as too much erosion can produce poor mattes."
+          }
+        },
+        "screenSoftness": {
+          "name": {
+            "UI-text": "屏幕柔化"
+          },
+          "tooltip": {
+            "UI-text": "Blur the matte’s edges for smoother compositing. This only affects edges and not solid areas. Small values are recommended."
+          }
+        },
+        "screenDespotBlack": {
+          "name": {
+            "UI-text": "去污黑点"
+          },
+          "tooltip": {
+            "UI-text": "移除不透明区域中孤立的透明斑点，以清理前景/主体中可能出现的小孔。"
+          }
+        },
+        "screenDespotWhite": {
+          "name": {
+            "UI-text": "去污白点"
+          },
+          "tooltip": {
+            "UI-text": "Remove isolated opaque spots in transparent areas to clean up any small holes that may appear within the background."
+          }
+        },
+        "screenReplaceMethod": {
+          "name": {
+            "UI-text": "屏幕替换"
+          },
+          "tooltip": {
+            "UI-text": "Determine the method for how colors in the foreground/subject are replaced when using ‘Despill’ for advanced color correction."
+          }
+        },
+        "screenReplaceColor": {
+          "name": {
+            "UI-text": "替换颜色"
+          },
+          "tooltip": {
+            "UI-text": "设置用于替换前景/主体中任何溢色的颜色。设置为主体的主色（如肤色或布料颜色）以获得最佳效果。"
+          }
+        },
+        "shadowGain": {
+          "name": {
+            "UI-text": "阴影增益"
+          },
+          "tooltip": {
+            "UI-text": "Adjust the matte’s contrast in dark areas. Higher values make shadows more opaque."
+          }
+        },
+        "midtonesGain": {
+          "name": {
+            "UI-text": "中间调增益"
+          },
+          "tooltip": {
+            "UI-text": "Adjust the matte’s contrast in mid-range areas. Higher values improve edge definition."
+          }
+        },
+        "highlightsGain": {
+          "name": {
+            "UI-text": "高光增益"
+          },
+          "tooltip": {
+            "UI-text": "Adjust the matte’s contrast in bright areas. Higher values make highlights more opaque."
+          }
+        },
+        "preBlur": {
+          "name": {
+            "UI-text": "预模糊"
+          },
+          "tooltip": {
+            "UI-text": "在键控前模糊输入图像以减少噪点/颗粒。这不影响输出。"
+          }
+        },
+        "detailPreservation": {
+          "name": {
+            "UI-text": "细节恢复"
+          },
+          "tooltip": {
+            "UI-text": "恢复可能被错误键出的细节（如发丝）。使用边缘检测和颜色分析来识别应保持不透明的区域，其中 0 = 不恢复，1 = 最大恢复。"
+          }
+        },
+        "edgeSoftness": {
+          "name": {
+            "UI-text": "边缘柔化"
+          },
+          "tooltip": {
+            "UI-text": "Control the softness of the matte’s edges where 0 = hard edges and 1 = very soft edges to help create a smoother transition between opaque and transparent pixels."
+          }
+        }
+      },
+      "enums": {
+        "viewMode": {
+          "0": {
+            "UI-text": "最终结果"
+          },
+          "1": {
+            "UI-text": "来源"
+          },
+          "2": {
+            "UI-text": "Alpha"
+          },
+          "4": {
+            "UI-text": "状态"
+          }
+        },
+        "screenReplaceMethod": {
+          "0": {
+            "UI-text": "无"
+          },
+          "1": {
+            "UI-text": "来源"
+          },
+          "2": {
+            "UI-text": "硬色"
+          },
+          "3": {
+            "UI-text": "柔和颜色"
+          }
+        },
+        "useAlphaBiasForDespill": {
+          "0": {
+            "UI-text": "禁用"
+          },
+          "1": {
+            "UI-text": "已启用"
+          }
+        }
+      }
+    }
+  }
+]

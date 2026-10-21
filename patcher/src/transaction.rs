@@ -8,7 +8,7 @@ use std::{
 };
 
 pub const MANIFEST: &str = "snapshot.json";
-pub const FILES: &[&str] = &[
+pub const BASE_FILES: &[&str] = &[
     "Contents/Info.plist",
     "Contents/Frameworks/libExtensionLayer.dylib",
     "Contents/MacOS/CavalryLauncher",
@@ -18,6 +18,15 @@ pub const FILES: &[&str] = &[
     "Contents/Resources/cavalry-bilingual-settings.json",
     "Contents/assets/Definitions/nodeStrings.json",
 ];
+
+fn files_for_version(version: &str) -> Vec<String> {
+    let mut files: Vec<String> = BASE_FILES.iter().map(|path| (*path).to_string()).collect();
+    if version == "2.8.0" {
+        files.retain(|path| path != "Contents/assets/Definitions/nodeStrings.json");
+        files.extend(crate::assets::CAVALRY_280_OVERLAY_FILES.iter().map(|relative| format!("Contents/assets/{relative}")));
+    }
+    files
+}
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Snapshot {
@@ -34,8 +43,8 @@ struct Entry {
     sha256: Option<String>,
     mode: Option<u32>,
 }
-fn checked_path(root: &Path, rel: &str) -> Result<std::path::PathBuf> {
-    if !FILES.contains(&rel)
+fn checked_path(root: &Path, rel: &str, version: &str) -> Result<std::path::PathBuf> {
+    if !files_for_version(version).iter().any(|allowed| allowed == rel)
         || Path::new(rel)
             .components()
             .any(|x| !matches!(x, Component::Normal(_)))
@@ -56,11 +65,12 @@ fn checked_path(root: &Path, rel: &str) -> Result<std::path::PathBuf> {
 }
 pub fn capture(app: &Path, root: &Path) -> Result<std::path::PathBuf> {
     let version = detect::cavalry_version(app)?.ok_or_else(|| msg("无法识别目标版本"))?;
+    let files = files_for_version(&version);
     backup::ensure_backup_root(root)?;
     let mut entries = Vec::new();
     // Preflight every target before creating/writing the snapshot.
-    for rel in FILES {
-        let src = checked_path(app, rel)?;
+    for rel in &files {
+        let src = checked_path(app, rel, &version)?;
         if src.exists() && !src.is_file() {
             return Err(msg("补丁目标不是普通文件"));
         }
@@ -97,7 +107,7 @@ pub fn capture(app: &Path, root: &Path) -> Result<std::path::PathBuf> {
 /// Cheap list metadata only. Integrity is always checked by load() before restore.
 pub fn summary(dir: &Path) -> Result<Snapshot> {
     let snapshot = checked_manifest(dir)?;
-    if snapshot.schema != 2 || snapshot.files.len() != FILES.len() {
+    if snapshot.schema != 2 || snapshot.files.len() != files_for_version(&snapshot.version).len() {
         return Err(msg("快照清单格式不受支持"));
     }
     Ok(snapshot)
@@ -105,12 +115,12 @@ pub fn summary(dir: &Path) -> Result<Snapshot> {
 
 pub fn load(dir: &Path) -> Result<Snapshot> {
     let meta = checked_manifest(dir)?;
-    if meta.schema != 2 || meta.files.len() != FILES.len() {
+    if meta.schema != 2 || meta.files.len() != files_for_version(&meta.version).len() {
         return Err(msg("备份格式不受支持或内容不完整"));
     }
     let mut seen = std::collections::HashSet::new();
     for entry in &meta.files {
-        let path = checked_path(dir, &entry.path)?;
+        let path = checked_path(dir, &entry.path, &meta.version)?;
         if !seen.insert(&entry.path) {
             return Err(msg("备份含重复文件"));
         }
@@ -146,7 +156,7 @@ pub fn restore_files(app: &Path, dir: &Path) -> Result<(Vec<String>, Vec<String>
     }
     let mut bytes = Vec::new();
     for entry in &snapshot.files {
-        checked_path(app, &entry.path)?;
+        checked_path(app, &entry.path, &snapshot.version)?;
         bytes.push(if entry.sha256.is_some() {
             Some(fs::read(dir.join(&entry.path))?)
         } else {
@@ -157,15 +167,41 @@ pub fn restore_files(app: &Path, dir: &Path) -> Result<(Vec<String>, Vec<String>
     for (entry, content) in snapshot.files.iter().zip(bytes) {
         let target = app.join(&entry.path);
         if let Some(content) = content {
+            let already_matches = target.is_file()
+                && util::mode_of(&target).ok().flatten() == entry.mode
+                && fs::read(&target)
+                    .map(|current| current == content)
+                    .unwrap_or(false);
+            if already_matches {
+                continue;
+            }
             if let Some(parent) = target.parent() {
-                fs::create_dir_all(parent)?;
+                fs::create_dir_all(parent)
+                    .map_err(|error| util::io_context("创建恢复目录", &target, error))?;
             }
             util::atomic_write_with_mode(&target, &content, entry.mode)?;
             restored.push(entry.path.clone());
         } else if target.exists() {
-            fs::remove_file(&target)?;
+            fs::remove_file(&target)
+                .map_err(|error| util::io_context("移除补丁文件", &target, error))?;
             removed.push(entry.path.clone());
         }
     }
     Ok((restored, removed))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::files_for_version;
+
+    #[test]
+    fn cavalry_28_snapshot_covers_overlay_without_reusing_27_catalog() {
+        let legacy = files_for_version("2.7.2");
+        let current = files_for_version("2.8.0");
+        assert_eq!(legacy.len(), 8);
+        assert_eq!(current.len(), 24);
+        assert!(!current.iter().any(|path| path == "Contents/assets/Definitions/nodeStrings.json"));
+        assert!(current.iter().any(|path| path == "Contents/assets/Definitions/Translation/nodeStrings_zh-CN.translation.json"));
+        assert!(current.iter().any(|path| path == "Contents/assets/Learn/Guides/Translation/strings_zh-CN.translation.json"));
+    }
 }

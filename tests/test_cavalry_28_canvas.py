@@ -1,6 +1,9 @@
 """Cavalry 2.8 Canvas callsite contract fixtures; no vendor binaries required."""
 import unittest
+import pathlib
+import sys
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "tools"))
 import audit_cavalry_28_canvas as audit
 import audit_cavalry_28_tool_path as common
 

@@ -5,6 +5,7 @@ use cbpatch::transaction;
 use cbpatch::{config::Settings, ops, util};
 use serde_json::{json, Value};
 use std::{
+    env,
     fs,
     path::{Path, PathBuf},
 };
@@ -77,26 +78,155 @@ fn format_unix_time_utc(secs: u64) -> String {
     format!("{year:04}-{m:02}-{d:02} {hour:02}:{minute:02}")
 }
 
-/// 扫描备份根下所有带合法时间戳的备份目录，按时间戳降序返回（名称, 路径, 时间戳）。
-fn scan_backups(backup_root: &Path) -> Vec<(u64, String, PathBuf)> {
+/// The list UI must distinguish a missing/empty root from an unreadable directory.
+fn scan_backups_checked(backup_root: &Path) -> Result<Vec<(u64, String, PathBuf)>, String> {
+    let entries = match fs::read_dir(backup_root) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(_) => return Err("备份目录无法读取，请检查访问权限后重试".into()),
+    };
     let mut items = Vec::new();
-    if !backup_root.is_dir() {
-        return items;
-    }
-    if let Ok(entries) = fs::read_dir(backup_root) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if !path.is_dir() {
-                continue;
-            }
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if let Some(ts) = backup_dir_timestamp(&name) {
-                items.push((ts, name, path));
-            }
-        }
+    for entry in entries {
+        let entry = entry.map_err(|_| "读取备份列表未完成，请重试")?;
+        let path = entry.path();
+        let metadata = fs::metadata(&path).map_err(|_| "部分备份暂时无法读取，请重新刷新")?;
+        if !metadata.is_dir() { continue; }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if let Some(ts) = backup_dir_timestamp(&name) { items.push((ts, name, path)); }
     }
     items.sort_by(|a, b| b.0.cmp(&a.0));
-    items
+    Ok(items)
+}
+
+// Existing status/deletion guards keep their conservative no-snapshot fallback.
+fn scan_backups(backup_root: &Path) -> Vec<(u64, String, PathBuf)> {
+    scan_backups_checked(backup_root).unwrap_or_default()
+}
+
+#[cfg(target_os = "macos")]
+fn cavalry_candidates() -> Vec<PathBuf> {
+    let mut roots = vec![PathBuf::from("/Applications")];
+    if let Some(home) = env::var_os("HOME") {
+        roots.push(PathBuf::from(home).join("Applications"));
+    }
+    let mut apps = Vec::new();
+    for root in roots {
+        let Ok(entries) = fs::read_dir(root) else { continue; };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_dir() || !path.join("Contents/MacOS/Cavalry").is_file() { continue; }
+            let plist = path.join("Contents/Info.plist");
+            if cbpatch::plist::read_string(&plist, "CFBundleIdentifier").ok().flatten().as_deref()
+                != Some("com.scenegroup.cavalry") { continue; }
+            apps.push(path);
+        }
+    }
+    apps.sort();
+    apps.dedup();
+    apps.sort_by(|a, b| {
+        let av = cbpatch::detect::cavalry_version(a).ok().flatten().unwrap_or_default();
+        let bv = cbpatch::detect::cavalry_version(b).ok().flatten().unwrap_or_default();
+        bv.cmp(&av).then_with(|| a.cmp(b))
+    });
+    apps
+}
+
+#[cfg(not(target_os = "macos"))]
+fn cavalry_candidates() -> Vec<PathBuf> { Vec::new() }
+
+fn selected_target(state: &GuiState) -> Option<PathBuf> {
+    fs::read_to_string(&state.target_path_file)
+        .ok()
+        .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
+        .and_then(|value| value.get("path").and_then(Value::as_str).map(PathBuf::from))
+        .filter(|path| path.is_dir())
+}
+
+fn target_app(state: &GuiState) -> PathBuf {
+    selected_target(state).unwrap_or_else(cbpatch::ops::default_app_path)
+}
+fn bundled_injector_for_app(state: &GuiState, app_root: &Path) -> Result<PathBuf, String> {
+    #[cfg(not(windows))]
+    {
+        cbpatch::ops::dylib_path_for_app(app_root, &state.dylib_path, &state.dylib_280_path).map_err(|error| error.to_string())
+    }
+    #[cfg(windows)]
+    {
+        let _ = app_root;
+        Ok(state.dylib_path.clone())
+    }
+}
+
+fn cavalry_install_json(state: &GuiState, path: &Path) -> Value {
+    let version = cbpatch::detect::cavalry_version(path).ok().flatten();
+    let running = ops::ensure_target_not_running(path).is_err();
+    let selected = target_app(state) == path;
+    json!({
+        "path": path,
+        "version": version.clone().unwrap_or_else(|| "未知版本".into()),
+        "displayName": format!("Cavalry {}", version.unwrap_or_else(|| "未知版本".into())),
+        "running": running,
+        "selected": selected,
+    })
+}
+
+
+#[tauri::command]
+pub fn list_cavalry_installs(state: State<GuiState>) -> Value {
+    json!(cavalry_candidates().iter().map(|path| cavalry_install_json(&state, path)).collect::<Vec<_>>())
+}
+
+#[tauri::command]
+pub fn set_target_cavalry(state: State<GuiState>, path: String) -> Result<Value, String> {
+    let candidate = PathBuf::from(&path);
+    if !cavalry_candidates().iter().any(|item| item == &candidate) {
+        return Err("不是可识别的 Cavalry 安装目录".into());
+    }
+    let payload = serde_json::to_vec_pretty(&json!({ "path": candidate })).map_err(|e| e.to_string())?;
+    util::atomic_write(&state.target_path_file, &payload).map_err(|e| e.to_string())?;
+    Ok(json!({ "ok": true, "path": candidate }))
+}
+
+#[tauri::command]
+pub async fn check_cavalry_update() -> Result<crate::updates::ReleaseInfo, String> {
+    tauri::async_runtime::spawn_blocking(crate::updates::check_release).await.map_err(|_| "版本检查任务未完成".to_string())?
+}
+#[tauri::command]
+pub async fn download_cavalry_update(app: tauri::AppHandle, state: State<'_, GuiState>, version: String) -> Result<crate::updates::DownloadResult, String> {
+    use tauri::Emitter;
+    let downloads = state.downloads.clone();
+    tauri::async_runtime::spawn_blocking(move || crate::updates::download_release(&downloads, &version, |progress| { let _ = app.emit("cavalry-download-progress", progress); })).await.map_err(|_| "下载任务未完成".to_string())?
+}
+#[tauri::command]
+pub fn cancel_cavalry_download(state: State<'_, GuiState>) { state.downloads.cancel(); }
+#[tauri::command]
+pub fn reveal_cavalry_download(path: String) -> Result<(), String> { crate::updates::reveal_download(Path::new(&path)) }
+#[tauri::command]
+pub fn prepare_error_report(state: State<'_, GuiState>, message: String, logs: Vec<crate::reporting::OperationLog>, cavalry_version: Option<String>) -> Result<crate::reporting::ReportPreview, String> {
+    crate::reporting::prepare(&state.reports, state.backup_root.parent().ok_or("配置目录不可用")?, &message, &logs, cavalry_version)
+}
+#[tauri::command]
+pub fn export_error_report(state: State<'_, GuiState>, report_id: String) -> Result<crate::reporting::ReportReceipt, String> {
+    crate::reporting::export(&state.reports, state.backup_root.parent().ok_or("配置目录不可用")?, &report_id)
+}
+#[tauri::command]
+pub async fn send_error_report(state: State<'_, GuiState>, report_id: String, email_js: Option<crate::reporting::EmailJsSession>) -> Result<crate::reporting::ReportReceipt, String> {
+    let state = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || crate::reporting::send(&state.reports, state.backup_root.parent().ok_or("配置目录不可用")?, &report_id, email_js)).await.map_err(|_| "报告处理任务未完成".to_string())?
+}
+#[tauri::command]
+pub async fn begin_emailjs_send(state: State<'_, GuiState>, report_id: String, email_js: crate::reporting::EmailJsSession) -> Result<String, String> {
+    let state = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || crate::reporting::begin_emailjs(&state.reports, state.backup_root.parent().ok_or("配置目录不可用")?, &report_id, email_js)).await.map_err(|_| "EmailJS 发送准备任务未完成".to_string())?
+}
+#[tauri::command]
+pub async fn complete_emailjs_send(state: State<'_, GuiState>, report_id: String) -> Result<crate::reporting::ReportReceipt, String> {
+    let state = state.inner().clone();
+    tauri::async_runtime::spawn_blocking(move || crate::reporting::complete_emailjs(&state.reports, state.backup_root.parent().ok_or("配置目录不可用")?, &report_id)).await.map_err(|_| "EmailJS 发送完成任务未完成".to_string())?
+}
+#[tauri::command]
+pub fn abort_emailjs_send(state: State<'_, GuiState>, report_id: String) -> Result<(), String> {
+    crate::reporting::abort_emailjs(&state.reports, &report_id)
 }
 
 fn config_json(state: &GuiState, config: &Settings) -> Value {
@@ -146,8 +276,16 @@ pub fn list_fonts() -> Vec<String> {
 }
 #[tauri::command]
 pub fn get_build_info(state: State<GuiState>) -> Value {
+    #[cfg(not(windows))]
+    let cavalry_28_assets = cbpatch::ops::default_cavalry_28_assets_path().ok();
+    #[cfg(windows)]
+    let cavalry_28_assets: Option<PathBuf> = None;
     json!({ "dylibPath": state.dylib_path, "dylibExists": state.dylib_path.is_file(),
         "dylibSha12": util::file_sha256(&state.dylib_path).ok().map(|s| s[..12].to_string()),
+        "dylib280Path": state.dylib_280_path, "dylib280Exists": state.dylib_280_path.is_file(),
+        "dylib280Sha12": util::file_sha256(&state.dylib_280_path).ok().map(|s| s[..12].to_string()),
+        "cavalry280AssetsPath": cavalry_28_assets.as_ref().map(|path| path.display().to_string()),
+        "cavalry280AssetsExists": cavalry_28_assets.as_ref().is_some_and(|path| path.is_dir()),
         "configPath": state.config_path, "configExists": state.config_path.is_file(),
         "appVersion": env!("CARGO_PKG_VERSION"), "supportedLangs": ["zh-Hans"] })
 }
@@ -159,33 +297,62 @@ pub async fn get_status(state: State<'_, GuiState>) -> Result<Value, String> {
         .map_err(|e| e.to_string())?
 }
 fn status_info(state: &GuiState) -> Result<Value, String> {
-    if !state.app_root.is_dir() {
-        return Ok(json!({ "detected": false }));
+    // Resolve on every refresh instead of only at GUI startup. Users often
+    // open the tool before Cavalry, and macOS may have multiple versioned
+    // Cavalry bundles installed side by side.
+    let app_root = target_app(state);
+    if !app_root.is_dir() {
+        return Ok(json!({
+            "detected": false,
+            "appPath": app_root,
+        }));
     }
-    let report = ops::status(&state.app_root).map_err(|e| e.to_string())?;
+    let report = ops::status(&app_root).map_err(|e| e.to_string())?;
     let compatibility =
-        cbpatch::compatibility::inspect(&state.app_root).map_err(|e| e.to_string())?;
+        cbpatch::compatibility::inspect(&app_root).map_err(|e| e.to_string())?;
     let latest = scan_backups(&state.backup_root)
         .into_iter()
         .next()
         .map(|(ts, _, _)| format_unix_time(ts));
     let saved = Settings::load(&state.config_path).map_err(|e| e.to_string())?;
-    let installed = Settings::load(&cbpatch::runtime::settings_path(&state.app_root)).ok();
-    let manifest: Option<Value> = fs::read(cbpatch::runtime::manifest_path(&state.app_root)).ok().and_then(|bytes| serde_json::from_slice(&bytes).ok());
-    let installed_hash = util::file_sha256(&cbpatch::runtime::injector_path(&state.app_root)).ok();
-    let bundled_hash = util::file_sha256(&state.dylib_path).ok();
+    let installed = Settings::load(&cbpatch::runtime::settings_path(&app_root)).ok();
+    let manifest: Option<Value> = fs::read(cbpatch::runtime::manifest_path(&app_root))
+        .ok()
+        .and_then(|bytes| serde_json::from_slice(&bytes).ok());
+    let installed_hash = util::normalized_binary_sha256(&cbpatch::runtime::injector_path(&app_root)).ok();
+    let bundled_path = bundled_injector_for_app(state, &app_root)?;
+    let bundled_hash = util::normalized_binary_sha256(&bundled_path).ok();
     let runtime_changed = bundled_hash.is_some() && bundled_hash != installed_hash;
-    let scope_changed = manifest.as_ref().and_then(|m|m.get("assetScope")).and_then(Value::as_str) != Some("nodeStrings-v1");
+    let expected_scope = if report.cavalry_version.as_deref() == Some("2.8.0") { "cavalry-28-translation-v1" } else { "nodeStrings-v1" };
+    let scope_changed = manifest
+        .as_ref()
+        .and_then(|m| m.get("assetScope"))
+        .and_then(Value::as_str)
+        != Some(expected_scope);
     let pending = report.state == cbpatch::AppState::Ours
-        && (installed.as_ref() != Some(&saved) || runtime_changed || scope_changed
-            || !cbpatch::runtime::settings_path(&state.app_root).is_file());
-    Ok(
-        json!({ "detected": true, "cavalryVersion": report.cavalry_version, "executable": report.executable,
-        "state": report.state.as_str(), "lang": report.lang, "latestBackup": latest,
-        "pendingSettings": pending, "running": ops::ensure_target_not_running(&state.app_root).is_err(),
-        "compatibility": compatibility, "signing": { "identifier": report.signing.identifier, "flags": report.signing.flags, "signature": report.signing.signature } }),
-    )
+        && (installed.as_ref() != Some(&saved)
+            || runtime_changed
+            || scope_changed
+            || !cbpatch::runtime::settings_path(&app_root).is_file());
+    Ok(json!({
+        "detected": true,
+        "appPath": app_root,
+        "cavalryVersion": report.cavalry_version,
+        "executable": report.executable,
+        "state": report.state.as_str(),
+        "lang": report.lang,
+        "latestBackup": latest,
+        "pendingSettings": pending,
+        "running": ops::ensure_target_not_running(&app_root).is_err(),
+        "compatibility": compatibility,
+        "signing": {
+            "identifier": report.signing.identifier,
+            "flags": report.signing.flags,
+            "signature": report.signing.signature
+        }
+    }))
 }
+
 async fn mutate<F>(state: GuiState, operation: F) -> Result<Value, String>
 where
     F: FnOnce(&GuiState) -> Result<Value, String> + Send + 'static,
@@ -204,7 +371,12 @@ where
 pub async fn apply_patch(state: State<'_, GuiState>) -> Result<Value, String> {
     mutate(state.inner().clone(), |state| {
         let config = Settings::load(&state.config_path).map_err(|e| e.to_string())?;
-        let outcome = ops::apply_with_settings(&state.app_root, &state.dylib_path, &config, &state.backup_root).map_err(|e| e.to_string())?;
+        let app_root = target_app(state);
+        let dylib = bundled_injector_for_app(state, &app_root)?;
+        if !dylib.is_file() {
+            return Err(format!("缺少当前 Cavalry 版本对应的注入器：{}。请重新安装完整工具包；不会修改目标。", dylib.display()));
+        }
+        let outcome = ops::apply_with_settings(&app_root, &dylib, &config, &state.backup_root).map_err(|e| e.to_string())?;
         Ok(json!({"ok": outcome.ok, "app": outcome.app, "stateBefore": outcome.state_before.as_str(), "backupDir": outcome.backup_dir, "assetStringsUpdated": outcome.asset_strings_updated}))
     }).await
 }
@@ -214,14 +386,15 @@ pub async fn restore_backup(
     backup_dir: String,
 ) -> Result<Value, String> {
     mutate(state.inner().clone(), move |state| {
-        let outcome = if backup_dir.is_empty() { ops::restore(&state.app_root, &state.backup_root) }
-        else { ops::restore_from_dir(&state.app_root, Path::new(&backup_dir), &state.backup_root) }.map_err(|e| e.to_string())?;
+        let app_root = target_app(state);
+        let outcome = if backup_dir.is_empty() { ops::restore(&app_root, &state.backup_root) }
+        else { ops::restore_from_dir(&app_root, Path::new(&backup_dir), &state.backup_root) }.map_err(|e| e.to_string())?;
         Ok(json!({"ok": true, "app": outcome.app, "backupDir": outcome.backup_dir, "restored": outcome.restored, "removed": outcome.removed}))
     }).await
 }
 #[tauri::command]
-pub fn list_backups(state: State<GuiState>) -> Value {
-    json!(scan_backups(&state.backup_root).into_iter().map(|(ts, name, path)| {
+pub fn list_backups(state: State<GuiState>) -> Result<Value, String> {
+    Ok(json!(scan_backups_checked(&state.backup_root)?.into_iter().map(|(ts, name, path)| {
         #[cfg(not(windows))]
         let manifest = transaction::summary(&path).map(|m| m.state);
         #[cfg(windows)]
@@ -231,5 +404,52 @@ pub fn list_backups(state: State<GuiState>) -> Value {
             Ok("ours") => "双语快照", Ok("vendor") => "注入前快照", Ok(_) => "社区补丁快照", Err(_) => "旧备份 / 清单无效",
         };
         json!({"name": name, "path": path, "time": format_unix_time(ts), "version": backup_dir_version(&name), "kind": kind, "recoverable": recoverable})
-    }).collect::<Vec<_>>())
+    }).collect::<Vec<_>>()))
+}
+
+
+#[tauri::command]
+pub async fn delete_backup(state: State<'_, GuiState>, backup_dir: String) -> Result<Value, String> {
+    mutate(state.inner().clone(), move |state| {
+        let requested = Path::new(&backup_dir);
+        if !scan_backups(&state.backup_root).iter().any(|(_, _, path)| path == requested) {
+            return Err("备份已不在当前列表，请刷新后重试".into());
+        }
+        crate::backup_actions::recycle_backup(&state.backup_root, requested)?;
+        Ok(json!({"ok": true, "backupDir": backup_dir}))
+    }).await
+}
+
+#[cfg(test)]
+mod backup_read_tests {
+    use super::*;
+    struct Fixture(PathBuf);
+    impl Fixture {
+        fn new() -> Self {
+            let path = std::env::temp_dir().join(format!("cb-backup-read-{}", sentry_types::random_uuid()));
+            fs::create_dir(&path).unwrap(); Self(path)
+        }
+    }
+    impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+    #[test]
+    fn missing_and_empty_roots_are_legitimately_empty() {
+        let fixture = Fixture::new();
+        assert!(scan_backups_checked(&fixture.0.join("not-created")).unwrap().is_empty());
+        assert!(scan_backups_checked(&fixture.0).unwrap().is_empty());
+    }
+    #[test]
+    fn invalid_root_is_an_error_not_an_empty_list() {
+        let fixture = Fixture::new(); let file = fixture.0.join("backups"); fs::write(&file, b"not a directory").unwrap();
+        assert!(scan_backups_checked(&file).is_err());
+        assert!(scan_backups(&file).is_empty());
+    }
+    #[test]
+    fn readable_snapshot_list_preserves_order_and_ignores_files() {
+        let fixture = Fixture::new();
+        fs::create_dir(fixture.0.join("2.7.2-1750000001")).unwrap();
+        fs::create_dir(fixture.0.join("2.7.2-1750000002")).unwrap();
+        fs::write(fixture.0.join("2.7.2-1750000003"), b"file not snapshot").unwrap();
+        let rows = scan_backups_checked(&fixture.0).unwrap();
+        assert_eq!(rows.len(), 2); assert!(rows[0].0 > rows[1].0);
+    }
 }

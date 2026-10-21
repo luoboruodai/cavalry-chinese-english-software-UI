@@ -1,7 +1,10 @@
 {
   "bundle": {
     "resources": {
-      "runtime/libCavalryTranslatorInjector.dylib": "runtime/libCavalryTranslatorInjector.dylib"
+      "runtime/libCavalryTranslatorInjector.dylib": "runtime/libCavalryTranslatorInjector.dylib",
+      "runtime/libCavalryTranslatorInjector-280.dylib": "runtime/libCavalryTranslatorInjector-280.dylib",
+      "runtime/cavalry-28-assets": "runtime/cavalry-28-assets",
+      "runtime/legal/sentry-types-MIT.txt": "Legal/sentry-types-MIT.txt"
     }
   }
 }

@@ -8,6 +8,12 @@ use crate::util;
 
 #[cfg(not(windows))]
 pub const INJECTOR_DYLIB_NAME: &str = "libCavalryTranslatorInjector.dylib";
+#[cfg(not(windows))]
+pub const INJECTOR_DYLIB_NAME_280: &str = "libCavalryTranslatorInjector-280.dylib";
+#[cfg(not(windows))]
+pub fn injector_name_for_version(version: Option<&str>) -> &'static str {
+    if version == Some("2.8.0") { INJECTOR_DYLIB_NAME_280 } else { INJECTOR_DYLIB_NAME }
+}
 #[cfg(windows)]
 pub const INJECTOR_DYLIB_NAME: &str = "windows/generic/cavalryi18n.dll";
 pub fn settings_path(app: &Path) -> std::path::PathBuf {
@@ -113,6 +119,14 @@ pub fn bilingual_manifest_json(version: &str, lang: &str, installed_at: &str) ->
 #[cfg(test)]
 mod tests {
     use super::{bilingual_manifest_json, build_launch_wrapper, LANG_MARKER_NAME};
+
+    #[test]
+    fn runtime_selection_keeps_27_and_28_artifacts_separate() {
+        assert_eq!(super::injector_name_for_version(Some("2.8.0")), super::INJECTOR_DYLIB_NAME_280);
+        assert_eq!(super::injector_name_for_version(Some("2.7.2")), super::INJECTOR_DYLIB_NAME);
+        assert_eq!(super::injector_name_for_version(Some("2.8.1")), super::INJECTOR_DYLIB_NAME);
+        assert_eq!(super::injector_name_for_version(None), super::INJECTOR_DYLIB_NAME);
+    }
 
     #[test]
     fn wrapper_matches_runtime_contract() {

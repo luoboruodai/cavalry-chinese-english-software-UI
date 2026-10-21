@@ -7,13 +7,15 @@
     "compose": "node composer/make_bilingual.js --ts translations/pristine/zh-Hans.ts --out translations/working/zh-Hans.ts --all && node composer/make_model_display_bilingual.js --config composer/bilingual.config.json --in translations/pristine/model_display_translations.json --out translations/working/model_display_translations.json --lang zh-Hans",
     "compose:reset": "rm -f translations/working/zh-Hans.ts translations/working/model_display_translations.json tools/model_display_translations.json tools/zh-*.ts tools/ja_JP.ts",
     "build:macos": "node tools/prepare_runtime.js && bash tools/build_translator_injector.sh dist/libCavalryTranslatorInjector.dylib",
+    "build:macos-280": "node tools/prepare_runtime.js && bash tools/build_translator_injector_280.sh",
     "prepare:runtime": "node tools/prepare_runtime.js",
     "test:generator": "node tools/prepare_runtime.js && node --test tests/generator.test.cjs",
     "test:macos-canvas": "bash tools/test_macos_canvas.sh",
     "test:translations": "python3 -m unittest discover -s tests -p \"test_translation*.py\"",
     "audit:translations": "node tools/prepare_runtime.js && python3 tools/validate_translations.py --root . --json-report build/translation-audit.json --markdown-summary build/translation-audit.md",
     "test:catalog28": "PYTHONPATH=tools python3 -m unittest discover -s tests -p \"test_cavalry_28_*.py\"",
-    "audit:catalog28": "python3 tools/audit_cavalry_28.py",
-    "build:macos-universal": "npm run build:macos && npm run tauri:build --prefix gui/ui -- --target universal-apple-darwin --bundles app"
+    "audit:catalog28": "python3 tools/audit_cavalry_28.py --assets \"${CAVALRY_28_ASSETS:?Set CAVALRY_28_ASSETS to a Cavalry 2.8 Contents/assets directory}\" --language zh-Hans --report build/cavalry-28-audit.json",
+    "build:macos-universal": "npm run build:macos && npm run build:macos-280 && npm run tauri:build --prefix gui/ui -- --target universal-apple-darwin --bundles app",
+    "build:social-preview": "node tools/build_social_preview.mjs"
   }
 }

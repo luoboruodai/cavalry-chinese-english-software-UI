@@ -1,0 +1,41 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "zoomBlurFilter",
+      "niceName": {
+        "UI-text": "Zoom Blur"
+      },
+      "layerInfo": {
+        "UI-text": "从中心点向外模糊形状，支持自定义衰减。"
+      },
+      "attributes": {
+        "origin": {
+          "name": {
+            "UI-text": "来源"
+          },
+          "tooltip": {
+            "UI-text": "设置模糊的中心点，其中 0,0 是形状的中心。"
+          }
+        },
+        "amount": {
+          "name": {
+            "UI-text": "数量"
+          },
+          "tooltip": {
+            "UI-text": "设置模糊的距离/强度。"
+          }
+        },
+        "attenuationMultiplier": {
+          "name": {
+            "UI-text": "衰减倍数"
+          },
+          "tooltip": {
+            "UI-text": "Multiply the blur based on the distance from the ‘Origin’. A lower value will create a harder transition."
+          }
+        }
+      }
+    }
+  }
+]

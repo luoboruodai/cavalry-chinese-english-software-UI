@@ -1,104 +1,89 @@
 # Cavalry Bilingual
 
+![Cavalry Bilingual：中英对照、字体排版与可恢复快照](docs/assets/social-preview.png)
+
 **简体中文** | [English](README.en.md)
 
-Cavalry 的中英双语界面工具：在保留英文原文的同时显示中文，帮助用户在跟随英文教程时理解界面，并提供字体排版、可恢复补丁和备份管理。
+[![0.1.0 Preview 3](https://img.shields.io/badge/release-0.1.0%20Preview%203-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![License](https://img.shields.io/badge/license-MIT-80827f)](LICENSE)
 
-> **0.1.0 开发候选。** 当前提供 `0.1.0 Preview 2` 预发布附件；它不是稳定版，也不能保证全界面、全版本或全平台兼容。
-> 与 Scene Group / Cavalry 官方无关；不分发 Cavalry、Qt 或 Skia 的宿主二进制。
+在保留英文原文的同时显示中文，帮助你一边使用 Cavalry，一边对照英文教程。工具还提供字体排版、可恢复补丁、备份管理和用户主动反馈。
 
-## 当前平台状态
+> **当前版本：0.1.0 Preview 3（预发布）。** 适合提前试用与反馈，不是稳定版，也不代表全界面、全版本或全平台验收完成。
+> 本项目与 Scene Group / Cavalry 官方无关，不分发 Cavalry、Qt 或 Skia 的宿主二进制。
 
-| 平台 / 宿主 | 当前状态 |
-|---|---|
-| macOS arm64 · Cavalry 2.7.2 / Qt 6.6.3 | 工具已在本机安装并完成部分真实宿主验证；仍不是全界面验收。 |
-| macOS universal | 工具与注入器可构建 arm64 + x86_64；x86_64 测试主要通过 Rosetta，Intel 原生硬件仍待验证。 |
-| Cavalry 2.8.0 / Qt 6.9.2 | 隔离副本已取得限定词条、Path 和固定视口证据；正式写入仍拒绝，通用 Canvas/Graph、TrackingTool 和全界面覆盖未完成。 |
-| Windows x64 | 当前提供交叉构建的 NSIS 安装器；原生 Windows、MSVC 和真实 Cavalry 宿主仍未验收，本轮 Wine 安装复验未完成。 |
+## 下载
 
-详细边界见 [兼容与覆盖矩阵](docs/COMPATIBILITY.md)。Rosetta、Wine、静态 ABI 检查、合成测试和真实宿主验证是不同证据，不能互相替代。
+| 平台 | 安装附件 | 当前边界 |
+|---|---|---|
+| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/Cavalry-Bilingual_0.1.0-preview.3_macOS-universal.dmg) | ad-hoc 签名、未公证；Intel 原生硬件仍待验证 |
+| Windows x64 | [NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/Cavalry-Bilingual_0.1.0-preview.3_Windows-x64-setup.exe) | 未签名；交叉构建与包体验证，原生 Windows／真实宿主仍待验收 |
+| 校验 | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/SHA256SUMS.txt) | 下载后核对附件 SHA-256 |
+
+[完整预发布说明](docs/RELEASE-0.1.0-preview.3.md) · [兼容与覆盖矩阵](docs/COMPATIBILITY.md) · [全部版本](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
+
+GitHub 自动生成的 **Source code** 是源码快照，不是安装包。
 
 ## 主要功能
 
-- **中英对照**：界面标签保留英文原文，便于对照官方或英文教程。
-- **排版与字体**：调整双语顺序和中英文字体，保存前可预览；空字体表示跟随系统。
-- **可恢复补丁**：应用前建立带校验的快照，支持按快照恢复。
-- **输入安全**：用户输入值、图层自定义名称、路径、表达式、端口 ID 和连接数据保持原文，只处理 UI 展示字段。
-- **未知版本保护**：版本、Qt ABI、UUID 或调用点不符合已验证合同时保持关闭，而不是强行注入。
+- **中英对照**：保留英文原文并显示中文，便于跟随英文教程。
+- **Cavalry 2.7.2 / 2.8.0**：macOS 使用对应 Qt 合同与独立注入资源，版本或资源不匹配时保持关闭。
+- **字体与排版**：调整双语顺序和中英文字体；草稿预览、保存后应用，留空跟随系统。
+- **可恢复补丁与备份**：应用前创建带校验的快照，可按快照恢复；恢复前保留当前状态。
+- **清晰的操作反馈**：状态、日志与低优先级说明使用统一的右侧通知，关键确认保留在弹窗内。
+- **用户主动反馈**：先预览脱敏报告，再决定是否发送；不读取工程文件或 Cavalry 原始日志，不自动收集遥测。
 
-## 获取与安装
+## 使用流程
 
-### 0.1.0 Preview 2 预发布
+1. **先保存工程，再自行退出 Cavalry。** 工具不会自动保存或强制退出宿主。
+2. 打开 Cavalry Bilingual，在“排版”中检查顺序与字体并保存设置。
+3. 在“状态”页刷新检测；只在版本、资源和安全合同匹配时应用双语。
+4. 重新打开 Cavalry。需要回退时，在“备份”中选择对应快照。
+5. 如遇问题，在“日志”页打开“反馈问题”，检查预览后自行决定保存或发送。
 
-- [macOS universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_macOS-universal.dmg)：ad-hoc 签名，未公证。
-- [Windows x64 NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/Cavalry-Bilingual_0.1.0-preview.2_Windows-x64-setup.exe)：未签名，原生 Windows 未验收。
-- [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.2/SHA256SUMS.txt) 与 [预发布说明](docs/RELEASE-0.1.0-preview.2.md)。
+macOS 更新工具后，如系统“隐私与安全性 → App 管理”中的权限被重置，请重新允许并重启工具；不要在权限拒绝时反复写入宿主。
 
-GitHub 自动生成的 **Source code** 仅用于审查和构建源码，不是安装包。
+## 当前平台状态
 
-### 从源码构建 macOS universal 工具
+| 平台 / 宿主 | 已有证据 | 尚未覆盖 |
+|---|---|---|
+| macOS · Cavalry 2.7.2 / Qt 6.6.3 | 本机工具安装、限定真实宿主与快照流程验证 | 全界面与所有工程类型 |
+| macOS · Cavalry 2.8.0 / Qt 6.9.2 | 独立 2.8 注入器与资源、限定界面／视口文案、实际应用与还原流程 | 全界面、通用 Canvas／Graph／TrackingTool 覆盖 |
+| macOS universal | arm64 + x86_64 构建，x86_64 主要通过 Rosetta | Intel 原生硬件 |
+| Windows x64 | PE／DLL 交叉构建、Wine 合成与加载检查、NSIS 包内容回读 | 原生 Windows、MSVC、真实 Cavalry 宿主与完整安装体验 |
 
-需要 Node.js、Python 3.10+、Rust、macOS 开发工具、Qt 6.6.3 SDK，以及 Rust 的两个 macOS 目标标准库。
+详细证据分级见 [COMPATIBILITY.md](docs/COMPATIBILITY.md) 与 [NATIVE-ACCEPTANCE.md](docs/NATIVE-ACCEPTANCE.md)。静态 ABI、合成测试、Wine／Rosetta 和原生宿主验证不能互相替代。
+
+## 从源码构建
+
+### macOS Universal
+
+需要 Node.js、Python 3.10+、Rust、macOS 开发工具、相应 Qt SDK，以及两个 macOS Rust 目标。
 
 ```bash
 git clone https://github.com/luoboruodai/cavalry-chinese-english-software-UI.git
 cd cavalry-chinese-english-software-UI
-
 npm ci --prefix gui/ui
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
 export CAVALRY_QT_PREFIX=/path/to/Qt/6.6.3/macos
 npm run build:macos-universal
 ```
 
-构建结果位于：
+输出：`gui/target/universal-apple-darwin/release/bundle/macos/Cavalry Bilingual.app`。
 
-```text
-gui/target/universal-apple-darwin/release/bundle/macos/Cavalry Bilingual.app
-```
+Windows 原生构建、交叉打包与验收要求见 [Windows／原生验收指南](docs/NATIVE-ACCEPTANCE.md)。反馈功能的构建期公开配置见 [FEEDBACK-SERVICE.md](docs/FEEDBACK-SERVICE.md)；邮箱授权码与 Private Key 不应写入源码。
 
-本地构建使用 ad-hoc 签名，未公证；不要把它描述为已公证的分发包。Windows 原生构建入口和验收要求见 [原生验收指南](docs/NATIVE-ACCEPTANCE.md)。
+## 文档与参与
 
-## 使用流程
+- [Agent／维护者项目上下文](docs/PROJECT-CONTEXT.md)：架构、设计初衷、需求演变、堵点与解决方法。
+- [设计规范](DESIGN.md)：视觉 tokens、布局、动效、焦点与通知原则。
+- [更新日志](CHANGELOG.md) · [Preview 3 发布说明](docs/RELEASE-0.1.0-preview.3.md)
+- [反馈安全说明](docs/FEEDBACK-SERVICE.md) · [兼容矩阵](docs/COMPATIBILITY.md)
 
-1. **先保存工程，再自行退出 Cavalry。** 工具不会自动保存或强制退出宿主。
-2. 打开 Cavalry Bilingual，在“排版与字体”中调整顺序和字体，检查预览并保存设置。
-3. 在状态页刷新检测。只有宿主版本、资源和安全合同匹配时，工具才允许应用。
-4. 应用后重新打开 Cavalry。
-5. 需要回退时选择对应快照。“恢复”是恢复到该快照，**不一定等于恢复成原厂英文状态**；恢复前也会保留当前状态。
+提交问题前，请移除工程文件、账号、真实路径和其他私人内容。应用内反馈也必须先预览，不会因打开弹窗而自动发送。
 
-没有完整校验清单的旧备份只读展示，不应自动恢复。不要在 Cavalry 运行期间直接覆盖宿主文件。
+## 许可与声明
 
-## 测试与审计
-
-```bash
-npm test --prefix gui/ui
-cargo test --manifest-path patcher/Cargo.toml
-bash tools/test_qt_runtime.sh
-npm run test:generator
-npm run test:translations
-npm run audit:translations
-npm run test:catalog28
-npm run test:macos-canvas
-```
-
-`bash tools/test_qt_runtime.sh` 需要正确设置 `CAVALRY_QT_PREFIX`。字典条数、编译成功和合成测试都不等于真实界面覆盖率；发布前还需执行候选文件、Git 索引/历史和最终归档的隐私检查。
-
-## 项目结构
-
-- `gui/`：Tauri + React 工具界面、草稿设置和状态展示。
-- `patcher/`：Rust 补丁守卫、版本配置、备份校验及恢复事务。
-- `injector/`：Qt 运行时翻译和受精确 ABI 合同保护的自绘适配。
-- `translations/pristine/`：翻译真源；模型身份、用户名称和 ID 不被译文替换。
-- `tools/`、`tests/`：构建、字典生成、审计及合成合同测试。
-
-## 更多文档
-
-- [更新日志](CHANGELOG.md)
-- [兼容与覆盖矩阵](docs/COMPATIBILITY.md)
-- [Windows / Intel / Cavalry 2.8 原生验收指南](docs/NATIVE-ACCEPTANCE.md)
-
-## 许可
-
-本项目采用 [MIT License](LICENSE)。上游 `daftAI2026/Cavalry-i18n` 衍生部分的版权和 MIT 声明保留在 [LICENSE.daftai](LICENSE.daftai) 与 [NOTICE.md](NOTICE.md)。
-
-GUI 使用系统字体，不因用户选择本机字体而复制或分发字体文件。
+[MIT](LICENSE)。上游与第三方声明见 [NOTICE.md](NOTICE.md) 和随包 `Legal/`。

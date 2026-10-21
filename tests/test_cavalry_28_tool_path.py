@@ -1,8 +1,11 @@
 """Cavalry 2.8 tool-path contract fixtures; no vendor binaries required."""
 import struct
 import unittest
+import pathlib
+import sys
 import uuid
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "tools"))
 import audit_cavalry_28_tool_path as audit
 
 

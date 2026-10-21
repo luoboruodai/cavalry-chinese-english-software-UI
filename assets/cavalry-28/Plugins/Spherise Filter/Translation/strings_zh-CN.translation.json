@@ -1,0 +1,190 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "spheriseFilter",
+      "niceName": {
+        "UI-text": "Spherise"
+      },
+      "layerInfo": {
+        "UI-text": "将输入形状映射到可旋转的球体上。"
+      },
+      "attributes": {
+        "centre": {
+          "name": {
+            "UI-text": "中心"
+          },
+          "tooltip": {
+            "UI-text": "设置球体的位置。"
+          }
+        },
+        "radius": {
+          "name": {
+            "UI-text": "半径"
+          },
+          "tooltip": {
+            "UI-text": "Set the radius of the sphere as a percentage of the Shape’s size."
+          }
+        },
+        "visibility": {
+          "name": {
+            "UI-text": "可见性"
+          },
+          "tooltip": {
+            "UI-text": "确定使用包含透明度的图像时球体的哪些面可见。"
+          }
+        },
+        "rotation": {
+          "name": {
+            "UI-text": "旋转"
+          },
+          "tooltip": {
+            "UI-text": "围绕球体的 X、Y 或 Z 轴旋转（度）。"
+          }
+        },
+        "enableLighting": {
+          "name": {
+            "UI-text": "启用光照"
+          },
+          "tooltip": {
+            "UI-text": "When checked, diffuse lighting is added to the sphere’s surface."
+          }
+        },
+        "lightPosition": {
+          "name": {
+            "UI-text": "光源位置"
+          },
+          "tooltip": {
+            "UI-text": "设置光源的 3D 位置。"
+          }
+        },
+        "lightIntensity": {
+          "name": {
+            "UI-text": "光照强度"
+          },
+          "tooltip": {
+            "UI-text": "设置光源的亮度。"
+          }
+        },
+        "lightColor": {
+          "name": {
+            "UI-text": "光照颜色"
+          },
+          "tooltip": {
+            "UI-text": "设置光源的颜色。"
+          }
+        },
+        "ambientStrength": {
+          "name": {
+            "UI-text": "环境光强度"
+          },
+          "tooltip": {
+            "UI-text": "设置环境光的量（基础照明）。"
+          }
+        },
+        "ambientColor": {
+          "name": {
+            "UI-text": "环境光颜色"
+          },
+          "tooltip": {
+            "UI-text": "设置环境光的颜色。"
+          }
+        },
+        "specularStrength": {
+          "name": {
+            "UI-text": "高光强度"
+          },
+          "tooltip": {
+            "UI-text": "设置高光的强度。"
+          }
+        },
+        "specularColor": {
+          "name": {
+            "UI-text": "高光颜色"
+          },
+          "tooltip": {
+            "UI-text": "设置高光的颜色。"
+          }
+        },
+        "shininess": {
+          "name": {
+            "UI-text": "光泽度"
+          },
+          "tooltip": {
+            "UI-text": "设置高光的大小和锐度。较高的值会产生更小、更锐利的高光。"
+          }
+        },
+        "useAsBumpMap": {
+          "name": {
+            "UI-text": "用作凹凸贴图"
+          },
+          "tooltip": {
+            "UI-text": "When checked, the Shape’s material is used as a bump map to add surface detail lighting."
+          }
+        },
+        "bumpMapStrength": {
+          "name": {
+            "UI-text": "凹凸贴图强度"
+          },
+          "tooltip": {
+            "UI-text": "增加/减少凹凸贴图对表面光照的影响。"
+          }
+        },
+        "enableSelfShadowing": {
+          "name": {
+            "UI-text": "启用自阴影"
+          },
+          "tooltip": {
+            "UI-text": "选中时，在球体背面添加阴影。"
+          }
+        },
+        "shadowIntensity": {
+          "name": {
+            "UI-text": "阴影强度"
+          },
+          "tooltip": {
+            "UI-text": "确定阴影区域变暗的程度。"
+          }
+        },
+        "shadowSoftness": {
+          "name": {
+            "UI-text": "阴影柔化"
+          },
+          "tooltip": {
+            "UI-text": "Determine the softness of the shadow’s transition from dark to light"
+          }
+        },
+        "backExposure": {
+          "name": {
+            "UI-text": "背面曝光"
+          },
+          "tooltip": {
+            "UI-text": "设置球体背面/内部表面的亮度。"
+          }
+        }
+      },
+      "enums": {
+        "visibility": {
+          "0": {
+            "UI-text": "两者"
+          },
+          "1": {
+            "UI-text": "正面"
+          },
+          "2": {
+            "UI-text": "Back"
+          }
+        }
+      },
+      "tabs": {
+        "filter": {
+          "UI-text": "设置"
+        },
+        "lighting": {
+          "UI-text": "光照"
+        }
+      }
+    }
+  }
+]

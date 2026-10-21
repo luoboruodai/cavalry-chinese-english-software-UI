@@ -30,3 +30,14 @@ This project is **not affiliated with, endorsed by, or sponsored by Scene Group
 or the official Cavalry product**. It is provided for personal study and research
 purposes only. Use it with a legally obtained copy of Cavalry, entirely at your
 own risk.
+
+
+## Optional feedback protocol component
+
+The desktop manager includes Sentry's `sentry-types` 0.49.3 (MIT), from
+https://github.com/getsentry/sentry-rust, for user-approved feedback envelopes.
+Copyright (c) 2021 Functional Software, Inc. dba Sentry. The license is retained in
+`docs/licenses/sentry-types-MIT.txt` and packaged as `Legal/sentry-types-MIT.txt`.
+This integration is not an endorsement or affiliation and enables no automatic
+telemetry. Transport and connection boundaries are documented in
+`docs/FEEDBACK-SERVICE.md`.

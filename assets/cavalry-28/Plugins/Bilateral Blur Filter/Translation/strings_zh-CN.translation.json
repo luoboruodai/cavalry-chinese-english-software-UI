@@ -1,0 +1,41 @@
+[
+  {
+    "type": "layerStrings",
+    "value": {
+      "author": "sceneGroup",
+      "layerType": "bilateralBlurFilter",
+      "niceName": {
+        "UI-text": "Bilateral Blur"
+      },
+      "layerInfo": {
+        "UI-text": "一种保留边缘的模糊效果，可平滑颜色相近的区域，同时保持清晰的边缘。"
+      },
+      "attributes": {
+        "amount": {
+          "name": {
+            "UI-text": "数量"
+          },
+          "tooltip": {
+            "UI-text": "设置应用于形状的模糊像素量。"
+          }
+        },
+        "edgeThreshold": {
+          "name": {
+            "UI-text": "边缘阈值"
+          },
+          "tooltip": {
+            "UI-text": "设置边缘检测灵敏度。较低的值会保留更多边缘。"
+          }
+        },
+        "colorSigma": {
+          "name": {
+            "UI-text": "颜色容差"
+          },
+          "tooltip": {
+            "UI-text": "设置合并相似颜色的容差。较高的值会导致更多颜色被合并。"
+          }
+        }
+      }
+    }
+  }
+]
