@@ -4,25 +4,25 @@
 
 [简体中文](README.md) | **English**
 
-[![0.1.0 Preview 3](https://img.shields.io/badge/release-0.1.0%20Preview%203-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
-[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
-[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3)
+[![0.1.0 Preview 4](https://img.shields.io/badge/release-0.1.0%20Preview%203-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4)
+[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4)
 [![License](https://img.shields.io/badge/license-MIT-80827f)](LICENSE)
 
 Read Chinese alongside the original English UI, so you can use Cavalry while following English tutorials. The desktop manager also provides typography controls, restorable patches, backups, and user-initiated feedback.
 
-> **Current version: 0.1.0 Preview 3 (pre-release).** Intended for early evaluation and feedback. It is not a stable release and does not establish full-UI, all-version, or all-platform acceptance.
+> **Current version: 0.1.0 Preview 4 (pre-release).** Intended for early evaluation and feedback. It is not a stable release and does not establish full-UI, all-version, or all-platform acceptance.
 > This project is not affiliated with Scene Group or Cavalry and does not redistribute Cavalry, Qt, or Skia host binaries.
 
 ## Download
 
 | Platform | Installer | Current boundary |
 |---|---|---|
-| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/Cavalry-Bilingual_0.1.0-preview.3_macOS-universal.dmg) | Ad-hoc signed, not notarized; native Intel hardware remains unverified |
-| Windows x64 | [NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/Cavalry-Bilingual_0.1.0-preview.3_Windows-x64-setup.exe) | Unsigned; cross-built and package-verified, native Windows and real-host acceptance remain incomplete |
-| Checksums | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.3/SHA256SUMS.txt) | Verify the downloaded attachment's SHA-256 |
+| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.4/Cavalry-Bilingual_0.1.0-preview.4_macOS-universal.dmg) | Ad-hoc signed, not notarized; native Intel hardware remains unverified |
+| Windows x64 | [NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.4/Cavalry-Bilingual_0.1.0-preview.4_Windows-x64-setup.exe) | Unsigned; cross-built and package-verified, native Windows and real-host acceptance remain incomplete |
+| Checksums | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.0-preview.4/SHA256SUMS.txt) | Verify the downloaded attachment's SHA-256 |
 
-[Full pre-release notes](docs/RELEASE-0.1.0-preview.3.md) · [Compatibility matrix](docs/COMPATIBILITY.md) · [All releases](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
+[Full pre-release notes](docs/RELEASE-0.1.0-preview.4.md) · [Compatibility matrix](docs/COMPATIBILITY.md) · [All releases](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
 
 GitHub's automatic **Source code** archives are source snapshots, not installers.
 
@@ -33,6 +33,7 @@ GitHub's automatic **Source code** archives are source snapshots, not installers
 - **Typography controls**: adjust language order and fonts with a draft preview; empty font fields follow the system.
 - **Restorable patches and backups**: create verified snapshots before changes and preserve the current state before restoring.
 - **Clear operation feedback**: status, logs, and supplemental explanations share the same right-side notification language while critical confirmations remain explicit.
+- **Windows startup compatibility**: embed the Common Controls v6 manifest to resolve the `TaskDialogIndirect` entry-point startup failure without requesting administrator privileges.
 - **User-initiated feedback**: review a redacted report before choosing to send it. No project files, raw Cavalry logs, or automatic telemetry are collected.
 
 ## Quick start
@@ -79,7 +80,7 @@ For native Windows builds, cross-packaging, and acceptance requirements, see the
 
 - [Project context for agents and maintainers](docs/PROJECT-CONTEXT.md): architecture, original intent, requirement evolution, blockers, and solutions.
 - [Design guide](DESIGN.md): visual tokens, layout, motion, focus, and notification principles.
-- [Changelog](CHANGELOG.md) · [Preview 3 release notes](docs/RELEASE-0.1.0-preview.3.md)
+- [Changelog](CHANGELOG.md) · [Preview 3 release notes](docs/RELEASE-0.1.0-preview.4.md)
 - [Feedback security](docs/FEEDBACK-SERVICE.md) · [Compatibility matrix](docs/COMPATIBILITY.md)
 
 Remove project files, accounts, real paths, and other private material before filing an issue. Opening the in-app feedback dialog never sends a report by itself.

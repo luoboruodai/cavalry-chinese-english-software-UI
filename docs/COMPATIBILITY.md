@@ -1,8 +1,8 @@
 # 兼容性、覆盖范围与验收矩阵
 
-> 当前公开版本为 `v0.1.0-preview.3`（2026-10-21），仍是开发候选。已编译、静态 ABI 检查、合成测试、安装包检查和原生宿主交互必须分别记录；条目数不是全界面覆盖率。
+> 当前公开版本为 `v0.1.0-preview.4`（2026-10-21），仍是开发候选。已编译、静态 ABI 检查、合成测试、安装包检查和原生宿主交互必须分别记录；条目数不是全界面覆盖率。
 
-## Preview 3 当前摘要
+## Preview 4 当前摘要
 
 | 平台 / 宿主 | 当前证据 | 不得写成已通过 |
 |---|---|---|
@@ -11,7 +11,7 @@
 | macOS Universal | arm64 + x86_64；x86_64 主要通过 Rosetta | Intel 原生硬件 |
 | Windows x64 | PE／DLL 交叉构建、Wine 合成与加载检查、NSIS 成员与载荷回读 | 原生 Windows、MSVC、完整安装体验、真实 Cavalry 宿主；不得由 macOS 2.8 推定 Windows 2.8 |
 
-Preview 3 的 macOS DMG 为 ad-hoc 签名、未公证；Windows NSIS 安装器未签名并要求 WebView2。发布附件和上传成功本身不是原生验收证据。本轮 Wine 静默安装在 90 秒超时后未生成目标目录，记为未完成；原生 Windows 安装与宿主验收仍需在对应环境执行。下文保留 2026-10-14 以来的历史证据与需求演变，具体“当前”表述以本节和 Preview 3 发布说明为准。
+Preview 4 的 macOS DMG 为 ad-hoc 签名、未公证；Windows NSIS 安装器未签名并要求 WebView2。发布附件和上传成功本身不是原生验收证据。Preview 3 的 Wine 静默安装在 90 秒超时后未生成目标目录；Preview 4 已嵌入 Common Controls v6 manifest 修复 `TaskDialogIndirect` 启动入口问题，但原生 Windows 安装与宿主验收仍需在对应环境执行。下文保留 2026-10-14 以来的历史证据与需求演变，具体“当前”表述以本节和 Preview 4 发布说明为准。
 
 ## 历史验收调整：跨平台与2.8迁移（2026-10-14）
 

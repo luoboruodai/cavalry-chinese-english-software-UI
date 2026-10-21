@@ -1,9 +1,9 @@
-Cavalry Bilingual 0.1.0 Preview 3 — Windows x64
+Cavalry Bilingual 0.1.0 Preview 4 — Windows x64
 ================================================
 
 中文
 ----
-1. 运行 Cavalry-Bilingual_0.1.0-preview.3_Windows-x64-setup.exe，并按安装器提示完成安装。
+1. 运行 Cavalry-Bilingual_0.1.0-preview.4_Windows-x64-setup.exe，并按安装器提示完成安装。
 2. 需要 Windows x64 和可用的 WebView2 Runtime。安装器未签名，Windows 可能显示 SmartScreen；请只在核对发布页与 SHA256SUMS.txt 后自行决定是否继续。
 3. 先保存自己的工程，再自行退出 Cavalry。工具不会自动保存或强制退出宿主。
 4. 打开 Cavalry Bilingual，检查排版与字体设置并保存；在状态页刷新检测。
@@ -16,7 +16,7 @@ Cavalry Bilingual 0.1.0 Preview 3 — Windows x64
 
 English
 -------
-1. Run Cavalry-Bilingual_0.1.0-preview.3_Windows-x64-setup.exe and follow the installer.
+1. Run Cavalry-Bilingual_0.1.0-preview.4_Windows-x64-setup.exe and follow the installer.
 2. Windows x64 and a working WebView2 Runtime are required. The installer is unsigned, so SmartScreen may appear. Proceed only after reviewing the release page and SHA256SUMS.txt yourself.
 3. Save your project and quit Cavalry yourself. The tool does not auto-save or force-quit the host.
 4. Open Cavalry Bilingual, review and save the typography/font settings, then refresh detection on the Status page.
@@ -29,7 +29,7 @@ Uninstalling does not automatically remove backups or settings. Review them befo
 
 Release / 发布页
 ---------------
-https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.3
+https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.0-preview.4
 
 License and upstream notices are installed in the Legal directory.
 许可与上游声明安装在 Legal 目录。

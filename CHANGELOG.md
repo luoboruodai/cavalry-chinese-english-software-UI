@@ -1,3 +1,10 @@
+# 0.1.0 Preview 4 · 2026-10-21
+
+- 修复 Windows 安装后启动时报 `TaskDialogIndirect` 入口点缺失：此前 EXE 导入 Comctl32 v6 API 但没有应用程序 manifest。
+- Windows 构建现嵌入 `Microsoft.Windows.Common-Controls 6.0.0.0` 与 `asInvoker`，不请求管理员权限；新增同源探针及 PE 资源／XML 回读检查。
+- 保留 Preview 3 的界面、双语、备份、反馈和安全边界；本版主要是 Windows 启动兼容热修复。
+- 发布新的 macOS Universal DMG 与 Windows x64 NSIS 附件及中英文说明。安装器仍未签名，原生 Windows／真实宿主、Intel 原生和全界面覆盖不标记为通过。
+
 # 0.1.0 Preview 3 · 2026-10-21
 
 - 完善 Cavalry 2.8.0 / Qt 6.9.2 的独立 macOS 注入器、版本化资源与限定界面／视口双语适配；继续保留 2.7.2 路径及未知版本关闭保护。

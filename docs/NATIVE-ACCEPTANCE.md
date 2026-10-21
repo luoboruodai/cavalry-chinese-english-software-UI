@@ -38,6 +38,17 @@ npm run tauri:build --prefix gui/ui -- --target x86_64-pc-windows-gnu --bundles 
 
 `gui/ui/scripts/tauri.mjs` 只允许在 Tauri 已生成本次 `installer.nsi` 后调用交叉 NSIS fallback；脚本过旧表示编译或资源阶段未到达打包步骤，必须保留原错误并停止，不能拿旧 EXE 继续发布。生成的安装器再用 7-Zip 执行 CRC、成员与解压回读，逐项比较主程序、两个 DLL、`INSTALL.txt` 和全部 Legal 文件。即使这些检查通过，也只记为交叉构建与包体验证，不是原生 Windows 或真实 Cavalry 验收。
 
+## Windows Common Controls v6 启动入口修复
+
+Preview 3 的 EXE 静态导入 `comctl32.dll` 的 `TaskDialogIndirect`，但 PE Resource Directory 为空。RFD 使用该 API 显示消息对话框，Windows 默认旧版 common-controls 路径会造成入口点缺失。Preview 4 在 Windows 构建中嵌入 `asInvoker` 与 `Microsoft.Windows.Common-Controls 6.0.0.0` manifest，不请求管理员权限，也不改变发送或补丁逻辑。
+
+```bash
+python3 tools/test_windows_comctl32.py
+x86_64-w64-mingw32-objdump -p gui/target/x86_64-pc-windows-gnu/release/cavalry-bilingual.exe
+```
+
+探针检查同源 manifest 的 `GetProcAddress`，最终还必须确认 EXE 的 Resource Directory 非空、嵌入 XML 包含 v6 与 `asInvoker`，并在 NSIS 解压后的主程序上复核。未签名安装器仍会出现“未知发布者”警告，这与入口点修复是两件事。Wine／静态 PE 检查不替代 Windows 原生启动与真实宿主验收。
+
 ## Intel Mac 原生
 
 ```bash
