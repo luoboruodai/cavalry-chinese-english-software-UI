@@ -569,10 +569,11 @@ mod target_selection_tests {
         let state = fixture.state();
         set_target_cavalry_path(&state, &parent).unwrap();
         assert_eq!(target_app(&state), app);
+        let has_selected = |installs: &Vec<Value>| installs.iter().any(|item| item["path"].as_str().map(PathBuf::from).as_ref() == Some(&app) && item["selected"].as_bool() == Some(true));
         let installs = cavalry_install_list(&state);
-        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)), "nested install missing or not selected: {installs:?}");
+        assert!(has_selected(&installs), "nested install missing or not selected: {installs:?}");
         fs::remove_file(app.join("Qt6Core.dll")).unwrap();
         let installs = cavalry_install_list(&state);
-        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)), "incomplete saved target must remain visible instead of falling back to the default");
+        assert!(has_selected(&installs), "incomplete saved target must remain visible instead of falling back to the default");
     }
 }
