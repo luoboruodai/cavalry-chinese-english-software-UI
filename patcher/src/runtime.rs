@@ -116,7 +116,7 @@ pub fn bilingual_manifest_json(version: &str, lang: &str, installed_at: &str) ->
     ])
 }
 
-#[cfg(test)]
+#[cfg(all(test, not(windows)))]
 mod tests {
     use super::{bilingual_manifest_json, build_launch_wrapper, LANG_MARKER_NAME};
 

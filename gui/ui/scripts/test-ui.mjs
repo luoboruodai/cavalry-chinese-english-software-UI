@@ -23,6 +23,14 @@ const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 let checks = 0;
 const check = (value, message) => { assert.ok(value, message); ++checks; };
+const waitForModalSettled = async () => {
+  await page.waitForFunction(() => {
+    const dialog = document.querySelector('dialog.app-modal[open]');
+    if (!dialog) return false;
+    const style = getComputedStyle(dialog);
+    return Number(style.opacity) === 1 && (style.transform === 'none' || style.transform === 'matrix(1, 0, 0, 1, 0, 0)');
+  });
+};
 try {
   const tauriConfig = JSON.parse(readFileSync(new URL('../../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
   const capabilities = JSON.parse(readFileSync(new URL('../../src-tauri/capabilities/default.json', import.meta.url), 'utf8'));
@@ -801,6 +809,7 @@ try {
   await readableReview.focus();
   await page.keyboard.press('End');await page.waitForTimeout(160);
   check(await readableReview.evaluate(el=>el.scrollTop>0), 'keyboard can scroll through the attached records');
+  await waitForModalSettled();
   const reviewBounds=await readableReview.boundingBox(), reviewActionBounds=await page.getByRole('button',{name:'发送报告',exact:true}).boundingBox();
   check(reviewBounds.y>=64 && reviewBounds.y+reviewBounds.height<=reviewActionBounds.y, 'review scroll surface never overlays its actions');
   check(reviewActionBounds.y+reviewActionBounds.height<=528, 'long report keeps final actions inside the minimum window');

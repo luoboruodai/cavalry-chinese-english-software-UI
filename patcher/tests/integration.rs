@@ -4,6 +4,9 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+
+static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
 use cbpatch::backup::{self, BackupAction};
 use cbpatch::detect::{self, AppState};
@@ -36,8 +39,9 @@ impl TempDir {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
+        let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
         let path =
-            std::env::temp_dir().join(format!("cbpatch-it-{name}-{}-{nanos}", std::process::id()));
+            std::env::temp_dir().join(format!("cbpatch-it-{name}-{}-{nanos}-{sequence}", std::process::id()));
         let _ = fs::remove_dir_all(&path);
         fs::create_dir_all(&path).unwrap();
         TempDir(path)
@@ -148,7 +152,8 @@ fn strip_signature_copy(bytes: &[u8]) -> Option<Vec<u8>> {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    let temp = std::env::temp_dir().join(format!("cbpatch-strip-{}-{nanos}", std::process::id()));
+    let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
+    let temp = std::env::temp_dir().join(format!("cbpatch-strip-{}-{nanos}-{sequence}", std::process::id()));
     let run = (|| -> std::io::Result<Vec<u8>> {
         std::fs::write(&temp, bytes)?;
         let status = std::process::Command::new("codesign")
