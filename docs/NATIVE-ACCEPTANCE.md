@@ -55,6 +55,8 @@ x86_64-w64-mingw32-objdump -p gui/target/x86_64-pc-windows-gnu/release/cavalry-b
 
 `.github/workflows/ci.yml` 在原生 Windows 与 macOS runner 上执行 UI、patcher 和 GUI Rust 测试；macOS 追加目录、生成器、翻译与隐私检查。CI 中的 EmailJS 使用浏览器路由夹具，不发送真实邮件。原生 CI 结果与真实用户网络、WebView2、GPU 和 Cavalry 宿主验收分别记录。
 
+0.1.3 另修复报告通知只在弹窗入场初期测量一次造成的 18px 纵向偏移。通知现在在后续帧及弹窗 transitionstart／end／cancel 重新计算 offset；CI 直接校验最终 offset 与动作命中，不仅比较静态截图。
+
 ## Intel Mac 原生
 
 ```bash

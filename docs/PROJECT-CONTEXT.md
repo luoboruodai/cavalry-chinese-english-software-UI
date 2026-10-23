@@ -1,6 +1,6 @@
 # Cavalry Bilingual — Project context for agents and maintainers
 
-**Current public snapshot:** `0.1.2`, 2026-10-23. This is the stable release; its release identity is not a full-coverage claim.
+**Current public snapshot:** `0.1.3`, 2026-10-23. This is the stable release; its release identity is not a full-coverage claim.
 
 This document is the compact public handoff. It preserves the original intent, current architecture, requirement evolution, difficult failure modes, and the checks that matter. A machine-local ignored `PROJECT.md` may contain additional private evidence and exact local paths; it is not required to understand the repository and must never be uploaded.
 
@@ -109,6 +109,7 @@ Accepted by the provider is not a guarantee of mailbox delivery. The local limit
 | Windows startup reports missing `TaskDialogIndirect` | The PE imports the Comctl32 v6 API but has no manifest, leaving Windows on the older common-controls path | Embed an `asInvoker` Common-Controls v6 manifest only for Windows, verify the PE resource directory and embedded XML, and inspect the same payload inside NSIS |
 | Windows cannot select Cavalry on another drive | Detection only covers default locations | Use the official Tauri directory picker, validate an absolute directory containing `Cavalry.exe`, persist the confirmed target, and preserve the old target on cancel or invalid input |
 | Windows finds Cavalry but reports an unknown version | Official `Cavalry.exe` files may omit `VS_VERSION_INFO`, and the GUI list also reused the macOS plist lookup | Read a unique NUL-delimited supported release token with bounded streaming, keep duplicate/ambiguous markers closed, and use the Windows detector in the GUI list; Qt and deployment guards remain unchanged |
+| Report-delivery toast is vertically offset after modal entry | Its fixed-position offset was measured once while the dialog was still 18px lower during entry | Recompute on the next frame and dialog transition start/end/cancel, then verify the final offset and action hit testing on CI |
 | Windows feedback offers only local export | Non-macOS delivery was hardcoded to export | Use the same reviewed EmailJS browser flow as macOS when no ingestion DSN is configured, with local export retained and no private credential added |
 | A release leaks local paths or private evidence | Source, index, history, and packages were treated as one scope | Scan each scope independently with `tools/audit_release.py`, use explicit file allowlists, inspect actual archive members, and never print suspected secrets |
 
@@ -142,7 +143,7 @@ A green test suite is not a release by itself. Freeze the source commit, build a
 
 ## 8. Current release boundaries
 
-- Version 0.1.2 supplies a macOS Universal DMG and Windows x64 NSIS installer as a stable release with the same explicit coverage boundaries.
+- Version 0.1.3 supplies a macOS Universal DMG and Windows x64 NSIS installer as a stable release with the same explicit coverage boundaries.
 - GitHub Actions runs UI, patcher, and GUI Rust tests on native Windows and macOS runners. CI proves those test environments, not every user's GPU, WebView2, network, or real Cavalry host.
 - macOS packages are ad-hoc signed and not notarized.
 - Windows packages are unsigned and require WebView2; cross-build/package checks do not replace native Windows acceptance. The earlier Wine silent-install attempt timed out after 90 seconds without creating the target directory and is explicitly incomplete.

@@ -17,9 +17,20 @@ function ReportDeliveryInfo({preview}:{preview:ReportPreview}) {
       const rect=root.current?.closest("dialog")?.getBoundingClientRect();
       if(rect)setOffset({top:76-rect.top,right:16-rect.left});
     };
+    const dialog=root.current?.closest("dialog");
     update();
+    const frame=window.requestAnimationFrame(update);
+    dialog?.addEventListener("transitionstart",update);
+    dialog?.addEventListener("transitionend",update);
+    dialog?.addEventListener("transitioncancel",update);
     window.addEventListener("resize",update);
-    return()=>window.removeEventListener("resize",update);
+    return()=>{
+      window.cancelAnimationFrame(frame);
+      dialog?.removeEventListener("transitionstart",update);
+      dialog?.removeEventListener("transitionend",update);
+      dialog?.removeEventListener("transitioncancel",update);
+      window.removeEventListener("resize",update);
+    };
   },[open]);
   useEffect(()=>setOpen(true),[preview.id]);
   useEffect(()=>{
