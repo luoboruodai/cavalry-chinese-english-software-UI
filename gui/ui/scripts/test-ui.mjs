@@ -558,7 +558,8 @@ try {
     check(await page.locator('.toast[data-kind="error"] .toast-body').innerText()==='设置保存未完成，详细原因已保留在保存栏。','long save diagnostics stay detailed in context and concise in the toast');
     check(await page.locator('.toast-stack').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=window.innerHeight;}),'notification stack remains inside the viewport after a long save failure');
     check(await page.getByText('保存未完成，更改仍保留',{exact:true}).isVisible(), 'save failure communicates preserved draft');
-    while(await page.locator('.toast-close').count()){await page.locator('.toast-close').first().click();await page.waitForTimeout(180);}
+    await page.locator('.toast-close').evaluateAll(nodes=>nodes.forEach(node=>node.click()));
+    await page.waitForFunction(()=>document.querySelectorAll('.toast-close').length===0);
     check(await page.getByRole('alert').isVisible(), 'closing transient toast never removes the actionable save error');
     check(await page.locator('.content').evaluate(el=>parseFloat(getComputedStyle(el).scrollPaddingBottom)>=document.querySelector('.settings-footer').getBoundingClientRect().height+23), 'scroll inset grows with actual error/footer height');
     if(fixture==='save-error-long') {
