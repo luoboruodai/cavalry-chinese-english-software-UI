@@ -80,7 +80,10 @@ try {
   await refreshButton.click();
   const refreshIcon=refreshButton.locator('svg');
   check(await refreshIcon.evaluate(el=>getComputedStyle(el).animationName==='refresh-spin'&&getComputedStyle(el).animationDuration==='0.38s'),'refresh uses one bounded Kit-length spin');
-  await page.waitForTimeout(450);
+  await page.waitForFunction(() => {
+    const icon = document.querySelector('.tb-refresh svg');
+    return icon && icon.getAnimations().every(animation => animation.playState === 'finished');
+  });
   check(await refreshIcon.evaluate(el=>el.getAnimations().every(animation=>animation.playState==='finished')),'refresh spin stops instead of becoming an idle animation');
   await page.waitForFunction(()=>!document.querySelector('.tb-refresh')?.disabled);
   await page.emulateMedia({reducedMotion:'reduce'});
