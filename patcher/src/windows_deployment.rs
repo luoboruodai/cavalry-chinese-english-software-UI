@@ -140,12 +140,7 @@ fn inspect_with_vendor(root: &Path, id: &Identity, vendor: &str) -> Result<&'sta
         if current != vendor {
             return Err(msg("不是已审核的原厂 qwindows.dll；拒绝覆盖未知平台插件"));
         }
-        if FILES
-            .iter()
-            .skip(1)
-            .filter(|rel| **rel != ASSETS)
-            .any(|rel| root.join(rel).exists())
-        {
+        if FILES.iter().skip(1).filter(|rel| **rel != ASSETS).any(|rel| root.join(rel).exists()) {
             return Err(msg("存在无有效清单的同名运行时文件，需先人工检查"));
         }
         return Ok("vendor");

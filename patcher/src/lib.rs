@@ -23,11 +23,11 @@ pub mod transaction;
 
 pub mod operation_lock;
 
-#[cfg(windows)]
-pub mod windows;
-#[cfg(any(windows, test))]
-mod windows_deployment;
 #[cfg(any(windows, test))]
 mod windows_version;
+#[cfg(any(windows, test))]
+mod windows_deployment;
+#[cfg(windows)]
+pub mod windows;
 
 pub mod assets;
