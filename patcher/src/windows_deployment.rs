@@ -140,7 +140,12 @@ fn inspect_with_vendor(root: &Path, id: &Identity, vendor: &str) -> Result<&'sta
         if current != vendor {
             return Err(msg("不是已审核的原厂 qwindows.dll；拒绝覆盖未知平台插件"));
         }
-        if FILES.iter().skip(1).filter(|rel| **rel != ASSETS).any(|rel| root.join(rel).exists()) {
+        if FILES
+            .iter()
+            .skip(1)
+            .filter(|rel| **rel != ASSETS)
+            .any(|rel| root.join(rel).exists())
+        {
             return Err(msg("存在无有效清单的同名运行时文件，需先人工检查"));
         }
         return Ok("vendor");
@@ -500,6 +505,20 @@ mod tests {
         );
         assert!(!f.root.join(GENERIC).exists());
         assert!(!f.root.join(VENDOR).exists());
+    }
+    #[test]
+    fn windows_nested_install_root_applies_and_restores() {
+        let mut f = Fixture::new();
+        let nested = f.base.join("Program Files/Cavalry/New Folder");
+        fs::create_dir_all(nested.parent().unwrap()).unwrap();
+        fs::rename(&f.root, &nested).unwrap();
+        f.root = nested.clone();
+        let (backup, state) = f.apply(&Settings::default()).unwrap();
+        assert_eq!(state, "vendor");
+        assert_eq!(inspect_with_vendor(&nested, &f.id, &f.vendor).unwrap(), "ours");
+        restore_with_vendor(&nested, &f.id, &backup, &f.backups, &f.vendor).unwrap();
+        assert_eq!(inspect_with_vendor(&nested, &f.id, &f.vendor).unwrap(), "vendor");
+        assert!(!nested.join(GENERIC).exists());
     }
     #[test]
     fn windows_unknown_vendor_and_bad_artifact_fail_before_backup() {

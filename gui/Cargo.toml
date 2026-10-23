@@ -1,6 +1,6 @@
 [package]
 name = "cavalry-bilingual-gui"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 description = "Cavalry Bilingual GUI — Tauri v2 desktop shell for cbpatch"
 

@@ -153,7 +153,7 @@ fn cavalry_candidates() -> Vec<PathBuf> {
 fn is_cavalry_install(path: &Path) -> bool {
     #[cfg(windows)]
     {
-        path.join("Cavalry.exe").is_file()
+        cbpatch::windows::is_cavalry_install(path)
     }
     #[cfg(target_os = "macos")]
     {
@@ -224,12 +224,16 @@ pub fn set_target_cavalry(state: State<GuiState>, path: String) -> Result<Value,
 }
 
 fn set_target_cavalry_path(state: &GuiState, candidate: &Path) -> Result<Value, String> {
-    if !candidate.is_absolute() || !is_cavalry_install(candidate) {
+    #[cfg(windows)]
+    let resolved = cbpatch::windows::resolve_install_root(candidate).map_err(|error| error.to_string())?;
+    #[cfg(not(windows))]
+    let resolved = candidate.to_path_buf();
+    if !resolved.is_absolute() || !is_cavalry_install(&resolved) {
         return Err("不是可识别的 Cavalry 安装目录".into());
     }
-    let payload = serde_json::to_vec_pretty(&json!({ "path": candidate })).map_err(|e| e.to_string())?;
+    let payload = serde_json::to_vec_pretty(&json!({ "path": resolved })).map_err(|e| e.to_string())?;
     util::atomic_write(&state.target_path_file, &payload).map_err(|e| e.to_string())?;
-    Ok(json!({ "ok": true, "path": candidate }))
+    Ok(json!({ "ok": true, "path": resolved }))
 }
 
 #[tauri::command]
@@ -536,6 +540,7 @@ mod target_selection_tests {
             let app = self.0.join("OtherDrive/Cavalry");
             fs::create_dir_all(&app).unwrap();
             fs::write(app.join("Cavalry.exe"), b"fixture").unwrap();
+            fs::write(app.join("Qt6Core.dll"), b"fixture").unwrap();
             app
         }
     }
@@ -552,5 +557,20 @@ mod target_selection_tests {
         let before = fs::read(&state.target_path_file).unwrap();
         assert!(set_target_cavalry_path(&state, &fixture.0.join("missing")).is_err());
         assert_eq!(fs::read(&state.target_path_file).unwrap(), before);
+    }
+    #[cfg(windows)]
+    #[test]
+    fn nested_target_is_resolved_to_the_actual_install_root() {
+        let fixture = Fixture::new();
+        let parent = fixture.0.join("OtherDrive/Program Files");
+        let app = parent.join("Cavalry/New Folder");
+        fs::create_dir_all(&app).unwrap();
+        fs::write(app.join("Cavalry.exe"), b"MZ\x00sentry-release\x00\x002.8.0\x00/.crashdb\x00").unwrap();
+        fs::write(app.join("Qt6Core.dll"), b"fixture").unwrap();
+        let state = fixture.state();
+        set_target_cavalry_path(&state, &parent).unwrap();
+        assert_eq!(target_app(&state), app);
+        let installs = cavalry_install_list(&state);
+        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)));
     }
 }

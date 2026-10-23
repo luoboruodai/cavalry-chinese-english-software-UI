@@ -176,7 +176,7 @@ const MOCK_BUILD_INFO: BuildInfo = {
   configExists: true,
   template: MOCK_CONFIG.template,
   lang: MOCK_CONFIG.lang,
-  appVersion: "0.1.3",
+  appVersion: "0.1.4",
   supportedLangs: ["en", "zh-Hans", "zh-Hant", "ja_JP"],
 };
 
@@ -292,7 +292,7 @@ function mockInvoke<T>(
       if (mockMode() === "report-prepare-error") return Promise.reject("无法生成报告预览，请重试");
       const logs = (args?.logs ?? []) as Array<{time:string;text:string}>;
       const redact = (text: string) => text.replace(/(?:\/Users\/|[A-Z]:\\Users\\)[^\r\n，；]+/gi,"<本机路径已隐藏>").replace(/(?:api[_-]?key|password|token)\s*[:=]\s*[^\s,;，；]+/gi,"<凭据已隐藏>").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"<邮箱已隐藏>");
-      const content = {app:"Cavalry Bilingual",appVersion:"0.1.3",cavalryVersion:args?.cavalryVersion ?? null,message:redact(String(args?.message ?? "")),logs:logs.slice(0,20).map(log=>({...log,text:redact(log.text)}))};
+      const content = {app:"Cavalry Bilingual",appVersion:"0.1.4",cavalryVersion:args?.cavalryVersion ?? null,message:redact(String(args?.message ?? "")),logs:logs.slice(0,20).map(log=>({...log,text:redact(log.text)}))};
       const service = mockMode() === "report-service";
       const previewData = mockMode() === "report-extra-field" ? {...content, additionalDiagnostic:"这是新增字段，必须在完整预览中显示"} : mockMode() === "report-extra-log-field" ? {...content, logs:[{time:"2026-10-19 15:00",text:"普通诊断",additionalLogDiagnostic:"新的记录字段同样不得遗漏"}]} : content;
       result = {id:"mock-report-approved",preview:mockMode() === "report-invalid-shape" ? "暂不支持的报告格式\n完整原文必须仍能检查" : JSON.stringify(previewData,null,2),logCount:content.logs.length,delivery:service ? "service" : "mail",serviceName:service ? "feedback.example.invalid" : "EmailJS",note:service ? null : "将通过 EmailJS 外部服务发送；未配置服务不会发送邮件。"};

@@ -57,6 +57,10 @@ x86_64-w64-mingw32-objdump -p gui/target/x86_64-pc-windows-gnu/release/cavalry-b
 
 0.1.3 另修复报告通知只在弹窗入场初期测量一次造成的 18px 纵向偏移。通知现在在后续帧及弹窗 transitionstart／end／cancel 重新计算 offset；CI 直接校验最终 offset 与动作命中，不仅比较静态截图。
 
+## Windows 嵌套安装路径
+
+0.1.4 的自定义路径不再只检查当前层级。选择父目录时，会在最多 4 层、256 个目录内按稳定顺序查找同时包含 `Cavalry.exe` 与 `Qt6Core.dll` 的安装根，并持久保存解析后的真实路径。直接选择安装目录或 `Cavalry.exe` 也可识别；多个有效安装、缺失 Qt、符号链接／重解析点、过深或过大目录均明确失败，不做全盘扫描或任意猜测。Windows CI 另覆盖嵌套目录 apply→状态确认→restore，验证路径结果能进入实际部署合同。
+
 ## Intel Mac 原生
 
 ```bash

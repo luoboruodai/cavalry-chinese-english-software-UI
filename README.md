@@ -4,25 +4,25 @@
 
 **简体中文** | [English](README.en.md)
 
-[![0.1.3](https://img.shields.io/badge/release-0.1.3-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.3)
-[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.3)
-[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.3)
+[![0.1.4](https://img.shields.io/badge/release-0.1.4-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.4)
+[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.4)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.4)
 [![License](https://img.shields.io/badge/license-MIT-80827f)](LICENSE)
 
 在保留英文原文的同时显示中文，帮助你一边使用 Cavalry，一边对照英文教程。工具还提供字体排版、可恢复补丁、备份管理和用户主动反馈。
 
-> **当前版本：0.1.3（正式发行）。** 正式版身份不代表全界面、全版本或全平台验收完成；具体证据与限制见兼容矩阵。
+> **当前版本：0.1.4（正式发行）。** 正式版身份不代表全界面、全版本或全平台验收完成；具体证据与限制见兼容矩阵。
 > 本项目与 Scene Group / Cavalry 官方无关，不分发 Cavalry、Qt 或 Skia 的宿主二进制。
 
 ## 下载
 
 | 平台 | 安装附件 | 当前边界 |
 |---|---|---|
-| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.3/Cavalry-Bilingual_0.1.3_macOS-universal.dmg) | ad-hoc 签名、未公证；Intel 原生硬件仍待验证 |
-| Windows x64 | [NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.3/Cavalry-Bilingual_0.1.3_Windows-x64-setup.exe) | 未签名；交叉构建与包体验证，原生 Windows／真实宿主仍待验收 |
-| 校验 | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.3/SHA256SUMS.txt) | 下载后核对附件 SHA-256 |
+| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.4/Cavalry-Bilingual_0.1.4_macOS-universal.dmg) | ad-hoc 签名、未公证；Intel 原生硬件仍待验证 |
+| Windows x64 | [NSIS 安装器](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.4/Cavalry-Bilingual_0.1.4_Windows-x64-setup.exe) | 未签名；交叉构建与包体验证，原生 Windows／真实宿主仍待验收 |
+| 校验 | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.4/SHA256SUMS.txt) | 下载后核对附件 SHA-256 |
 
-[完整发布说明](docs/RELEASE-0.1.3.md) · [兼容与覆盖矩阵](docs/COMPATIBILITY.md) · [全部版本](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
+[完整发布说明](docs/RELEASE-0.1.4.md) · [兼容与覆盖矩阵](docs/COMPATIBILITY.md) · [全部版本](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
 
 GitHub 自动生成的 **Source code** 是源码快照，不是安装包。
 
@@ -81,7 +81,7 @@ Windows 原生构建、交叉打包与验收要求见 [Windows／原生验收指
 
 - [Agent／维护者项目上下文](docs/PROJECT-CONTEXT.md)：架构、设计初衷、需求演变、堵点与解决方法。
 - [设计规范](DESIGN.md)：视觉 tokens、布局、动效、焦点与通知原则。
-- [更新日志](CHANGELOG.md) · [0.1.3 发布说明](docs/RELEASE-0.1.3.md)
+- [更新日志](CHANGELOG.md) · [0.1.4 发布说明](docs/RELEASE-0.1.4.md)
 - [反馈安全说明](docs/FEEDBACK-SERVICE.md) · [兼容矩阵](docs/COMPATIBILITY.md)
 
 提交问题前，请移除工程文件、账号、真实路径和其他私人内容。应用内反馈也必须先预览，不会因打开弹窗而自动发送。

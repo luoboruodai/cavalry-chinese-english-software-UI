@@ -419,7 +419,7 @@ export default function App() {
       </div>
 
       <footer className="bottom-bar">
-        <span>v{buildInfo?.appVersion ?? "0.1.3"}{isMock ? " · 界面演示" : " · 验证中"}</span>
+        <span>v{buildInfo?.appVersion ?? "0.1.4"}{isMock ? " · 界面演示" : " · 验证中"}</span>
         <span>仅供学习用途 · 与 Scene Group 无关</span>
       </footer>
 

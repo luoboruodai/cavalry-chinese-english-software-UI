@@ -26,6 +26,12 @@ use windows_sys::Win32::{
 fn wide(path: &Path) -> Vec<u16> {
     path.as_os_str().encode_wide().chain(Some(0)).collect()
 }
+pub fn is_cavalry_install(path: &Path) -> bool {
+    crate::windows_version::is_install_root(path)
+}
+pub fn resolve_install_root(path: &Path) -> Result<PathBuf> {
+    crate::windows_version::resolve_install_root(path).map_err(|error| msg(error))
+}
 pub fn default_app_path() -> PathBuf {
     if let Some(running) = running_app_path() {
         return running;
@@ -70,8 +76,7 @@ fn running_app_path() -> Option<PathBuf> {
                 .iter()
                 .position(|c| *c == 0)
                 .unwrap_or(entry.szExeFile.len());
-            if String::from_utf16_lossy(&entry.szExeFile[..end])
-                .eq_ignore_ascii_case("Cavalry.exe")
+            if String::from_utf16_lossy(&entry.szExeFile[..end]).eq_ignore_ascii_case("Cavalry.exe")
             {
                 if let Some((root, created)) = process_root(entry.th32ProcessID) {
                     let key = root.to_string_lossy().to_ascii_lowercase();
@@ -106,15 +111,28 @@ fn process_root(pid: u32) -> Option<(PathBuf, u64)> {
         if !root.join("Cavalry.exe").is_file() {
             return None;
         }
-        let mut creation = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
-        let mut exit = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
-        let mut kernel = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
-        let mut user = FILETIME { dwLowDateTime: 0, dwHighDateTime: 0 };
-        let created = if GetProcessTimes(process.0, &mut creation, &mut exit, &mut kernel, &mut user) != 0 {
-            (u64::from(creation.dwHighDateTime) << 32) | u64::from(creation.dwLowDateTime)
-        } else {
-            0
+        let mut creation = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
         };
+        let mut exit = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut kernel = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let mut user = FILETIME {
+            dwLowDateTime: 0,
+            dwHighDateTime: 0,
+        };
+        let created =
+            if GetProcessTimes(process.0, &mut creation, &mut exit, &mut kernel, &mut user) != 0 {
+                (u64::from(creation.dwHighDateTime) << 32) | u64::from(creation.dwLowDateTime)
+            } else {
+                0
+            };
         Some((fs::canonicalize(&root).ok().unwrap_or(root), created))
     }
 }
@@ -288,11 +306,19 @@ mod tests {
     use super::*;
     #[test]
     fn gui_version_lookup_uses_windows_executable_not_macos_plist() {
-        let root = std::env::temp_dir().join(format!("cb-gui-windows-version-{}", std::process::id()));
+        let root =
+            std::env::temp_dir().join(format!("cb-gui-windows-version-{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
         fs::create_dir(&root).unwrap();
-        fs::write(root.join("Cavalry.exe"), b"MZ\x00sentry-release\x00\x002.7.2\x00/.crashdb\x00").unwrap();
-        assert_eq!(crate::detect::cavalry_version(&root).unwrap().as_deref(), Some("2.7.2"));
+        fs::write(
+            root.join("Cavalry.exe"),
+            b"MZ\x00sentry-release\x00\x002.7.2\x00/.crashdb\x00",
+        )
+        .unwrap();
+        assert_eq!(
+            crate::detect::cavalry_version(&root).unwrap().as_deref(),
+            Some("2.7.2")
+        );
         fs::remove_dir_all(root).unwrap();
     }
 }

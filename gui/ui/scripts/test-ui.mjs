@@ -804,7 +804,7 @@ try {
   check(await page.getByLabel('即将提交的报告内容',{exact:true}).isHidden(), 'raw serialized payload stays collapsed by default');
   check(await page.locator('.review-message').textContent()===description, 'human review preserves message text and line breaks exactly');
   check(await page.locator('.review-message').locator('*').count()===0, 'description markup remains text in the review');
-  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.3','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
+  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.4','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
   check(await page.getByRole('region',{name:'版本信息',exact:true}).isVisible(), 'environment section is simplified to version information');
   check(await page.locator('.review-logs li').count()===20, 'review retains all attached records, including below the fold');
   check(JSON.stringify(await page.locator('.review-logs p').allTextContents())===JSON.stringify(reviewLogs.map(entry=>entry.text)), 'operation text is not silently summarized or truncated');
