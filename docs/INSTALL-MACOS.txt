@@ -1,4 +1,4 @@
-Cavalry Bilingual 0.1.4 — macOS Universal
+Cavalry Bilingual 0.1.5 — macOS Universal
 ==========================================
 
 中文
@@ -31,7 +31,7 @@ No Cavalry, Qt, or Skia host binaries are included. This project is not affiliat
 
 Release / 发布页
 ---------------
-https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.4
+https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.5
 
 License and upstream notices are in the Legal directory.
 许可与上游声明位于 Legal 目录。

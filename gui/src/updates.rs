@@ -68,7 +68,7 @@ pub(crate) fn official_client() -> Result<Client, String> {
         .https_only(true)
         .connect_timeout(Duration::from_secs(10))
         .timeout(Duration::from_secs(20))
-        .user_agent("Cavalry-Bilingual/0.1.4 update-check")
+        .user_agent("Cavalry-Bilingual/0.1.5 update-check")
         .redirect(Policy::custom(|attempt| {
             if attempt.previous().len() < 5
                 && attempt.url().scheme() == "https"

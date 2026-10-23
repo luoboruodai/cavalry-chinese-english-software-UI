@@ -61,6 +61,10 @@ x86_64-w64-mingw32-objdump -p gui/target/x86_64-pc-windows-gnu/release/cavalry-b
 
 0.1.4 的自定义路径不再只检查当前层级。选择父目录时，会在最多 4 层、256 个目录内按稳定顺序查找同时包含 `Cavalry.exe` 与 `Qt6Core.dll` 的安装根，并持久保存解析后的真实路径。直接选择安装目录或 `Cavalry.exe` 也可识别；多个有效安装、缺失 Qt、符号链接／重解析点、过深或过大目录均明确失败，不做全盘扫描或任意猜测。Windows CI 另覆盖嵌套目录 apply→状态确认→restore，验证路径结果能进入实际部署合同。
 
+## Windows 首次配置与自动发现
+
+0.1.5 在写入 `target-cavalry.json` 前先创建配置父目录，修复首次使用时的 os error 3。自动发现在默认目录和嵌套解析之外，还读取运行中的 Cavalry 与 MSI 开始菜单快捷方式，随后仍要求完整安装结构。Windows 2.8.0 / Qt 6.9.2 会显示真实版本与“仅支持 2.7.2 / Qt 6.6.3”的明确原因，不再显示为未检测到；当前 2.8 QPA／私有 ABI 合同未获验证，不会写入。
+
 ## Intel Mac 原生
 
 ```bash

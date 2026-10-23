@@ -21,7 +21,7 @@ use std::{
 use windows_sys::Win32::{
     Foundation::*,
     Storage::FileSystem::*,
-    System::{Diagnostics::ToolHelp::*, Threading::*},
+    System::{ApplicationInstallationAndServicing::*, Diagnostics::ToolHelp::*, Threading::*},
 };
 fn wide(path: &Path) -> Vec<u16> {
     path.as_os_str().encode_wide().chain(Some(0)).collect()
@@ -32,9 +32,65 @@ pub fn is_cavalry_install(path: &Path) -> bool {
 pub fn resolve_install_root(path: &Path) -> Result<PathBuf> {
     crate::windows_version::resolve_install_root(path).map_err(|error| msg(error))
 }
+
+fn start_menu_roots() -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(base) = std::env::var_os("PROGRAMDATA") {
+        roots.push(PathBuf::from(base).join("Microsoft/Windows/Start Menu/Programs"));
+    }
+    if let Some(base) = std::env::var_os("APPDATA") {
+        roots.push(PathBuf::from(base).join("Microsoft/Windows/Start Menu/Programs"));
+    }
+    roots
+}
+
+fn collect_cavalry_shortcuts(root: &Path, depth: usize, output: &mut Vec<PathBuf>) {
+    if depth > 4 || output.len() >= 256 { return; }
+    let Ok(entries) = fs::read_dir(root) else { return; };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let Ok(kind) = entry.file_type() else { continue; };
+        if kind.is_dir() {
+            collect_cavalry_shortcuts(&path, depth + 1, output);
+            continue;
+        }
+        let is_link = path.extension().and_then(|value| value.to_str())
+            .is_some_and(|value| value.eq_ignore_ascii_case("lnk"));
+        let named = path.file_stem().and_then(|value| value.to_str())
+            .is_some_and(|value| value.to_ascii_lowercase().contains("cavalry"));
+        if is_link && named { output.push(path); }
+    }
+}
+
+fn resolve_msi_shortcut(shortcut: &Path) -> Option<PathBuf> {
+    let shortcut = wide(shortcut);
+    let mut product = vec![0u16; 39];
+    let mut feature = vec![0u16; 64];
+    let mut component = vec![0u16; 39];
+    let result = unsafe { MsiGetShortcutTargetW(shortcut.as_ptr(), product.as_mut_ptr(), feature.as_mut_ptr(), component.as_mut_ptr()) };
+    if result != 0 { return None; }
+    let mut path = vec![0u16; 32_768];
+    let mut chars = path.len() as u32;
+    let state = unsafe { MsiGetComponentPathW(product.as_ptr(), component.as_ptr(), path.as_mut_ptr(), &mut chars) };
+    if !matches!(state, INSTALLSTATE_LOCAL | INSTALLSTATE_SOURCE | INSTALLSTATE_DEFAULT) || chars == 0 {
+        return None;
+    }
+    path.truncate(chars as usize);
+    PathBuf::from(OsString::from_wide(&path)).parent().map(Path::to_path_buf)
+}
+
+pub fn msi_install_candidates() -> Vec<PathBuf> {
+    let mut shortcuts = Vec::new();
+    for root in start_menu_roots() { collect_cavalry_shortcuts(&root, 0, &mut shortcuts); }
+    shortcuts.iter().filter_map(|path| resolve_msi_shortcut(path)).collect()
+}
+
 pub fn default_app_path() -> PathBuf {
     if let Some(running) = running_app_path() {
         return running;
+    }
+    for root in msi_install_candidates() {
+        if is_cavalry_install(&root) { return root; }
     }
     for name in ["ProgramFiles", "ProgramW6432", "LOCALAPPDATA"] {
         if let Some(base) = std::env::var_os(name) {
@@ -58,7 +114,7 @@ pub fn default_app_path() -> PathBuf {
 /// process and choose the most recently created one instead of returning the
 /// first arbitrary 2.7/2.8 instance. If one process is inaccessible, keep
 /// scanning rather than turning a permission failure into "not detected".
-fn running_app_path() -> Option<PathBuf> {
+pub fn running_app_path() -> Option<PathBuf> {
     unsafe {
         let handle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
         if handle == INVALID_HANDLE_VALUE {
@@ -391,6 +447,17 @@ pub fn families() -> Vec<String> {
     families.sort();
     families.dedup();
     families
+}
+
+#[cfg(test)]
+mod msi_discovery_tests {
+    use super::*;
+    #[test]
+    fn msi_candidates_are_complete_install_roots() {
+        for path in msi_install_candidates() {
+            assert!(is_cavalry_install(&path));
+        }
+    }
 }
 pub fn replace_file(source: &Path, target: &Path) -> Result<()> {
     if unsafe {

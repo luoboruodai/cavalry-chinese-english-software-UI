@@ -137,6 +137,8 @@ fn cavalry_candidates() -> Vec<PathBuf> { Vec::new() }
 #[cfg(windows)]
 fn cavalry_candidates() -> Vec<PathBuf> {
     let mut apps = Vec::new();
+    if let Some(running) = cbpatch::windows::running_app_path() { apps.push(running); }
+    apps.extend(cbpatch::windows::msi_install_candidates());
     for name in ["ProgramFiles", "ProgramW6432", "LOCALAPPDATA"] {
         if let Some(base) = env::var_os(name) {
             for suffix in ["Cavalry", "Programs/Cavalry"] {
@@ -145,6 +147,7 @@ fn cavalry_candidates() -> Vec<PathBuf> {
             }
         }
     }
+    apps.retain(|path| is_cavalry_install(path));
     apps.sort();
     apps.dedup();
     apps
@@ -229,6 +232,9 @@ fn set_target_cavalry_path(state: &GuiState, candidate: &Path) -> Result<Value, 
     let resolved = candidate.to_path_buf();
     if !resolved.is_absolute() || !is_cavalry_install(&resolved) {
         return Err("不是可识别的 Cavalry 安装目录".into());
+    }
+    if let Some(parent) = state.target_path_file.parent() {
+        fs::create_dir_all(parent).map_err(|_| "无法创建配置目录，请检查磁盘空间和目录权限")?;
     }
     let payload = serde_json::to_vec_pretty(&json!({ "path": resolved })).map_err(|e| e.to_string())?;
     util::atomic_write(&state.target_path_file, &payload).map_err(|e| e.to_string())?;
@@ -556,6 +562,16 @@ mod target_selection_tests {
         let before = fs::read(&state.target_path_file).unwrap();
         assert!(set_target_cavalry_path(&state, &fixture.0.join("missing")).is_err());
         assert_eq!(fs::read(&state.target_path_file).unwrap(), before);
+    }
+    #[test]
+    fn target_file_parent_is_created_on_first_use() {
+        let fixture = Fixture::new();
+        let app = fixture.custom_app();
+        let mut state = fixture.state();
+        state.target_path_file = fixture.0.join("new-config/target-cavalry.json");
+        set_target_cavalry_path(&state, &app).unwrap();
+        assert!(state.target_path_file.is_file());
+        assert_eq!(target_app(&state), app);
     }
     #[cfg(windows)]
     #[test]

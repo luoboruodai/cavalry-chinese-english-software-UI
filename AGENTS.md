@@ -32,8 +32,8 @@ Use `npm run build:macos-universal` for a local macOS build after setting the re
 
 ## Release and documentation map
 
-- Current release: `v0.1.4` (stable release; coverage boundaries still apply).
-- Release notes: [docs/RELEASE-0.1.4.md](docs/RELEASE-0.1.4.md)
+- Current release: `v0.1.5` (stable release; coverage boundaries still apply).
+- Release notes: [docs/RELEASE-0.1.5.md](docs/RELEASE-0.1.5.md)
 - Compatibility: [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md)
 - Feedback security: [docs/FEEDBACK-SERVICE.md](docs/FEEDBACK-SERVICE.md)
 - Release privacy scanner: `python3 tools/audit_release.py self-test`

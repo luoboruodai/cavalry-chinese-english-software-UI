@@ -109,7 +109,7 @@ fn bytes<T: Serialize>(value: &T) -> Result<Vec<u8>> {
 }
 fn validate_identity(id: &Identity) -> Result<()> {
     if id.version != "2.7.2" || id.qt_version != "6.6.3" {
-        return Err(msg("尚未验证此 Windows Cavalry / Qt 版本；不会写入补丁"));
+        return Err(msg(format!("检测到 Cavalry {} / Qt {}，当前 Windows 补丁仅支持 2.7.2 / Qt 6.6.3；不会写入补丁", id.version, id.qt_version)));
     }
     Ok(())
 }
@@ -544,5 +544,17 @@ mod tests {
         f.apply(&Settings::default()).unwrap();
         fs::write(f.root.join(GENERIC), b"drift").unwrap();
         assert!(f.apply(&Settings::default()).is_err());
+    }
+    #[test]
+    fn unsupported_version_message_is_explicit_not_undetected() {
+        let error = validate_identity(&Identity {
+            version: "2.8.0".into(),
+            qt_version: "6.9.2".into(),
+            executable_hash: "test-executable".into(),
+            qt_hash: "test-qt".into(),
+        }).unwrap_err().to_string();
+        assert!(error.contains("检测到 Cavalry 2.8.0 / Qt 6.9.2"));
+        assert!(error.contains("仅支持 2.7.2 / Qt 6.6.3"));
+        assert!(!error.contains("未检测到"));
     }
 }
