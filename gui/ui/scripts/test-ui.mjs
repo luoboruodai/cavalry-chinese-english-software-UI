@@ -916,6 +916,7 @@ try {
     await rowRestore.focus();await page.keyboard.press('Tab');await page.waitForTimeout(280);
     check(await rowDelete.evaluate(el=>document.activeElement===el&&el.matches(':focus-visible')), 'keyboard can focus the row danger action without activating it');
     check(await rowDelete.evaluate(el=>{const s=getComputedStyle(el.closest('.backup-row'),'::before');return s.borderTopWidth==='0px'&&s.boxShadow.includes('1.5px')}),'keyboard focus uses Kit 1.5px inset emphasis without moving the hit target');
+    await page.waitForFunction(()=>{const el=document.activeElement;return el&&getComputedStyle(el).color==='rgb(160, 68, 53)'&&getComputedStyle(el).backgroundColor==='rgb(249, 236, 230)';});
     check(await rowDelete.evaluate(el=>getComputedStyle(el).color)==='rgb(160, 68, 53)', 'direct keyboard danger focus has the same risk ink as direct hover');
     check(await rowDelete.evaluate(el=>getComputedStyle(el).backgroundColor)==='rgb(249, 236, 230)', 'danger focus has its semantic wash without shifting the row');
     check(await page.getByRole('dialog').count()===0, 'focusing danger only provides feedback; it never performs deletion');
