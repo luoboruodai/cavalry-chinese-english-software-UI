@@ -50,10 +50,17 @@ pub fn classify(app_root: &Path) -> AppState {
 }
 
 pub fn cavalry_version(app_root: &Path) -> Result<Option<String>> {
-    plist::read_string(
-        &app_root.join("Contents/Info.plist"),
-        "CFBundleShortVersionString",
-    )
+    #[cfg(windows)]
+    {
+        crate::windows::status(app_root).map(|report| report.cavalry_version)
+    }
+    #[cfg(not(windows))]
+    {
+        plist::read_string(
+            &app_root.join("Contents/Info.plist"),
+            "CFBundleShortVersionString",
+        )
+    }
 }
 
 pub fn bundle_executable(app_root: &Path) -> Result<Option<String>> {

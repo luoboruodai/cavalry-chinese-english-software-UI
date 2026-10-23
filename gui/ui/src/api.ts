@@ -176,7 +176,7 @@ const MOCK_BUILD_INFO: BuildInfo = {
   configExists: true,
   template: MOCK_CONFIG.template,
   lang: MOCK_CONFIG.lang,
-  appVersion: "0.1.1",
+  appVersion: "0.1.2",
   supportedLangs: ["en", "zh-Hans", "zh-Hant", "ja_JP"],
 };
 
@@ -292,8 +292,8 @@ function mockInvoke<T>(
       if (mockMode() === "report-prepare-error") return Promise.reject("无法生成报告预览，请重试");
       const logs = (args?.logs ?? []) as Array<{time:string;text:string}>;
       const redact = (text: string) => text.replace(/(?:\/Users\/|[A-Z]:\\Users\\)[^\r\n，；]+/gi,"<本机路径已隐藏>").replace(/(?:api[_-]?key|password|token)\s*[:=]\s*[^\s,;，；]+/gi,"<凭据已隐藏>").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"<邮箱已隐藏>");
-      const content = {app:"Cavalry Bilingual",appVersion:"0.1.1",cavalryVersion:args?.cavalryVersion ?? null,message:redact(String(args?.message ?? "")),logs:logs.slice(0,20).map(log=>({...log,text:redact(log.text)}))};
-      const service = ["report-service","report-error"].includes(mockMode());
+      const content = {app:"Cavalry Bilingual",appVersion:"0.1.2",cavalryVersion:args?.cavalryVersion ?? null,message:redact(String(args?.message ?? "")),logs:logs.slice(0,20).map(log=>({...log,text:redact(log.text)}))};
+      const service = mockMode() === "report-service";
       const previewData = mockMode() === "report-extra-field" ? {...content, additionalDiagnostic:"这是新增字段，必须在完整预览中显示"} : mockMode() === "report-extra-log-field" ? {...content, logs:[{time:"2026-10-19 15:00",text:"普通诊断",additionalLogDiagnostic:"新的记录字段同样不得遗漏"}]} : content;
       result = {id:"mock-report-approved",preview:mockMode() === "report-invalid-shape" ? "暂不支持的报告格式\n完整原文必须仍能检查" : JSON.stringify(previewData,null,2),logCount:content.logs.length,delivery:service ? "service" : "mail",serviceName:service ? "feedback.example.invalid" : "EmailJS",note:service ? null : "将通过 EmailJS 外部服务发送；未配置服务不会发送邮件。"};
       break;
@@ -304,6 +304,18 @@ function mockInvoke<T>(
       localStorage.setItem("cb-mock-report-send-count", String(Number(localStorage.getItem("cb-mock-report-send-count") ?? 0) + 1));
       if (mockMode() === "report-error") return Promise.reject("报告暂时无法发送，请重试或保存报告");
       result = {id:String(args?.reportId),delivery:mockMode() === "report-service" ? "submitted" : "mail-sent",path:null}; break;
+    case "begin_emailjs_send":
+      if (mockMode() === "report-rate-limit") return Promise.reject("发信过于频繁，请 60 秒后再试");
+      result = JSON.stringify({service_id:"service_mock",template_id:"template_mock",user_id:"public_mock",template_params:{to_email:"nobody@example.invalid",subject:"合成反馈",message:String(args?.reportId ?? ""),report_id:String(args?.reportId ?? "")}});
+      break;
+    case "complete_emailjs_send":
+      localStorage.setItem("cb-mock-report-send-count", String(Number(localStorage.getItem("cb-mock-report-send-count") ?? 0) + 1));
+      result = {id:String(args?.reportId),delivery:"mail-sent",path:null};
+      break;
+    case "abort_emailjs_send":
+      localStorage.setItem("cb-mock-report-abort-count", String(Number(localStorage.getItem("cb-mock-report-abort-count") ?? 0) + 1));
+      result = null;
+      break;
     case "export_error_report":
       result = {id:String(args?.reportId),delivery:"exported",path:"/Users/example/.cavalry-bilingual/error-reports/approved.json"}; break;
     case "delete_backup":

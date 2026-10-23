@@ -324,7 +324,7 @@ fn submit_with_client(draft: &Draft, dsn: &Dsn, client: &Client) -> Result<(), S
         .header("Content-Type", "application/x-sentry-envelope")
         .header(
             "X-Sentry-Auth",
-            dsn.to_auth(Some("cavalry-bilingual/0.1.1")).to_string(),
+            dsn.to_auth(Some("cavalry-bilingual/0.1.2")).to_string(),
         )
         .body(envelope_bytes(draft)?)
         .send()
@@ -574,6 +574,17 @@ mod tests {
     fn default_desktop_delivery_is_emailjs() {
         let dir = temp();
         assert!(matches!(delivery(&dir), Delivery::Mail));
+        fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn default_preview_is_sendable_and_uses_the_current_app_version() {
+        let dir = temp();
+        let state = ReportState::default();
+        let preview = prepare(&state, &dir, "Windows 默认发送路径", &[], None).unwrap();
+        assert_eq!(preview.delivery, "mail");
+        assert_eq!(preview.service_name, "EmailJS");
+        let content: serde_json::Value = serde_json::from_str(&preview.preview).unwrap();
+        assert_eq!(content["appVersion"], env!("CARGO_PKG_VERSION"));
         fs::remove_dir_all(dir).unwrap();
     }
     #[test]

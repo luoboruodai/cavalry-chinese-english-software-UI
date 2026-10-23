@@ -24,6 +24,8 @@ pub mod transaction;
 pub mod operation_lock;
 
 #[cfg(any(windows, test))]
+mod windows_version;
+#[cfg(any(windows, test))]
 mod windows_deployment;
 #[cfg(windows)]
 pub mod windows;

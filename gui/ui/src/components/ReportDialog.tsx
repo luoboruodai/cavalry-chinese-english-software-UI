@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { api, errorText, isMock, type ReportPreview, type ReportReceipt } from "../api";
+import { api, errorText, type ReportPreview, type ReportReceipt } from "../api";
 import type { LogEntry } from "../App";
 import { Modal } from "./Modal";
 import { Icon } from "./Icon";
@@ -53,12 +53,12 @@ export function ReportDialog({logs,cavalryVersion,onClose,onComplete}:Props) {
     try{
       if(kind==="send"){
         const result=await (async()=>{
-          if(preview.delivery==="mail"&&!isMock){
+          if(preview.delivery==="mail"){
             const body=await api.beginEmailJsSend(preview.id,emailJsConfig());
             try{await sendEmailJsBrowser(body);}catch(reason){await api.abortEmailJsSend(preview.id).catch(()=>{});throw reason;}
             return api.completeEmailJsSend(preview.id);
           }
-          return api.sendErrorReport(preview.id,preview.delivery==="mail"?emailJsConfig():undefined);
+          return api.sendErrorReport(preview.id);
         })();
         setReceipt(result);onComplete(result);
       }else{

@@ -1,3 +1,10 @@
+# 0.1.2 · 2026-10-23
+
+- 修复 Windows 已找到 Cavalry 却显示“未知版本”：官方 EXE 没有 `VS_VERSION_INFO` 时，使用唯一 NUL 分隔的受支持版本标记；重复、相似和冲突标记保持拒绝。
+- 修复 Windows GUI 安装列表误用 macOS plist 检测的问题；Qt、哈希与部署安全合同不放宽。
+- 反馈预览在 Windows 原生 CI 中验证默认可发送及当前版本号；浏览器测试实际覆盖 begin → EmailJS fetch → complete／abort、失败草稿保留、取消、限流与脱敏，不在 CI 发送真实邮件。
+- 新增 GitHub Actions Windows／macOS 测试矩阵，并提供新的 0.1.2 macOS Universal DMG 与 Windows x64 NSIS 安装附件。
+
 # 0.1.1 · 2026-10-21
 
 - 正式发行 0.1.1；正式版身份不扩大原生平台或全界面验收范围。

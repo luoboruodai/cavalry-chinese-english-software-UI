@@ -49,6 +49,12 @@ x86_64-w64-mingw32-objdump -p gui/target/x86_64-pc-windows-gnu/release/cavalry-b
 
 探针检查同源 manifest 的 `GetProcAddress`，最终还必须确认 EXE 的 Resource Directory 非空、嵌入 XML 包含 v6 与 `asInvoker`，并在 NSIS 解压后的主程序上复核。未签名安装器仍会出现“未知发布者”警告，这与入口点修复是两件事。Wine／静态 PE 检查不替代 Windows 原生启动与真实宿主验收。
 
+## Windows 版本识别与 CI
+
+官方 `Cavalry.exe` 可能只有图标、manifest 等资源而没有 `VS_VERSION_INFO`。0.1.2 不再把这种情况直接报成“未知版本”：有界流式扫描只接受唯一的 NUL 分隔受支持版本标记，重复、相似或冲突标记均拒绝。GUI 列表同时改用 Windows 检测，不再读取 macOS plist。Qt 版本、部署身份和写入安全门保持原要求。
+
+`.github/workflows/ci.yml` 在原生 Windows 与 macOS runner 上执行 UI、patcher 和 GUI Rust 测试；macOS 追加目录、生成器、翻译与隐私检查。CI 中的 EmailJS 使用浏览器路由夹具，不发送真实邮件。原生 CI 结果与真实用户网络、WebView2、GPU 和 Cavalry 宿主验收分别记录。
+
 ## Intel Mac 原生
 
 ```bash

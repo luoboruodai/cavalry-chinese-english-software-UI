@@ -6,6 +6,13 @@ const server = await preview({ preview: { port: 5217, host: '127.0.0.1', strictP
 const browser = await chromium.launch();
 const base = 'http://127.0.0.1:5217';
 const page = await browser.newPage();
+const emailJsRequests = [];
+await page.route('https://api.emailjs.com/api/v1.0/email/send', async route => {
+  const body = route.request().postDataJSON();
+  emailJsRequests.push(body);
+  const failed = page.url().includes('mock=report-error');
+  await route.fulfill({status:failed?500:200,contentType:'text/plain',body:failed?'synthetic failure':'OK'});
+});
 const closeModal = async () => {
   if (await page.getByRole('group',{name:'发送方式',exact:true}).count()) await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
@@ -340,6 +347,8 @@ try {
   await page.getByRole('button',{name:'发送报告',exact:true}).click();
   await page.getByRole('dialog',{name:'反馈已提交',exact:true}).waitFor();
   check(await page.getByText('报告已提交，感谢你的反馈。',{exact:true}).isVisible(), 'successful submission uses neutral user-facing copy');
+  check(emailJsRequests.length===1 && emailJsRequests[0].template_params.report_id==='mock-report-approved', 'the real browser fetch sends the reviewed report ID to EmailJS');
+  check(!JSON.stringify(emailJsRequests[0]).includes('do-not-send') && !JSON.stringify(emailJsRequests[0]).includes('/Users/example'), 'the real browser payload retains preview redaction');
   await page.getByRole('button',{name:'完成',exact:true}).click();
   await page.goto(`${base}/?mock=report-oauth-cancel#log`);
   await page.evaluate(()=>localStorage.setItem('cb-mock-report-send-count','0'));
@@ -348,6 +357,7 @@ try {
   await page.getByRole('button',{name:'发送报告',exact:true}).click();
   check((await page.getByRole('dialog').getByRole('alert').innerText()).includes('外部授权已取消'), 'cancelled OAuth explains why nothing was sent');
   check(await page.evaluate(()=>localStorage.getItem('cb-mock-report-send-count')) === '0', 'cancelled OAuth never invokes the mail API');
+  check(emailJsRequests.length===1, 'cancelled OAuth never reaches the EmailJS endpoint');
   await closeModal();
   await page.goto(`${base}/?mock=report-rate-limit#log`);
   await page.getByRole('button',{name:'反馈问题',exact:true}).click();
@@ -355,6 +365,7 @@ try {
   await page.getByRole('button',{name:'发送报告',exact:true}).click();
   check((await page.getByRole('dialog').getByRole('alert').innerText()).includes('60 秒'), 'rate-limited sends explain the required wait');
   check(await page.evaluate(()=>localStorage.getItem('cb-mock-report-send-count')) === '0', 'rate-limited sends do not count as accepted mail');
+  check(emailJsRequests.length===1, 'rate-limited sends do not reach the EmailJS endpoint');
   await closeModal();
   await page.goto(`${base}/?mock=report-service#log`);
   await page.getByRole('button',{name:'反馈问题',exact:true}).click();
@@ -374,6 +385,7 @@ try {
   await page.getByRole('dialog').getByRole('alert').waitFor();
   check(await page.getByLabel('即将提交的报告内容',{exact:true}).innerText() === beforeFailure, 'failed delivery retains the exact reviewed draft');
   check(await page.getByRole('button',{name:'发送报告',exact:true}).isEnabled(), 'send failure is retryable');
+  check(emailJsRequests.length===2 && await page.evaluate(()=>localStorage.getItem('cb-mock-report-abort-count'))==='1', 'a failed browser response aborts without a success receipt or duplicate completion');
   await page.getByRole('button',{name:'保存报告',exact:true}).click();
   check(await page.getByRole('dialog',{name:'报告已保存',exact:true}).isVisible(), 'offline export remains usable without a service account');
   await page.getByRole('button',{name:'完成',exact:true}).click();
@@ -780,7 +792,7 @@ try {
   check(await page.getByLabel('即将提交的报告内容',{exact:true}).isHidden(), 'raw serialized payload stays collapsed by default');
   check(await page.locator('.review-message').textContent()===description, 'human review preserves message text and line breaks exactly');
   check(await page.locator('.review-message').locator('*').count()===0, 'description markup remains text in the review');
-  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.1','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
+  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.2','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
   check(await page.getByRole('region',{name:'版本信息',exact:true}).isVisible(), 'environment section is simplified to version information');
   check(await page.locator('.review-logs li').count()===20, 'review retains all attached records, including below the fold');
   check(JSON.stringify(await page.locator('.review-logs p').allTextContents())===JSON.stringify(reviewLogs.map(entry=>entry.text)), 'operation text is not silently summarized or truncated');

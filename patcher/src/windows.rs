@@ -159,16 +159,23 @@ pub fn product_version(path: &Path) -> Result<[u16; 4]> {
 fn version3(value: [u16; 4]) -> String {
     format!("{}.{}.{}", value[0], value[1], value[2])
 }
+fn cavalry_version(executable: &Path) -> Result<String> {
+    if let Ok(version) = product_version(executable) {
+        return Ok(version3(version));
+    }
+    crate::windows_version::embedded_cavalry_version(executable)
+        .ok_or_else(|| msg("无法识别 Cavalry 版本：文件版本资源缺失，且未找到唯一受支持版本标记"))
+}
 fn identity(root: &Path) -> Result<deployment::Identity> {
     let exe = root.join("Cavalry.exe");
     let qt = root.join("Qt6Core.dll");
-    let version = product_version(&exe)?;
+    let version = cavalry_version(&exe)?;
     let qt_version = product_version(&qt)?;
     if qt_version[3] != 0 {
         return Err(msg("尚未验证此 Qt 构建号"));
     }
     Ok(deployment::Identity {
-        version: version3(version),
+        version,
         qt_version: version3(qt_version),
         executable_hash: util::file_sha256(&exe)?,
         qt_hash: util::file_sha256(&qt)?,
@@ -256,9 +263,7 @@ pub fn compatibility(root: &Path) -> Result<Compatibility> {
     }
 }
 pub fn status(root: &Path) -> Result<StatusReport> {
-    let version = product_version(&root.join("Cavalry.exe"))
-        .ok()
-        .map(version3);
+    let version = cavalry_version(&root.join("Cavalry.exe")).ok();
     let state = identity(root)
         .and_then(|id| deployment::inspect(root, &id))
         .map(|state| match state {
@@ -276,6 +281,20 @@ pub fn status(root: &Path) -> Result<StatusReport> {
             .map(|s| s.trim().into()),
         signing: SigningSummary::default(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn gui_version_lookup_uses_windows_executable_not_macos_plist() {
+        let root = std::env::temp_dir().join(format!("cb-gui-windows-version-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        fs::create_dir(&root).unwrap();
+        fs::write(root.join("Cavalry.exe"), b"MZ\x00sentry-release\x00\x002.7.2\x00/.crashdb\x00").unwrap();
+        assert_eq!(crate::detect::cavalry_version(&root).unwrap().as_deref(), Some("2.7.2"));
+        fs::remove_dir_all(root).unwrap();
+    }
 }
 pub fn apply(
     root: &Path,

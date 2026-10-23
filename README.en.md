@@ -4,25 +4,25 @@
 
 [简体中文](README.md) | **English**
 
-[![0.1.1](https://img.shields.io/badge/release-0.1.1-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1)
-[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1)
-[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.1)
+[![0.1.2](https://img.shields.io/badge/release-0.1.2-78a957)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.2)
+[![macOS universal](https://img.shields.io/badge/macOS-universal-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.2)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-2c2e2a)](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/tag/v0.1.2)
 [![License](https://img.shields.io/badge/license-MIT-80827f)](LICENSE)
 
 Read Chinese alongside the original English UI, so you can use Cavalry while following English tutorials. The desktop manager also provides typography controls, restorable patches, backups, and user-initiated feedback.
 
-> **Current version: 0.1.1 (stable release).** This release identity does not establish full-UI, all-version, or all-platform acceptance; see the compatibility matrix for evidence and limits.
+> **Current version: 0.1.2 (stable release).** This release identity does not establish full-UI, all-version, or all-platform acceptance; see the compatibility matrix for evidence and limits.
 > This project is not affiliated with Scene Group or Cavalry and does not redistribute Cavalry, Qt, or Skia host binaries.
 
 ## Download
 
 | Platform | Installer | Current boundary |
 |---|---|---|
-| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.1/Cavalry-Bilingual_0.1.1_macOS-universal.dmg) | Ad-hoc signed, not notarized; native Intel hardware remains unverified |
-| Windows x64 | [NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.1/Cavalry-Bilingual_0.1.1_Windows-x64-setup.exe) | Unsigned; cross-built and package-verified, native Windows and real-host acceptance remain incomplete |
-| Checksums | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.1/SHA256SUMS.txt) | Verify the downloaded attachment's SHA-256 |
+| macOS arm64 + x86_64 | [Universal DMG](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.2/Cavalry-Bilingual_0.1.2_macOS-universal.dmg) | Ad-hoc signed, not notarized; native Intel hardware remains unverified |
+| Windows x64 | [NSIS installer](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.2/Cavalry-Bilingual_0.1.2_Windows-x64-setup.exe) | Unsigned; cross-built and package-verified, native Windows and real-host acceptance remain incomplete |
+| Checksums | [SHA256SUMS.txt](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases/download/v0.1.2/SHA256SUMS.txt) | Verify the downloaded attachment's SHA-256 |
 
-[Full release notes](docs/RELEASE-0.1.1.md) · [Compatibility matrix](docs/COMPATIBILITY.md) · [All releases](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
+[Full release notes](docs/RELEASE-0.1.2.md) · [Compatibility matrix](docs/COMPATIBILITY.md) · [All releases](https://github.com/luoboruodai/cavalry-chinese-english-software-UI/releases)
 
 GitHub's automatic **Source code** archives are source snapshots, not installers.
 
@@ -81,7 +81,7 @@ For native Windows builds, cross-packaging, and acceptance requirements, see the
 
 - [Project context for agents and maintainers](docs/PROJECT-CONTEXT.md): architecture, original intent, requirement evolution, blockers, and solutions.
 - [Design guide](DESIGN.md): visual tokens, layout, motion, focus, and notification principles.
-- [Changelog](CHANGELOG.md) · [0.1.1 release notes](docs/RELEASE-0.1.1.md)
+- [Changelog](CHANGELOG.md) · [0.1.2 release notes](docs/RELEASE-0.1.2.md)
 - [Feedback security](docs/FEEDBACK-SERVICE.md) · [Compatibility matrix](docs/COMPATIBILITY.md)
 
 Remove project files, accounts, real paths, and other private material before filing an issue. Opening the in-app feedback dialog never sends a report by itself.

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci --prefix gui/ui
+      - run: npm exec --prefix gui/ui -- playwright install chromium
+      - run: npm test --prefix gui/ui
+      - run: cargo test --manifest-path patcher/Cargo.toml
+      - run: cargo test --manifest-path gui/Cargo.toml
+      - if: runner.os == 'macOS'
+        run: npm run test:catalog28
+      - if: runner.os == 'macOS'
+        run: npm run test:generator
+      - if: runner.os == 'macOS'
+        run: npm run test:translations
+      - if: runner.os == 'macOS'
+        run: python3 tools/audit_release.py self-test
+      - if: runner.os == 'macOS'
+        run: python3 tools/audit_release.py source
