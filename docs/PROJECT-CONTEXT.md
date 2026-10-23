@@ -1,6 +1,6 @@
 # Cavalry Bilingual — Project context for agents and maintainers
 
-**Current public snapshot:** `0.1.5`, 2026-10-23. This is the stable release; its release identity is not a full-coverage claim.
+**Current public snapshot:** `0.1.6`, 2026-10-23. This is the stable release; its release identity is not a full-coverage claim.
 
 This document is the compact public handoff. It preserves the original intent, current architecture, requirement evolution, difficult failure modes, and the checks that matter. A machine-local ignored `PROJECT.md` may contain additional private evidence and exact local paths; it is not required to understand the repository and must never be uploaded.
 
@@ -112,6 +112,7 @@ Accepted by the provider is not a guarantee of mailbox delivery. The local limit
 | First-time target selection fails with os error 3 | The target JSON write does not create its parent configuration directory | Create the directory before the existing atomic write; first-use persistence is tested separately |
 | Automatic discovery misses a custom install | Only default Program Files paths were considered | Include the running process and MSI Start Menu shortcuts, then apply the same complete-install checks and saved-target visibility |
 | Windows 2.8 looks like an undetected installation | Version and compatibility states were conflated | Display the detected 2.8.0 / Qt 6.9.2 version with an explicit unsupported message; do not write the unverified 2.8 QPA/private ABI contract |
+| Reopening Cavalry does not apply saved typography | Saving manager settings and applying the patch are separate operations | Add launch only after the current target is confirmed `ours` and not running; never treat saved settings or an unsupported target as applied |
 | Windows finds Cavalry but reports an unknown version | Official `Cavalry.exe` files may omit `VS_VERSION_INFO`, and the GUI list also reused the macOS plist lookup | Read a unique NUL-delimited supported release token with bounded streaming, keep duplicate/ambiguous markers closed, and use the Windows detector in the GUI list; Qt and deployment guards remain unchanged |
 | Report-delivery toast is vertically offset after modal entry | Its fixed-position offset was measured once while the dialog was still 18px lower during entry | Recompute on the next frame and dialog transition start/end/cancel, then verify the final offset and action hit testing on CI |
 | Windows feedback offers only local export | Non-macOS delivery was hardcoded to export | Use the same reviewed EmailJS browser flow as macOS when no ingestion DSN is configured, with local export retained and no private credential added |
@@ -147,7 +148,7 @@ A green test suite is not a release by itself. Freeze the source commit, build a
 
 ## 8. Current release boundaries
 
-- Version 0.1.5 supplies a macOS Universal DMG and Windows x64 NSIS installer as a stable release with the same explicit coverage boundaries.
+- Version 0.1.6 supplies a macOS Universal DMG and Windows x64 NSIS installer as a stable release with the same explicit coverage boundaries.
 - GitHub Actions runs UI, patcher, and GUI Rust tests on native Windows and macOS runners. CI proves those test environments, not every user's GPU, WebView2, network, or real Cavalry host.
 - macOS packages are ad-hoc signed and not notarized.
 - Windows packages are unsigned and require WebView2; cross-build/package checks do not replace native Windows acceptance. The earlier Wine silent-install attempt timed out after 90 seconds without creating the target directory and is explicitly incomplete.

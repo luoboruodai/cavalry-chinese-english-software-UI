@@ -239,6 +239,21 @@ export default function App() {
     [addLog, pushToast, refresh],
   );
 
+  const handleLaunchCavalry = useCallback(async (): Promise<string | null> => {
+    try {
+      const result = await api.launchCavalry();
+      addLog(`已启动 Cavalry ${result.version ?? "当前版本"}`);
+      pushToast("success", "已启动 Cavalry，当前安装已应用双语。");
+      await refresh();
+      return null;
+    } catch (error) {
+      const message = errorText(error);
+      addLog(`启动 Cavalry 失败 — ${message}`);
+      pushToast("error", "无法启动 Cavalry，请确认当前安装已应用双语且未在运行。");
+      return message;
+    }
+  }, [addLog, pushToast, refresh]);
+
   const handleDeleteBackup = useCallback(async (backupDir: string): Promise<string | null> => {
     setOperationBusy(true);
     try {
@@ -400,6 +415,7 @@ export default function App() {
                 onRetry={refresh}
                 onApply={handleApply}
                 onRestoreLatest={() => handleRestore("")}
+                onLaunchCavalry={handleLaunchCavalry}
                 onNavigate={setView}
                 onSelectCavalry={handleSelectCavalry}
                 onBrowseCavalry={handleBrowseCavalry}
@@ -419,7 +435,7 @@ export default function App() {
       </div>
 
       <footer className="bottom-bar">
-        <span>v{buildInfo?.appVersion ?? "0.1.5"}{isMock ? " · 界面演示" : " · 验证中"}</span>
+        <span>v{buildInfo?.appVersion ?? "0.1.6"}{isMock ? " · 界面演示" : " · 验证中"}</span>
         <span>仅供学习用途 · 与 Scene Group 无关</span>
       </footer>
 

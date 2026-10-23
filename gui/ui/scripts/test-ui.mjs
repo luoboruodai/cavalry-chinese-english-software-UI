@@ -186,6 +186,16 @@ try {
   check((await page.getByRole('button',{name:'应用双语',exact:true}).getAttribute('aria-describedby')).includes('status-running-hint'),'running disabled reason remains available to assistive technology');
   check(await page.getByRole('button',{name:'技术细节',exact:true}).count() === 0, 'technical-details panel removed by latest request');
   check(await page.getByRole('button',{name:'应用双语',exact:true}).isDisabled(), 'removing diagnostics never removes safety guard');
+  check(await page.getByRole('button',{name:'启动 Cavalry',exact:true}).isDisabled(), 'a running target cannot launch a duplicate instance');
+  await page.goto(`${base}/?mock=status-28#status`);
+  check(await page.getByRole('button',{name:'启动 Cavalry',exact:true}).isDisabled(), 'an unapplied target cannot launch from the patched-state action');
+  await page.goto(`${base}/#status`);
+  const launchButton=page.getByRole('button',{name:'启动 Cavalry',exact:true});
+  check(await launchButton.isEnabled(), 'an applied target can launch Cavalry');
+  await launchButton.click();
+  await page.locator('.toast').filter({hasText:'已启动 Cavalry，当前安装已应用双语。'}).waitFor();
+  check(await page.evaluate(()=>JSON.parse(localStorage.getItem('cb-mock-operation-log-v1')||'[]').filter(entry=>entry.text==='已启动 Cavalry 2.7.2').length===1), 'successful launch writes a truthful operation entry');
+  await page.locator('.toast-close').evaluateAll(nodes=>nodes.forEach(node=>node.click()));
 
   await page.goto(`${base}/?mock=status-28#status`);
   await page.waitForFunction(()=>!document.querySelector('.cta-coral')?.disabled);
@@ -804,7 +814,7 @@ try {
   check(await page.getByLabel('即将提交的报告内容',{exact:true}).isHidden(), 'raw serialized payload stays collapsed by default');
   check(await page.locator('.review-message').textContent()===description, 'human review preserves message text and line breaks exactly');
   check(await page.locator('.review-message').locator('*').count()===0, 'description markup remains text in the review');
-  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.5','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
+  check(await page.locator('.review-environment dd').allTextContents().then(values=>JSON.stringify(values)===JSON.stringify(['Cavalry Bilingual','0.1.6','2.7.2'])), 'only tool and Cavalry versions appear in the human review');
   check(await page.getByRole('region',{name:'版本信息',exact:true}).isVisible(), 'environment section is simplified to version information');
   check(await page.locator('.review-logs li').count()===20, 'review retains all attached records, including below the fold');
   check(JSON.stringify(await page.locator('.review-logs p').allTextContents())===JSON.stringify(reviewLogs.map(entry=>entry.text)), 'operation text is not silently summarized or truncated');

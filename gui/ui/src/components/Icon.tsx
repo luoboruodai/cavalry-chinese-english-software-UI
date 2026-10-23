@@ -1,5 +1,6 @@
-export type IconName = "chevron" | "close" | "restore" | "trash" | "mail" | "check" | "info" | "download" | "folder" | "feedback" | "refresh" | "arrow";
+export type IconName = "chevron" | "close" | "restore" | "trash" | "mail" | "check" | "info" | "download" | "folder" | "feedback" | "refresh" | "arrow" | "play";
 const paths: Record<IconName, React.ReactNode> = {
+  play: <path d="m8 5 11 7-11 7Z" />,
   download: <><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" /></>,
   folder: <path d="M3 7V5h7l2 3h9v12H3V7Z" />,
   feedback: <><path d="M4 4h16v12H9l-5 4V4Z" /><path d="M8 8h8M8 12h5" /></>,

@@ -324,7 +324,7 @@ fn submit_with_client(draft: &Draft, dsn: &Dsn, client: &Client) -> Result<(), S
         .header("Content-Type", "application/x-sentry-envelope")
         .header(
             "X-Sentry-Auth",
-            dsn.to_auth(Some("cavalry-bilingual/0.1.5")).to_string(),
+            dsn.to_auth(Some("cavalry-bilingual/0.1.6")).to_string(),
         )
         .body(envelope_bytes(draft)?)
         .send()

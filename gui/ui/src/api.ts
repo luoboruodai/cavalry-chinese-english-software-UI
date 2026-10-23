@@ -176,7 +176,7 @@ const MOCK_BUILD_INFO: BuildInfo = {
   configExists: true,
   template: MOCK_CONFIG.template,
   lang: MOCK_CONFIG.lang,
-  appVersion: "0.1.5",
+  appVersion: "0.1.6",
   supportedLangs: ["en", "zh-Hans", "zh-Hant", "ja_JP"],
 };
 
@@ -288,11 +288,14 @@ function mockInvoke<T>(
       mockDownloadCancelled = true; result = null; break;
     case "reveal_cavalry_download":
       result = null; break;
+    case "launch_cavalry":
+      result = {ok:true,path:mockTargetPath,version:mockTargetPath.includes("2.8")?"2.8.0":"2.7.2"};
+      break;
     case "prepare_error_report": {
       if (mockMode() === "report-prepare-error") return Promise.reject("无法生成报告预览，请重试");
       const logs = (args?.logs ?? []) as Array<{time:string;text:string}>;
       const redact = (text: string) => text.replace(/(?:\/Users\/|[A-Z]:\\Users\\)[^\r\n，；]+/gi,"<本机路径已隐藏>").replace(/(?:api[_-]?key|password|token)\s*[:=]\s*[^\s,;，；]+/gi,"<凭据已隐藏>").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"<邮箱已隐藏>");
-      const content = {app:"Cavalry Bilingual",appVersion:"0.1.5",cavalryVersion:args?.cavalryVersion ?? null,message:redact(String(args?.message ?? "")),logs:logs.slice(0,20).map(log=>({...log,text:redact(log.text)}))};
+      const content = {app:"Cavalry Bilingual",appVersion:"0.1.6",cavalryVersion:args?.cavalryVersion ?? null,message:redact(String(args?.message ?? "")),logs:logs.slice(0,20).map(log=>({...log,text:redact(log.text)}))};
       const service = mockMode() === "report-service";
       const previewData = mockMode() === "report-extra-field" ? {...content, additionalDiagnostic:"这是新增字段，必须在完整预览中显示"} : mockMode() === "report-extra-log-field" ? {...content, logs:[{time:"2026-10-19 15:00",text:"普通诊断",additionalLogDiagnostic:"新的记录字段同样不得遗漏"}]} : content;
       result = {id:"mock-report-approved",preview:mockMode() === "report-invalid-shape" ? "暂不支持的报告格式\n完整原文必须仍能检查" : JSON.stringify(previewData,null,2),logCount:content.logs.length,delivery:service ? "service" : "mail",serviceName:service ? "feedback.example.invalid" : "EmailJS",note:service ? null : "将通过 EmailJS 外部服务发送；未配置服务不会发送邮件。"};
@@ -396,6 +399,7 @@ export const api = {
   getBuildInfo: () => call<BuildInfo>("get_build_info"),
   listCavalryInstalls: () => call<CavalryInstall[]>("list_cavalry_installs"),
   setTargetCavalry: (path: string) => call<{ ok: boolean; path: string }>("set_target_cavalry", { path }),
+  launchCavalry: () => call<{ ok: boolean; path: string; version: string | null }>("launch_cavalry"),
   chooseCavalryDirectory: async (): Promise<string | null> => {
     if (isMock) return mockMode() === "choose-path-cancel" ? null : "E:\\Cavalry";
     const selected = await openDialog({ directory: true, multiple: false, title: "选择 Cavalry 安装目录" });

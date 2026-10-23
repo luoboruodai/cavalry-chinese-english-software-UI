@@ -8,6 +8,7 @@ use std::{
     env,
     fs,
     path::{Path, PathBuf},
+    process::{Command, Stdio},
 };
 use tauri::State;
 
@@ -407,6 +408,50 @@ fn status_info(state: &GuiState) -> Result<Value, String> {
     }))
 }
 
+fn validate_launch_target(app_root: &Path) -> Result<cbpatch::detect::StatusReport, String> {
+    if !is_cavalry_install(app_root) {
+        return Err("目标不是完整的 Cavalry 安装目录".into());
+    }
+    let report = ops::status(app_root).map_err(|e| e.to_string())?;
+    if report.state != cbpatch::AppState::Ours {
+        return Err("只有已确认应用双语的安装才能启动".into());
+    }
+    ops::ensure_target_not_running(app_root).map_err(|_| "Cavalry 已在运行，请使用当前窗口".to_string())?;
+    Ok(report)
+}
+
+fn launch_cavalry_root(app_root: &Path) -> Result<Value, String> {
+    let report = validate_launch_target(app_root)?;
+    #[cfg(windows)]
+    Command::new(app_root.join("Cavalry.exe"))
+        .current_dir(app_root)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|_| "无法启动 Cavalry，请检查安装路径和文件权限")?;
+    #[cfg(target_os = "macos")]
+    Command::new("open")
+        .arg(app_root)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|_| "无法启动 Cavalry，请检查安装路径和文件权限")?;
+    #[cfg(all(not(windows), not(target_os = "macos")))]
+    return Err("当前系统不支持启动 Cavalry".into());
+    #[allow(unreachable_code)]
+    Ok(json!({"ok": true, "path": app_root, "version": report.cavalry_version}))
+}
+
+#[tauri::command]
+pub async fn launch_cavalry(state: State<'_, GuiState>) -> Result<Value, String> {
+    let app_root = target_app(&state);
+    tauri::async_runtime::spawn_blocking(move || launch_cavalry_root(&app_root))
+        .await
+        .map_err(|e| e.to_string())?
+}
+
 async fn mutate<F>(state: GuiState, operation: F) -> Result<Value, String>
 where
     F: FnOnce(&GuiState) -> Result<Value, String> + Send + 'static,
@@ -599,5 +644,16 @@ mod target_selection_tests {
         fs::remove_file(app.join("Qt6Core.dll")).unwrap();
         let installs = cavalry_install_list(&state);
         assert!(has_selected(&installs), "incomplete saved target must remain visible instead of falling back to the default");
+    }
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn launch_requires_an_applied_install() {
+        let fixture = Fixture::new();
+        let app = fixture.custom_app();
+        fs::create_dir_all(app.join("Contents/Resources")).unwrap();
+        assert!(validate_launch_target(&app).is_err());
+        fs::write(app.join("Contents/Resources/cavalry-bilingual.json"), b"{}").unwrap();
+        let report = validate_launch_target(&app).unwrap();
+        assert_eq!(report.state, cbpatch::AppState::Ours);
     }
 }

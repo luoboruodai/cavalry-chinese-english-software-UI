@@ -19,6 +19,7 @@ interface Props {
   onRetry: () => Promise<void>;
   onApply: () => Promise<string | null>;
   onRestoreLatest: () => Promise<string | null>;
+  onLaunchCavalry: () => Promise<string | null>;
   onNavigate: (view: View) => void;
   onSelectCavalry: (path: string) => Promise<string | null>;
   onBrowseCavalry: () => Promise<string | null>;
@@ -38,6 +39,7 @@ export function StatusSection({
   onRetry,
   onApply,
   onRestoreLatest,
+  onLaunchCavalry,
   onNavigate,
   onSelectCavalry,
   onBrowseCavalry,
@@ -106,6 +108,7 @@ export function StatusSection({
 
   const detected = status?.detected ?? false;
   const applied = status?.state === "ours";
+  const canLaunch = applied && !status?.running && !blocked && !loadError;
 
   const hero = applied
     ? "双语已应用"
@@ -173,6 +176,7 @@ export function StatusSection({
             </button>
           )}
           <button type="button" className="secondary-button" disabled={blocked || !!loadError || !status?.latestBackup || status?.running} onClick={() => setPending("restore")}>还原最近备份</button>
+          <button type="button" className="secondary-button" disabled={!canLaunch} title={canLaunch ? "启动当前已应用双语的 Cavalry" : "只有已确认应用双语的安装才能启动"} onClick={() => void onLaunchCavalry()}><Icon name="play"/>启动 Cavalry</button>
           <button
             type="button"
             className="inline-link"

@@ -65,6 +65,10 @@ x86_64-w64-mingw32-objdump -p gui/target/x86_64-pc-windows-gnu/release/cavalry-b
 
 0.1.5 在写入 `target-cavalry.json` 前先创建配置父目录，修复首次使用时的 os error 3。自动发现在默认目录和嵌套解析之外，还读取运行中的 Cavalry 与 MSI 开始菜单快捷方式，随后仍要求完整安装结构。Windows 2.8.0 / Qt 6.9.2 会显示真实版本与“仅支持 2.7.2 / Qt 6.6.3”的明确原因，不再显示为未检测到；当前 2.8 QPA／私有 ABI 合同未获验证，不会写入。
 
+## 应用后启动 Cavalry
+
+0.1.6 的“启动 Cavalry”只在当前安装已确认应用双语且未运行时启用。命令先复核完整安装和 `ours` 状态，再按当前安装根启动，禁止重复实例。保存排版设置、重开管理器或重开 Cavalry 本身都不等于已应用双语；Windows 2.8 未获验证前仍不会被标记为已应用。macOS 启动守卫测试和 UI 三态检查分别覆盖已应用、未应用与运行中状态。
+
 ## Intel Mac 原生
 
 ```bash

@@ -79,6 +79,7 @@ pub fn run() {
             commands::list_fonts,
             commands::list_cavalry_installs,
             commands::set_target_cavalry,
+            commands::launch_cavalry,
             commands::check_cavalry_update,
             commands::download_cavalry_update,
             commands::cancel_cavalry_download,
