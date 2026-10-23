@@ -45,6 +45,7 @@ pub(crate) fn resolve_install_root(candidate: &Path) -> Result<PathBuf, String> 
     if !candidate.is_absolute() {
         return Err("请选择 Cavalry 安装目录的绝对路径".into());
     }
+    fs::symlink_metadata(candidate).map_err(|_| "所选 Cavalry 路径不存在")?;
     if is_reparse(candidate) {
         return Err("Cavalry 路径不得经过符号链接或重解析点".into());
     }

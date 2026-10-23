@@ -560,8 +560,15 @@ mod target_selection_tests {
         let installs = cavalry_install_list(&state);
         assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)));
         let before = fs::read(&state.target_path_file).unwrap();
-        let error = set_target_cavalry_path(&state, &fixture.0.join("missing")).unwrap_err();
+        let missing = fixture.0.join("missing");
+        fs::create_dir(&missing).unwrap();
+        let error = set_target_cavalry_path(&state, &missing).unwrap_err();
         assert!(error.contains("Cavalry.exe") && error.contains("Qt6Core.dll"), "missing-install error should name the required files: {error}");
+        #[cfg(windows)]
+        {
+            let nonexistent = set_target_cavalry_path(&state, &fixture.0.join("does-not-exist")).unwrap_err();
+            assert!(nonexistent.contains("不存在"), "nonexistent path should be distinguished from links: {nonexistent}");
+        }
         assert_eq!(fs::read(&state.target_path_file).unwrap(), before);
     }
     #[test]
