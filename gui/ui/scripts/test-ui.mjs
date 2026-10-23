@@ -176,10 +176,8 @@ try {
   check(await page.locator('.settings-status').count()===0,'clean settings remove the persistent saved message');
   await page.goto(`${base}/?mock=status-notices#status`);
   await page.locator('.toast').nth(2).waitFor();
-  for (let n=0; n<3; n++) {
-    await page.locator('.toast-close').first().click();
-    await page.waitForTimeout(180);
-  }
+  await page.locator('.toast-close').evaluateAll(nodes=>nodes.forEach(node=>node.click()));
+  await page.waitForFunction(()=>document.querySelectorAll('.toast').length===0);
   check(await page.locator('.toast').count() === 0, 'notification dismisses with exit');
   await page.getByRole('button',{name:'刷新状态',exact:true}).click();
   check(await page.locator('.toast').count() === 0, 'same refresh does not spam notifications');
