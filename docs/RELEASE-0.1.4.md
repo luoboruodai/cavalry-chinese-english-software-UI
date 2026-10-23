@@ -20,6 +20,7 @@
 - 修复报告“发送说明”在弹窗从下方进入时纵向偏移 18px 的问题；过渡开始、结束、取消和后续帧都会重新计算通知位置。
 - Windows 自定义路径现在会从所选目录向下定位实际安装根：支持父目录与 `New Folder` 等嵌套目录，保存解析后的真实路径，不再错误回落到 `C:\Program Files\Cavalry`。
 - 路径搜索限制为 4 层／256 个目录，要求同时存在 `Cavalry.exe` 与 `Qt6Core.dll`；多个匹配、缺少 Qt、符号链接、重解析点及过深或过大目录均明确拒绝。新增嵌套目录 apply→状态确认→restore 验证。
+- 已确认目标即使暂时缺少文件也继续显示真实路径和状态，不再因重新校验而静默消失或回落到默认目录。
 - 新增 GitHub Actions Windows／macOS 测试矩阵。CI 不发送真实邮件，也不代替用户网络、WebView2 或真实 Cavalry 宿主验收。
 - 保留 Common Controls v6 启动修复，不请求管理员权限。
 
@@ -57,6 +58,7 @@ Version 0.1.4 is a stable patch release that fixes Windows version detection and
 - Fixes the report-delivery toast retaining an 18px vertical offset from the modal entry animation; offsets now update on later frames and transition start/end/cancel.
 - Resolves Windows custom paths to the actual install root beneath the selected directory, including `New Folder` nesting, and persists that resolved path instead of falling back to `C:\Program Files\Cavalry`.
 - Bounds the search to 4 levels / 256 directories and requires both `Cavalry.exe` and `Qt6Core.dll`. Multiple matches, missing Qt, links, reparse points, and excessive directories fail closed. Adds nested install apply → status → restore coverage.
+- Keeps the confirmed target visible with its real path and status even when files are temporarily incomplete, instead of silently hiding it or falling back to the default directory.
 - Adds a GitHub Actions Windows/macOS matrix. CI sends no live email and does not replace user-network, WebView2, or real-host acceptance.
 - Retains the Common Controls v6 startup fix without requesting elevation.
 

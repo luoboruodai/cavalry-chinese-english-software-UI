@@ -173,7 +173,6 @@ fn selected_target(state: &GuiState) -> Option<PathBuf> {
         .ok()
         .and_then(|raw| serde_json::from_str::<Value>(&raw).ok())
         .and_then(|value| value.get("path").and_then(Value::as_str).map(PathBuf::from))
-        .filter(|path| path.is_dir())
 }
 
 fn target_app(state: &GuiState) -> PathBuf {
@@ -213,7 +212,7 @@ pub fn list_cavalry_installs(state: State<GuiState>) -> Value {
 fn cavalry_install_list(state: &GuiState) -> Vec<Value> {
     let mut paths = cavalry_candidates();
     if let Some(selected) = selected_target(state) {
-        if is_cavalry_install(&selected) && !paths.contains(&selected) { paths.push(selected); }
+        if !paths.contains(&selected) { paths.push(selected); }
     }
     paths.iter().map(|path| cavalry_install_json(state, path)).collect()
 }
@@ -571,6 +570,9 @@ mod target_selection_tests {
         set_target_cavalry_path(&state, &parent).unwrap();
         assert_eq!(target_app(&state), app);
         let installs = cavalry_install_list(&state);
-        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)));
+        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)), "nested install missing or not selected: {installs:?}");
+        fs::remove_file(app.join("Qt6Core.dll")).unwrap();
+        let installs = cavalry_install_list(&state);
+        assert!(installs.iter().any(|item| item["path"].as_str() == Some(app.to_string_lossy().as_ref()) && item["selected"].as_bool() == Some(true)), "incomplete saved target must remain visible instead of falling back to the default");
     }
 }
