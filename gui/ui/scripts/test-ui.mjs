@@ -563,7 +563,9 @@ try {
     if(fixture==='save-error-long') {
       check(await page.locator('.settings-save-error p').evaluate(el=>el.scrollHeight>el.clientHeight),'long error is locally scrollable rather than pushing actions out');
       await page.getByLabel('保存失败原因',{exact:true}).focus();
-      await page.keyboard.press('ArrowDown');await page.waitForTimeout(150);
+      await page.keyboard.press('Home');
+      await page.keyboard.press('End');
+      await page.waitForFunction(()=>{const el=document.activeElement;return el&&el.scrollTop>0;});
       check(await page.getByLabel('保存失败原因',{exact:true}).evaluate(el=>document.activeElement===el&&el.scrollTop>0),'long failure reason can be read with keyboard scrolling');
     }
     await page.getByRole('button',{name:'取消更改',exact:true}).click();
