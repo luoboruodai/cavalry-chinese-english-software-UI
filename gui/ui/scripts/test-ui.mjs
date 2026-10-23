@@ -818,6 +818,7 @@ try {
   check(reviewBounds.y>=64 && reviewBounds.y+reviewBounds.height<=reviewActionBounds.y, 'review scroll surface never overlays its actions');
   check(reviewActionBounds.y+reviewActionBounds.height<=528, 'long report keeps final actions inside the minimum window');
   check(await page.getByRole('group',{name:'发送方式',exact:true}).isVisible() && await page.getByRole('button',{name:'查看发送方式',exact:true}).count()===0 && await page.locator('.report-preview-shell').evaluate(el=>getComputedStyle(el).paddingTop)==='0px', 'automatic delivery toast removes the trigger and its reserved space');
+  await page.waitForFunction(()=>{const el=document.querySelector('.report-delivery-popover .toast');return el&&el.dataset.mounted==='true'&&el.getAnimations().every(animation=>animation.playState==='finished');});
   const deliveryNote=await page.getByRole('group',{name:'发送方式',exact:true}).boundingBox();
   check(await page.getByRole('button',{name:'发送报告',exact:true}).evaluate(el=>{const rect=el.getBoundingClientRect();const hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);return hit===el||el.contains(hit);}), 'delivery popover remains reachable without covering report actions');
   check(Math.abs(deliveryNote.y-76)<=1 && Math.abs(deliveryNote.x+deliveryNote.width-(700-16))<=1, 'delivery details use the same right-side floating geometry as main-window toasts');
