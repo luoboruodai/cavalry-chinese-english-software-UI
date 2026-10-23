@@ -1014,7 +1014,9 @@ try {
     check(await del.evaluate(el=>getComputedStyle(el).color)==='rgb(160, 68, 53)','only direct danger hover gets the danger ink');
     await page.mouse.down();check(JSON.stringify(await del.boundingBox())===JSON.stringify(delRest),'pressed danger target stays fixed');await page.mouse.move(8,8);await page.mouse.up();
     check(await page.getByRole('dialog').count()===0,'press then release outside never opens the delete confirmation');
-    await page.getByRole('button',{name:'备份',exact:true}).focus();await page.waitForTimeout(320);check(await row.evaluate(el=>getComputedStyle(el,'::before').backgroundColor)===restColor,'hover reverses fully after pointer and keyboard focus both leave the row');
+    await page.getByRole('button',{name:'备份',exact:true}).focus();
+    await page.waitForFunction(()=>{const row=document.querySelector('.backup-row');return row&&row.getAnimations({subtree:true}).every(animation=>animation.playState==='finished');});
+    check(await row.evaluate(el=>getComputedStyle(el,'::before').backgroundColor)===restColor,'hover reverses fully after pointer and keyboard focus both leave the row');
     check(await page.getByRole('button',{name:/^还原备份 /}).last().isDisabled(),'legacy snapshot protection stays intact after restyling');
     check(await row.evaluate(el=>el.getAnimations({subtree:true}).every(animation=>animation.playState==='finished')),'finite row feedback leaves no active animation at rest');
 
