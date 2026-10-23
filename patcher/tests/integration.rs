@@ -1,3 +1,5 @@
+#![cfg(not(windows))]
+
 //! 集成测试：手写 fixture app（绝不用真实 /Applications/Cavalry.app）。
 //! 覆盖：状态识别三分支、备份幂等、apply→restore 后文件树与 vendor fixture 一致。
 
