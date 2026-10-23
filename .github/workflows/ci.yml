@@ -29,6 +29,9 @@ jobs:
       - run: npm test --prefix gui/ui
       - run: cargo test --manifest-path patcher/Cargo.toml
       - run: cargo test --manifest-path gui/Cargo.toml
+        env:
+          # Unit tests do not package the generated platform runtimes.
+          TAURI_CONFIG: '{"bundle":{"active":false,"resources":[]}}'
       - if: runner.os == 'macOS'
         run: npm run test:catalog28
       - if: runner.os == 'macOS'
